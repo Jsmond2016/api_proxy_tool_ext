@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "name in manifest.json",
-  "description": "description in manifest.json",
+  "name": "API Proxy Tool",
+  "description": "A Chrome extension for proxying API requests to mock URLs",
   "options_ui": {
     "page": "src/pages/options/index.html"
   },
@@ -18,7 +18,19 @@
     "128": "icon-128.png"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "background"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "<all_urls>"
   ],
   "content_scripts": [
     {
@@ -36,6 +48,9 @@
     }
   ],
   "devtools_page": "src/pages/devtools/index.html",
+  "background": {
+    "service_worker": "src/pages/background/index.ts"
+  },
   "web_accessible_resources": [
     {
       "resources": [
