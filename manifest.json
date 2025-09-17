@@ -19,10 +19,7 @@
     "storage",
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
-    "webRequest",
-    "webRequestBlocking",
-    "tabs",
-    "background"
+    "tabs"
   ],
   "host_permissions": [
     "http://*/*",

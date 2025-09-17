@@ -95,37 +95,73 @@ function findMatchingApiConfig(url: string): ApiConfig | null {
   return null;
 }
 
-// 处理请求拦截
-chrome.webRequest.onBeforeRequest.addListener(
-  async (details) => {
-    // 检查全局开关
-    if (!globalConfig.isGlobalEnabled) {
-      return;
+// 动态更新 declarativeNetRequest 规则
+async function updateDeclarativeRules() {
+  if (!globalConfig.isGlobalEnabled) {
+    // 清除所有规则
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: await chrome.declarativeNetRequest.getDynamicRules().then(rules => rules.map(rule => rule.id))
+    });
+    return;
+  }
+
+  const rules: chrome.declarativeNetRequest.Rule[] = [];
+  let ruleId = 1;
+
+  for (const module of globalConfig.modules) {
+    for (const apiConfig of module.apiArr) {
+      if (!apiConfig.isOpen) continue;
+
+      // 构建匹配条件
+      let condition: any = {};
+      
+      switch (apiConfig.filterType) {
+        case 'exact':
+          condition.urlEquals = apiConfig.apiUrl;
+          break;
+        case 'contains':
+          condition.urlContains = apiConfig.apiUrl;
+          break;
+        case 'regex':
+          condition.regexFilter = apiConfig.apiUrl;
+          break;
+        default:
+          continue;
+      }
+
+      // 添加方法过滤
+      if (apiConfig.method) {
+        condition.initiatorDomains = undefined; // 清除默认值
+        condition.requestMethods = [apiConfig.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod];
+      }
+
+      rules.push({
+        id: ruleId++,
+        priority: 1,
+        action: {
+          type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+          redirect: {
+            url: apiConfig.redirectURL
+          }
+        },
+        condition: {
+          urlFilter: condition,
+          resourceTypes: [
+            chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST
+          ]
+        }
+      });
     }
+  }
 
-    // 查找匹配的API配置
-    const apiConfig = findMatchingApiConfig(details.url);
-    if (!apiConfig) {
-      return;
-    }
+  // 更新规则
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: await chrome.declarativeNetRequest.getDynamicRules().then(rules => rules.map(rule => rule.id)),
+    addRules: rules
+  });
 
-    console.log(`Intercepting request: ${details.url} -> ${apiConfig.redirectURL}`);
-
-    // 如果配置了延迟，等待指定时间
-    if (apiConfig.delay > 0) {
-      await new Promise(resolve => setTimeout(resolve, apiConfig.delay));
-    }
-
-    // 重定向到mock URL
-    return {
-      redirectUrl: apiConfig.redirectURL
-    };
-  },
-  {
-    urls: ["<all_urls>"]
-  },
-  ["blocking"]
-);
+  console.log(`Updated ${rules.length} declarative rules`);
+}
 
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -137,12 +173,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'updateConfig':
       globalConfig = request.config;
       saveConfig();
+      updateDeclarativeRules();
       sendResponse({ success: true });
       break;
       
     case 'toggleGlobal':
       globalConfig.isGlobalEnabled = request.enabled;
       saveConfig();
+      updateDeclarativeRules();
       sendResponse({ success: true });
       break;
       
@@ -153,6 +191,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           api.isOpen = request.enabled;
         });
         saveConfig();
+        updateDeclarativeRules();
         sendResponse({ success: true });
       } else {
         sendResponse({ success: false, error: 'Module not found' });
@@ -165,6 +204,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         if (api) {
           api.isOpen = request.enabled;
           saveConfig();
+          updateDeclarativeRules();
           sendResponse({ success: true });
           return;
         }
@@ -188,4 +228,9 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
 // 初始化
-loadConfig();
+async function initialize() {
+  await loadConfig();
+  await updateDeclarativeRules();
+}
+
+initialize();
