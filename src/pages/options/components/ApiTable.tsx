@@ -1,16 +1,13 @@
 import React from "react"
-import { Table, Switch, Button, Space, Tag, Tooltip } from "antd"
-import {
-  EditOutlined,
-  CopyOutlined,
-  DeleteOutlined,
-  CopyOutlined as CopyIcon,
-} from "@ant-design/icons"
+import { Table, Switch, Button, Space, Tag, Tooltip, Typography } from "antd"
+import { EditOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons"
+
 import { ApiConfig } from "../../../types"
 import { formatDelay } from "../../../utils/chromeApi"
 import "antd/dist/reset.css"
 import "../../../assets/styles/tailwind.css"
 
+const { Paragraph } = Typography
 interface ApiTableProps {
   apis: ApiConfig[]
   searchKeyword: string
@@ -41,11 +38,6 @@ export default function ApiTable({
     )
   })
 
-  // 复制到剪贴板
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
-  }
-
   // 检查是否所有API都已开启
   const allApisEnabled =
     filteredApis.length > 0 && filteredApis.every((api) => api.isOpen)
@@ -65,7 +57,7 @@ export default function ApiTable({
       key: "toggleAll",
       width: 80,
       align: "center" as const,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <Switch
           checked={record.isOpen}
           onChange={(checked) => onToggleApi(record.id, checked)}
@@ -78,7 +70,7 @@ export default function ApiTable({
       title: "请求方式",
       key: "method",
       width: 80,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <Tag color={getMethodColor(record.method)}>
           {record.method.toUpperCase()}
         </Tag>
@@ -88,7 +80,7 @@ export default function ApiTable({
       title: "接口名称",
       key: "apiName",
       width: 120,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <div className="font-medium">{record.apiName}</div>
       ),
     },
@@ -96,35 +88,23 @@ export default function ApiTable({
       title: "接口地址",
       key: "apiUrl",
       width: 200,
-      render: (_, record: ApiConfig) => (
-        <div className="space-y-1">
-          <div className="flex items-center space-x-1">
-            <span className="text-blue-600 text-sm font-mono">
-              {record.apiUrl}
-            </span>
-            <CopyIcon
-              className="text-gray-400 cursor-pointer hover:text-blue-500 text-xs"
-              onClick={() => copyToClipboard(record.apiUrl)}
-            />
-          </div>
-          <div className="flex items-center space-x-1">
-            <span className="text-red-600 text-sm font-mono">
-              {record.redirectURL}
-            </span>
-            <CopyIcon
-              className="text-gray-400 cursor-pointer hover:text-red-500 text-xs"
-              onClick={() => copyToClipboard(record.redirectURL)}
-            />
-            <span className="text-green-500 text-xs ml-1">▼</span>
-          </div>
-        </div>
+      render: (_: any, record: ApiConfig) => (
+        <Space direction="vertical">
+          <Paragraph copyable={{ text: record.apiUrl }} type='secondary'>
+            {record.apiUrl}
+          </Paragraph>
+
+          <Paragraph copyable={{ text: record.redirectURL }} type="danger">
+            {record.redirectURL}
+          </Paragraph>
+        </Space>
       ),
     },
     {
       title: "匹配方式",
       key: "filterType",
       width: 100,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <Tag color="blue">{record.filterType}</Tag>
       ),
     },
@@ -132,7 +112,7 @@ export default function ApiTable({
       title: "延迟时间",
       key: "delay",
       width: 100,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <span className="text-sm">{formatDelay(record.delay)}</span>
       ),
     },
@@ -140,12 +120,12 @@ export default function ApiTable({
       title: "操作",
       key: "actions",
       width: 160,
-      render: (_, record: ApiConfig) => (
+      render: (_: any, record: ApiConfig) => (
         <Space size="small">
           <Button
             type="link"
             size="small"
-            className='p-0'
+            className="p-0"
             icon={<EditOutlined />}
             onClick={() => onEditApi(record.id)}
           >
@@ -154,7 +134,7 @@ export default function ApiTable({
           <Button
             type="link"
             size="small"
-            className='p-0'
+            className="p-0"
             icon={<CopyOutlined />}
             onClick={() => onCloneApi(record.id)}
           >
@@ -164,7 +144,7 @@ export default function ApiTable({
             type="link"
             size="small"
             danger
-            className='p-0'
+            className="p-0"
             icon={<DeleteOutlined />}
             onClick={() => onDeleteApi(record.id)}
           >
@@ -184,9 +164,11 @@ export default function ApiTable({
       pagination={false}
       scroll={{ y: 400 }}
       className="api-table"
-      rowProps={(record) => ({
-        'data-api-id': record.id,
-      })}
+      onRow={(record) =>
+        ({
+          "data-api-id": record.id,
+        } as React.HTMLAttributes<HTMLTableRowElement>)
+      }
     />
   )
 }
