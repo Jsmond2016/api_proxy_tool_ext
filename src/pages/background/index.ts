@@ -5,7 +5,37 @@ console.log('API Proxy Tool background script loaded');
 // 存储配置
 let globalConfig: GlobalConfig = {
   isGlobalEnabled: false,
-  modules: []
+  modules: [
+    {
+      id: 'default-module',
+      apiDocKey: 'default.module',
+      label: '默认模块',
+      apiDocUrl: '',
+      dataWrapper: '',
+      pageDomain: '',
+      requestHeaders: '',
+      apiArr: [
+        {
+          id: 'example-api-1',
+          apiKey: '/api/example',
+          apiName: '示例接口',
+          apiUrl: 'http://localhost:3000/api/example',
+          redirectURL: 'http://127.0.0.1:4523/mock/api/example',
+          method: 'GET',
+          filterType: 'contains',
+          delay: 0,
+          isOpen: false,
+          mockWay: 'redirect',
+          statusCode: 200,
+          arrDepth: 4,
+          arrLength: 3,
+          mockResponseData: '',
+          requestBody: '',
+          requestHeaders: ''
+        }
+      ]
+    }
+  ]
 };
 
 // 从storage加载配置
@@ -147,6 +177,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
   
   return true; // 保持消息通道开放以支持异步响应
+});
+
+// 处理扩展图标点击事件
+chrome.action.onClicked.addListener((tab) => {
+  // 打开新标签页到配置页面
+  chrome.tabs.create({
+    url: chrome.runtime.getURL('src/pages/options/index.html')
+  });
 });
 
 // 初始化
