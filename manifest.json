@@ -6,7 +6,7 @@
     "page": "src/pages/options/index.html"
   },
   "action": {
-    "default_popup": "src/pages/popup/index.html",
+    "default_title": "API Proxy Tool",
     "default_icon": {
       "32": "icon-32.png"
     }
