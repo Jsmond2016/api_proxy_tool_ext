@@ -16,45 +16,7 @@ export default function ImportModal({ visible, onCancel, onOk }: ImportModalProp
 
   const handleFileChange = (info: any) => {
     setFileList(info.fileList);
-    
-    if (info.file.status === 'done' || info.file.status === 'success') {
-      try {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          try {
-            const content = e.target?.result as string;
-            const data = JSON.parse(content);
-            
-            // 验证数据格式
-            if (Array.isArray(data) && data.length > 0) {
-              const isValid = data.every(item => 
-                item.apiDocKey && 
-                item.label && 
-                Array.isArray(item.apiArr)
-              );
-              
-              if (isValid) {
-                setImportData(data);
-                message.success('文件解析成功');
-              } else {
-                message.error('文件格式不正确');
-                setImportData([]);
-              }
-            } else {
-              message.error('文件格式不正确');
-              setImportData([]);
-            }
-          } catch (error) {
-            message.error('文件解析失败');
-            setImportData([]);
-          }
-        };
-        reader.readAsText(info.file.originFileObj);
-      } catch (error) {
-        message.error('文件读取失败');
-        setImportData([]);
-      }
-    }
+    // 文件处理逻辑已移到 beforeUpload 中
   };
 
   const handleOk = () => {
@@ -98,7 +60,54 @@ export default function ImportModal({ visible, onCancel, onOk }: ImportModalProp
         message.error('文件大小不能超过10MB');
         return false;
       }
-      return false; // 阻止自动上传
+      // 直接处理文件，不阻止上传
+      handleFileProcessing(file);
+      return false; // 阻止实际上传
+    }
+  };
+
+  const handleFileProcessing = (file: File) => {
+    try {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          console.log('文件内容:', content);
+          const data = JSON.parse(content);
+          console.log('解析后的数据:', data);
+          
+          // 验证数据格式
+          if (Array.isArray(data) && data.length > 0) {
+            const isValid = data.every(item => 
+              item.apiDocKey && 
+              item.label && 
+              Array.isArray(item.apiArr)
+            );
+            
+            console.log('数据验证结果:', isValid);
+            
+            if (isValid) {
+              setImportData(data);
+              message.success('文件解析成功');
+            } else {
+              message.error('文件格式不正确');
+              setImportData([]);
+            }
+          } else {
+            message.error('文件格式不正确');
+            setImportData([]);
+          }
+        } catch (error) {
+          console.error('文件解析失败:', error);
+          message.error(`文件解析失败: ${error instanceof Error ? error.message : '未知错误'}`);
+          setImportData([]);
+        }
+      };
+      reader.readAsText(file);
+    } catch (error) {
+      console.error('文件读取失败:', error);
+      message.error('文件读取失败');
+      setImportData([]);
     }
   };
 

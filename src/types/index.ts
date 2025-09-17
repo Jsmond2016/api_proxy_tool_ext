@@ -62,7 +62,7 @@ export interface ImportExportFormat {
     isOpen: boolean;
     method: 'get' | 'post' | 'put' | 'delete' | 'patch';
     mockResponseData: string;
-    mockWay: 'redirect' | 'mock';
+    mockWay: 'redirect' | 'mockResponse';
     redirectURL: string;
     requestBody: string;
     statusCode: number;
