@@ -9,6 +9,7 @@ import {
   message,
   Drawer,
   Row,
+  Select,
 } from "antd"
 import {
   ArrowLeftOutlined,
@@ -43,6 +44,7 @@ export default function Options() {
   })
   const [activeModuleId, setActiveModuleId] = useState<string>("")
   const [searchKeyword, setSearchKeyword] = useState("")
+  const [searchResults, setSearchResults] = useState<ApiConfig[]>([])
   const [addDrawerVisible, setAddDrawerVisible] = useState(false)
   const [editModalVisible, setEditModalVisible] = useState(false)
   const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
@@ -450,6 +452,50 @@ export default function Options() {
     (module) => module.id === activeModuleId
   )
 
+  // 处理全局搜索
+  const handleSearch = (value: string) => {
+    setSearchKeyword(value);
+    if (!value.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const keyword = value.toLowerCase();
+    const results: ApiConfig[] = [];
+    
+    config.modules.forEach(module => {
+      module.apiArr.forEach(api => {
+        if (
+          api.apiName.toLowerCase().includes(keyword) ||
+          api.apiUrl.toLowerCase().includes(keyword) ||
+          api.redirectURL.toLowerCase().includes(keyword)
+        ) {
+          results.push(api);
+        }
+      });
+    });
+
+    setSearchResults(results);
+  };
+
+  // 处理搜索结果选择
+  const handleSearchResultClick = (api: ApiConfig) => {
+    // 找到API所在的模块
+    const module = config.modules.find(m => m.apiArr.some(a => a.id === api.id));
+    if (module) {
+      setActiveModuleId(module.id);
+      setSearchKeyword('');
+      setSearchResults([]);
+      // 这里可以添加滚动到对应API的逻辑
+      setTimeout(() => {
+        const element = document.querySelector(`[data-api-id="${api.id}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  };
+
   return (
     <div className="proxy-tool">
       <Layout className="h-screen">
@@ -462,14 +508,29 @@ export default function Options() {
             <ArrowLeftOutlined className="text-white cursor-pointer text-lg" />
           </div>
           <div className="flex items-center space-x-6">
-            <Search
+            <Select
               placeholder="全局搜索:接口名字、接口地址"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              prefix={<SearchOutlined />}
+              onSearch={handleSearch}
+              onChange={(value, option) => {
+                if (option && !Array.isArray(option) && option.api) {
+                  handleSearchResultClick(option.api);
+                }
+              }}
               size="middle"
-              className="w-96"
-              style={{ backgroundColor: "white" }}
+              className="w-[300px]"
+              showSearch
+              filterOption={false}
+              notFoundContent={searchKeyword ? "未找到匹配的接口" : null}
+              options={searchResults.map((api) => ({
+                value: api.id,
+                label: (
+                  <div>
+                    <div className="font-medium text-sm">{api.apiName}</div>
+                    <div className="text-xs text-gray-500">{api.apiUrl}</div>
+                  </div>
+                ),
+                api: api,
+              }))}
             />
           </div>
           <Space direction="horizontal">
