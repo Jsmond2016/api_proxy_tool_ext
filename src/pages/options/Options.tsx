@@ -369,44 +369,61 @@ export default function Options() {
 
   // 导入配置
   const handleImport = (importData: any[]) => {
-    const newModules: ModuleConfig[] = importData.map((moduleData) => ({
-      id: generateId(),
-      apiDocKey: moduleData.apiDocKey,
-      apiDocUrl: moduleData.apiDocUrl || "",
-      dataWrapper: moduleData.dataWrapper || "",
-      label: moduleData.label,
-      pageDomain: moduleData.pageDomain || "",
-      requestHeaders: moduleData.requestHeaders || "",
-      apiArr: moduleData.apiArr.map((apiData: any) => ({
-        id: generateId(),
-        apiKey: apiData.apiKey,
-        apiName: apiData.apiName,
-        apiUrl: apiData.apiUrl,
-        redirectURL: apiData.redirectURL,
-        method: apiData.method.toUpperCase() as any,
-        filterType: apiData.filterType,
-        delay: apiData.delay,
-        isOpen: apiData.isOpen,
-        mockWay: apiData.mockWay,
-        statusCode: apiData.statusCode,
-        arrDepth: apiData.arrDepth || 4,
-        arrLength: apiData.arrLength || 3,
-        mockResponseData: apiData.mockResponseData || "",
-        requestBody: apiData.requestBody || "",
-        requestHeaders: apiData.requestHeaders || "",
-      })),
-    }))
+    try {
+      console.log('开始导入数据:', importData);
+      
+      const newModules: ModuleConfig[] = importData.map((moduleData) => {
+        console.log('处理模块:', moduleData);
+        return {
+          id: generateId(),
+          apiDocKey: moduleData.apiDocKey,
+          apiDocUrl: moduleData.apiDocUrl || "",
+          dataWrapper: moduleData.dataWrapper || "",
+          label: moduleData.label,
+          pageDomain: moduleData.pageDomain || "",
+          requestHeaders: moduleData.requestHeaders || "",
+          apiArr: moduleData.apiArr.map((apiData: any) => {
+            console.log('处理API:', apiData);
+            return {
+              id: generateId(),
+              apiKey: apiData.apiKey,
+              apiName: apiData.apiName,
+              apiUrl: apiData.apiUrl,
+              redirectURL: apiData.redirectURL,
+              method: apiData.method.toUpperCase() as any,
+              filterType: apiData.filterType,
+              delay: apiData.delay,
+              isOpen: apiData.isOpen,
+              mockWay: apiData.mockWay,
+              statusCode: apiData.statusCode,
+              arrDepth: apiData.arrDepth || 4,
+              arrLength: apiData.arrLength || 3,
+              mockResponseData: apiData.mockResponseData || "",
+              requestBody: apiData.requestBody || "",
+              requestHeaders: apiData.requestHeaders || "",
+            };
+          }),
+        };
+      });
 
-    const newConfig = {
-      ...config,
-      modules: [...config.modules, ...newModules],
-    }
+      console.log('转换后的模块:', newModules);
 
-    setConfig(newConfig)
-    saveConfig(newConfig)
+      const newConfig = {
+        ...config,
+        modules: [...config.modules, ...newModules],
+      }
 
-    if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id)
+      setConfig(newConfig)
+      saveConfig(newConfig)
+
+      if (newModules.length > 0) {
+        setActiveModuleId(newModules[0].id)
+      }
+      
+      message.success(`成功导入 ${newModules.length} 个模块`);
+    } catch (error) {
+      console.error('导入失败:', error);
+      message.error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
     }
   }
 
