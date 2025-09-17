@@ -184,6 +184,9 @@ export default function ApiTable({
       pagination={false}
       scroll={{ y: 400 }}
       className="api-table"
+      rowProps={(record) => ({
+        'data-api-id': record.id,
+      })}
     />
   )
 }
