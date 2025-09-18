@@ -9,6 +9,7 @@ import {
   Space,
   message,
 } from "antd"
+const { TextArea } = Input
 import { ApiConfig, GlobalConfig } from "../../../types"
 import {
   isValidUrl,
@@ -154,11 +155,15 @@ export default function EditApiModal({
             },
           ]}
         >
-          <Input placeholder="请输入接口地址" />
+          <TextArea 
+            placeholder="请输入接口地址" 
+            rows={1}
+            autoSize={{ minRows: 1, maxRows: 3 }}
+          />
         </Form.Item>
 
         <Form.Item
-          label="redirect地址"
+          label="重定向URL"
           name="redirectURL"
           rules={[
             { required: true, message: "请输入重定向地址" },
@@ -173,7 +178,11 @@ export default function EditApiModal({
             },
           ]}
         >
-          <Input placeholder="请输入" />
+          <TextArea 
+            placeholder="请输入重定向URL" 
+            rows={1}
+            autoSize={{ minRows: 1, maxRows: 3 }}
+          />
         </Form.Item>
 
         <Form.Item
@@ -185,17 +194,9 @@ export default function EditApiModal({
         </Form.Item>
 
         <Space.Compact className="w-full">
-          <Form.Item label="请求方式" name="method" className="w-1/3">
-            <Select>
-              <Select.Option value="GET">GET</Select.Option>
-              <Select.Option value="POST">POST</Select.Option>
-              <Select.Option value="PUT">PUT</Select.Option>
-              <Select.Option value="DELETE">DELETE</Select.Option>
-              <Select.Option value="PATCH">PATCH</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item label="匹配方式" name="filterType" className="w-1/3">
+          {/* 请求方式字段已隐藏，默认使用 GET */}
+          
+          <Form.Item label="匹配方式" name="filterType" className="w-1/2">
             <Select>
               <Select.Option value="contains">contains</Select.Option>
               <Select.Option value="exact">exact</Select.Option>
@@ -203,7 +204,7 @@ export default function EditApiModal({
             </Select>
           </Form.Item>
 
-          <Form.Item label="延迟时间(ms)" name="delay" className="w-1/3">
+          <Form.Item label="延迟时间(ms)" name="delay" className="w-1/2">
             <InputNumber min={0} max={30000} step={100} className="w-full" />
           </Form.Item>
         </Space.Compact>
