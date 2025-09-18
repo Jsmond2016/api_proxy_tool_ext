@@ -33,7 +33,6 @@ import {
 } from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
-import AddApiModal from "./components/AddApiModal"
 import ApiFormDrawer from "./components/ApiFormDrawer"
 import ImportModal from "./components/ImportModal"
 import "antd/dist/reset.css"

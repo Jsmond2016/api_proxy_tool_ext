@@ -177,6 +177,15 @@ export default function ApiFormDrawer({
         </Form.Item>
 
         {/* 请求方式字段已隐藏，默认使用 GET */}
+        <Form.Item label="请求方式" name="method">
+          <Select>
+            <Select.Option value="GET">GET</Select.Option>
+            <Select.Option value="POST">POST</Select.Option>
+            <Select.Option value="PUT">PUT</Select.Option>
+            <Select.Option value="DELETE">DELETE</Select.Option>
+            <Select.Option value="PATCH">PATCH</Select.Option>
+          </Select>
+        </Form.Item>
 
         <Form.Item
           label="匹配方式"
