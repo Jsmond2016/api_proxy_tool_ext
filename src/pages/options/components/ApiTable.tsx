@@ -1,5 +1,5 @@
 import React from "react"
-import { Table, Switch, Button, Space, Tag, Tooltip, Typography } from "antd"
+import { Table, Switch, Button, Space, Tag, Typography } from "antd"
 import { EditOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "../../../types"
@@ -158,13 +158,14 @@ export default function ApiTable({
       columns={columns}
       rowKey="id"
       pagination={false}
-      scroll={{ y: 400 }}
-      className="api-table"
+      scroll={{ y: "calc(100vh - 400px)" }}
+      size="small"
       onRow={(record) =>
         ({
           "data-api-id": record.id,
         } as React.HTMLAttributes<HTMLTableRowElement>)
       }
+      bordered
     />
   )
 }
