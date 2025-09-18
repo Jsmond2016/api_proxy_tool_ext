@@ -442,6 +442,7 @@ export default function Popup() {
             <Button 
               icon={<ImportOutlined />} 
               size="small"
+              type="primary"
               onClick={() => setImportModalVisible(true)}
             >
               导入
