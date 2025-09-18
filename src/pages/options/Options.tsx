@@ -1,28 +1,19 @@
 import React, { useState, useEffect } from "react"
 import {
   Layout,
-  Tabs,
   Button,
   Switch,
-  Input,
   Space,
   message,
-  Drawer,
   Row,
-  Select,
   Modal,
   AutoComplete,
 } from "antd"
 import {
   ArrowLeftOutlined,
-  SearchOutlined,
   PlusOutlined,
   ImportOutlined,
   ExportOutlined,
-  SettingOutlined,
-  MoreOutlined,
-  ReloadOutlined,
-  EditOutlined,
 } from "@ant-design/icons"
 import { GlobalConfig, ModuleConfig, ApiConfig } from "../../types"
 import {
@@ -39,8 +30,7 @@ import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
 
-const { Header, Content } = Layout
-const { Search } = Input
+const { Content } = Layout
 
 export default function Options() {
   const [config, setConfig] = useState<GlobalConfig>({
@@ -49,7 +39,6 @@ export default function Options() {
   })
   const [activeModuleId, setActiveModuleId] = useState<string>("")
   const [searchKeyword, setSearchKeyword] = useState("")
-  const [searchResults, setSearchResults] = useState<ApiConfig[]>([])
   const [apiFormVisible, setApiFormVisible] = useState(false)
   const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
   const [importModalVisible, setImportModalVisible] = useState(false)
@@ -375,8 +364,8 @@ export default function Options() {
         },
       ],
     }
-    setConfig(newConfig)
-    saveConfig(newConfig)
+    setConfig(newConfig as GlobalConfig)
+    saveConfig(newConfig as GlobalConfig)
     setActiveModuleId("default-module")
   }
 
@@ -530,50 +519,45 @@ export default function Options() {
     (module) => module.id === activeModuleId
   )
 
-  // 处理全局搜索
-  const handleSearch = (value: string) => {
-    setSearchKeyword(value)
-    if (!value.trim()) {
-      setSearchResults([])
-      return
-    }
-
-    const keyword = value.toLowerCase()
-    const results: ApiConfig[] = []
-
+  // 获取所有API数据用于搜索
+  const getAllApis = () => {
+    const allApis: (ApiConfig & { moduleId: string; moduleName: string })[] = []
     config.modules.forEach((module) => {
       module.apiArr.forEach((api) => {
-        if (
-          api.apiName.toLowerCase().includes(keyword) ||
-          api.apiUrl.toLowerCase().includes(keyword) ||
-          api.redirectURL.toLowerCase().includes(keyword)
-        ) {
-          results.push(api)
-        }
+        allApis.push({
+          ...api,
+          moduleId: module.id,
+          moduleName: module.label,
+        })
       })
     })
-
-    setSearchResults(results)
+    return allApis
   }
 
   // 处理搜索结果选择
-  const handleSearchResultClick = (api: ApiConfig) => {
-    // 找到API所在的模块
-    const module = config.modules.find((m) =>
-      m.apiArr.some((a) => a.id === api.id)
+  const handleSearchResultClick = (api: ApiConfig & { moduleId: string; moduleName: string }) => {
+    setActiveModuleId(api.moduleId)
+    setSearchKeyword("")
+    // 滚动到对应API
+    setTimeout(() => {
+      const element = document.querySelector(`[data-api-id="${api.id}"]`)
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+    }, 100)
+  }
+
+  // 自定义筛选函数
+  const filterOption = (inputValue: string, option: any) => {
+    const searchText = inputValue.toLowerCase()
+    const api = option.api as ApiConfig & { moduleId: string; moduleName: string }
+    
+    return (
+      api.apiName.toLowerCase().includes(searchText) ||
+      api.apiUrl.toLowerCase().includes(searchText) ||
+      api.redirectURL.toLowerCase().includes(searchText) ||
+      api.moduleName.toLowerCase().includes(searchText)
     )
-    if (module) {
-      setActiveModuleId(module.id)
-      setSearchKeyword("")
-      setSearchResults([])
-      // 这里可以添加滚动到对应API的逻辑
-      setTimeout(() => {
-        const element = document.querySelector(`[data-api-id="${api.id}"]`)
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth", block: "center" })
-        }
-      }, 100)
-    }
   }
 
   return (
@@ -590,30 +574,26 @@ export default function Options() {
           <div className="flex items-center space-x-6">
             <AutoComplete
               allowClear
-              placeholder="全局搜索:接口名字、接口地址"
-              onSearch={handleSearch}
+              placeholder="全局搜索:接口名字、接口地址、模块名称"
               onSelect={(value, option) => {
                 if (option && option.api) {
                   handleSearchResultClick(option.api)
-                } else {
-                  // 如果通过 option 找不到 api，通过 URL 查找
-                  const api = searchResults.find((api) => api.apiUrl === value)
-                  if (api) {
-                    handleSearchResultClick(api)
-                  }
                 }
               }}
               size="large"
               className="w-[650px]"
-              filterOption={false}
-              notFoundContent={searchKeyword ? "未找到匹配的接口" : null}
-              options={searchResults.map((api) => ({
+              filterOption={filterOption}
+              notFoundContent="未找到匹配的接口"
+              options={getAllApis().map((api) => ({
                 value: api.apiUrl,
                 label: (
                   <div className="py-2">
                     <div className="font-medium text-sm">{api.apiName}</div>
                     <div className="text-xs text-gray-500 truncate">
                       {api.apiUrl}
+                    </div>
+                    <div className="text-xs text-blue-500">
+                      模块: {api.moduleName}
                     </div>
                   </div>
                 ),
@@ -674,22 +654,16 @@ export default function Options() {
         </Row>
 
         {/* 主要内容区域 */}
-        <Content className="flex-1 overflow-auto">
-          {activeModule ? (
-            <ApiTable
-              apis={activeModule.apiArr}
-              searchKeyword={searchKeyword}
-              onToggleApi={handleToggleApi}
-              onToggleAllApis={handleToggleAllApis}
-              onDeleteApi={handleDeleteApi}
-              onEditApi={handleEditApi}
-              onCloneApi={handleCloneApi}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500">
-              请选择一个模块或创建新模块
-            </div>
-          )}
+        <Content className="flex-1 overflow-hidden">
+          <ApiTable
+            apis={activeModule?.apiArr || []}
+            searchKeyword={searchKeyword}
+            onToggleApi={handleToggleApi}
+            onToggleAllApis={handleToggleAllApis}
+            onDeleteApi={handleDeleteApi}
+            onEditApi={handleEditApi}
+            onCloneApi={handleCloneApi}
+          />
         </Content>
       </Layout>
 
