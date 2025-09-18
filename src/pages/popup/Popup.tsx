@@ -1,120 +1,131 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Tabs, Button, Switch, Input, Space, message } from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  SearchOutlined, 
-  PlusOutlined, 
-  ImportOutlined, 
-  ExportOutlined, 
+import React, { useState, useEffect } from "react"
+import { Layout, Tabs, Button, Switch, Input, Space, message, Modal } from "antd"
+import {
+  ArrowLeftOutlined,
+  SearchOutlined,
+  PlusOutlined,
+  ImportOutlined,
+  ExportOutlined,
   SettingOutlined,
   MoreOutlined,
-  ReloadOutlined
-} from '@ant-design/icons';
-import { GlobalConfig, ModuleConfig, ApiConfig } from '../../types';
-import { ChromeApiService, generateId } from '../../utils/chromeApi';
-import ModuleTabs from './components/ModuleTabs';
-import ApiTable from './components/ApiTable';
-import AddApiModal from './components/AddApiModal';
-import EditApiModal from './components/EditApiModal';
-import ImportModal from './components/ImportModal';
-import './Popup.css';
+  ReloadOutlined,
+} from "@ant-design/icons"
+import { GlobalConfig, ModuleConfig, ApiConfig } from "../../types"
+import {
+  ChromeApiService,
+  generateId,
+  isModuleLabelDuplicate,
+  isApiUrlDuplicate,
+} from "../../utils/chromeApi"
+import ModuleTabs from "./components/ModuleTabs"
+import ApiTable from "./components/ApiTable"
+import AddApiModal from "./components/AddApiModal"
+import EditApiModal from "./components/EditApiModal"
+import ImportModal from "./components/ImportModal"
+import "./Popup.css"
 
-const { Header, Content } = Layout;
-const { Search } = Input;
+const { Header, Content } = Layout
+const { Search } = Input
 
 export default function Popup() {
   const [config, setConfig] = useState<GlobalConfig>({
     isGlobalEnabled: false,
-    modules: []
-  });
-  const [activeModuleId, setActiveModuleId] = useState<string>('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editingApi, setEditingApi] = useState<ApiConfig | null>(null);
-  const [importModalVisible, setImportModalVisible] = useState(false);
-  const [loading, setLoading] = useState(false);
+    modules: [],
+  })
+  const [activeModuleId, setActiveModuleId] = useState<string>("")
+  const [searchKeyword, setSearchKeyword] = useState("")
+  const [addModalVisible, setAddModalVisible] = useState(false)
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
+  const [importModalVisible, setImportModalVisible] = useState(false)
+  const [loading, setLoading] = useState(false)
 
   // 加载配置
   useEffect(() => {
-    loadConfig();
-  }, []);
+    loadConfig()
+  }, [])
 
   const loadConfig = async () => {
     try {
-      setLoading(true);
-      const configData = await ChromeApiService.getConfig();
-      setConfig(configData);
+      setLoading(true)
+      const configData = await ChromeApiService.getConfig()
+      setConfig(configData)
       if (configData.modules.length > 0 && !activeModuleId) {
-        setActiveModuleId(configData.modules[0].id);
+        setActiveModuleId(configData.modules[0].id)
       }
     } catch (error) {
-      message.error('加载配置失败');
-      console.error('Load config error:', error);
+      message.error("加载配置失败")
+      console.error("Load config error:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   // 保存配置到background script
   const saveConfig = async (newConfig: GlobalConfig) => {
     try {
-      await ChromeApiService.updateConfig(newConfig);
+      await ChromeApiService.updateConfig(newConfig)
     } catch (error) {
-      message.error('保存配置失败');
-      console.error('Save config error:', error);
+      message.error("保存配置失败")
+      console.error("Save config error:", error)
     }
-  };
+  }
 
   // 切换全局开关
   const handleToggleGlobal = async (enabled: boolean) => {
     try {
-      await ChromeApiService.toggleGlobal(enabled);
-      setConfig(prev => ({ ...prev, isGlobalEnabled: enabled }));
-      message.success(enabled ? '已开启全局代理' : '已关闭全局代理');
+      await ChromeApiService.toggleGlobal(enabled)
+      setConfig((prev) => ({ ...prev, isGlobalEnabled: enabled }))
+      message.success(enabled ? "已开启全局代理" : "已关闭全局代理")
     } catch (error) {
-      message.error('操作失败');
-      console.error('Toggle global error:', error);
+      message.error("操作失败")
+      console.error("Toggle global error:", error)
     }
-  };
+  }
 
   // 切换模块开关
   const handleToggleModule = async (moduleId: string, enabled: boolean) => {
     try {
-      await ChromeApiService.toggleModule(moduleId, enabled);
-      setConfig(prev => ({
+      await ChromeApiService.toggleModule(moduleId, enabled)
+      setConfig((prev) => ({
         ...prev,
-        modules: prev.modules.map(module =>
+        modules: prev.modules.map((module) =>
           module.id === moduleId
-            ? { ...module, apiArr: module.apiArr.map(api => ({ ...api, isOpen: enabled })) }
+            ? {
+                ...module,
+                apiArr: module.apiArr.map((api) => ({
+                  ...api,
+                  isOpen: enabled,
+                })),
+              }
             : module
-        )
-      }));
-      message.success(enabled ? '已开启模块代理' : '已关闭模块代理');
+        ),
+      }))
+      message.success(enabled ? "已开启模块代理" : "已关闭模块代理")
     } catch (error) {
-      message.error('操作失败');
-      console.error('Toggle module error:', error);
+      message.error("操作失败")
+      console.error("Toggle module error:", error)
     }
-  };
+  }
 
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
     try {
-      await ChromeApiService.toggleApi(apiId, enabled);
-      setConfig(prev => ({
+      await ChromeApiService.toggleApi(apiId, enabled)
+      setConfig((prev) => ({
         ...prev,
-        modules: prev.modules.map(module => ({
+        modules: prev.modules.map((module) => ({
           ...module,
-          apiArr: module.apiArr.map(api =>
+          apiArr: module.apiArr.map((api) =>
             api.id === apiId ? { ...api, isOpen: enabled } : api
-          )
-        }))
-      }));
+          ),
+        })),
+      }))
     } catch (error) {
-      message.error('操作失败');
-      console.error('Toggle API error:', error);
+      message.error("操作失败")
+      console.error("Toggle API error:", error)
     }
-  };
+  }
 
   // 添加模块
   const handleAddModule = () => {
@@ -122,221 +133,267 @@ export default function Popup() {
       id: generateId(),
       apiDocKey: `module_${Date.now()}`,
       label: `新模块_${Date.now()}`,
-      apiArr: []
-    };
-    
+      apiArr: [],
+    }
+
     const newConfig = {
       ...config,
-      modules: [...config.modules, newModule]
-    };
-    
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    setActiveModuleId(newModule.id);
-  };
+      modules: [...config.modules, newModule],
+    }
+
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setActiveModuleId(newModule.id)
+  }
 
   // 编辑模块
   const handleEditModule = (moduleId: string, newName: string) => {
     const newConfig = {
       ...config,
-      modules: config.modules.map(module =>
+      modules: config.modules.map((module) =>
         module.id === moduleId
           ? { ...module, label: newName, apiDocKey: newName }
           : module
-      )
-    };
-    setConfig(newConfig);
-    saveConfig(newConfig);
-  };
+      ),
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+  }
 
   // 删除模块
   const handleDeleteModule = (moduleId: string) => {
     const newConfig = {
       ...config,
-      modules: config.modules.filter(module => module.id !== moduleId)
-    };
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    
-    if (activeModuleId === moduleId) {
-      const remainingModules = newConfig.modules;
-      setActiveModuleId(remainingModules.length > 0 ? remainingModules[0].id : '');
+      modules: config.modules.filter((module) => module.id !== moduleId),
     }
-  };
+    setConfig(newConfig)
+    saveConfig(newConfig)
+
+    if (activeModuleId === moduleId) {
+      const remainingModules = newConfig.modules
+      setActiveModuleId(
+        remainingModules.length > 0 ? remainingModules[0].id : ""
+      )
+    }
+  }
 
   // 添加API
-  const handleAddApi = (apiData: Omit<ApiConfig, 'id'>) => {
+  const handleAddApi = (apiData: Omit<ApiConfig, "id">) => {
     const newApi: ApiConfig = {
       ...apiData,
-      id: generateId()
-    };
+      id: generateId(),
+    }
 
     const newConfig = {
       ...config,
-      modules: config.modules.map(module =>
+      modules: config.modules.map((module) =>
         module.id === activeModuleId
           ? { ...module, apiArr: [...module.apiArr, newApi] }
           : module
-      )
-    };
+      ),
+    }
 
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    setAddModalVisible(false);
-  };
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setAddModalVisible(false)
+  }
 
   // 编辑API
   const handleEditApi = (apiId: string) => {
     const api = config.modules
-      .flatMap(module => module.apiArr)
-      .find(api => api.id === apiId);
-    
+      .flatMap((module) => module.apiArr)
+      .find((api) => api.id === apiId)
+
     if (api) {
-      setEditingApi(api);
-      setEditModalVisible(true);
+      setEditingApi(api)
+      setEditModalVisible(true)
     }
-  };
+  }
 
   // 更新API
-  const handleUpdateApi = (apiData: Omit<ApiConfig, 'id'>) => {
-    if (!editingApi) return;
+  const handleUpdateApi = (apiData: Omit<ApiConfig, "id">) => {
+    if (!editingApi) return
 
     const newConfig = {
       ...config,
-      modules: config.modules.map(module => ({
+      modules: config.modules.map((module) => ({
         ...module,
-        apiArr: module.apiArr.map(api =>
-          api.id === editingApi.id
-            ? { ...api, ...apiData }
-            : api
-        )
-      }))
-    };
+        apiArr: module.apiArr.map((api) =>
+          api.id === editingApi.id ? { ...api, ...apiData } : api
+        ),
+      })),
+    }
 
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    setEditModalVisible(false);
-    setEditingApi(null);
-  };
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setEditModalVisible(false)
+    setEditingApi(null)
+  }
 
   // 克隆API
   const handleCloneApi = (apiId: string) => {
     const api = config.modules
-      .flatMap(module => module.apiArr)
-      .find(api => api.id === apiId);
-    
+      .flatMap((module) => module.apiArr)
+      .find((api) => api.id === apiId)
+
     if (api) {
       const clonedApi: ApiConfig = {
         ...api,
         id: generateId(),
-        apiName: `${api.apiName}_副本`
-      };
+        apiName: `${api.apiName}_副本`,
+      }
 
       const newConfig = {
         ...config,
-        modules: config.modules.map(module =>
+        modules: config.modules.map((module) =>
           module.id === activeModuleId
             ? { ...module, apiArr: [...module.apiArr, clonedApi] }
             : module
-        )
-      };
+        ),
+      }
 
-      setConfig(newConfig);
-      saveConfig(newConfig);
+      setConfig(newConfig)
+      saveConfig(newConfig)
     }
-  };
+  }
 
   // 删除API
   const handleDeleteApi = (apiId: string) => {
     const newConfig = {
       ...config,
-      modules: config.modules.map(module => ({
+      modules: config.modules.map((module) => ({
         ...module,
-        apiArr: module.apiArr.filter(api => api.id !== apiId)
-      }))
-    };
-    setConfig(newConfig);
-    saveConfig(newConfig);
-  };
+        apiArr: module.apiArr.filter((api) => api.id !== apiId),
+      })),
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+  }
 
   // 重置模块
   const handleResetModule = (moduleId: string) => {
     const newConfig = {
       ...config,
-      modules: config.modules.map(module =>
-        module.id === moduleId
-          ? { ...module, apiArr: [] }
-          : module
-      )
-    };
-    setConfig(newConfig);
-    saveConfig(newConfig);
-  };
+      modules: config.modules.map((module) =>
+        module.id === moduleId ? { ...module, apiArr: [] } : module
+      ),
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+  }
 
   // 全局重置
   const handleResetAll = () => {
     const newConfig = {
       isGlobalEnabled: false,
-      modules: []
-    };
-    setConfig(newConfig);
-    saveConfig(newConfig);
-    setActiveModuleId('');
-  };
+      modules: [],
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setActiveModuleId("")
+  }
 
   // 导入配置
   const handleImport = (importData: any[]) => {
-    const newModules: ModuleConfig[] = importData.map(moduleData => ({
-      id: generateId(),
-      apiDocKey: moduleData.apiDocKey,
-      apiDocUrl: moduleData.apiDocUrl || '',
-      dataWrapper: moduleData.dataWrapper || '',
-      label: moduleData.label,
-      pageDomain: moduleData.pageDomain || '',
-      requestHeaders: moduleData.requestHeaders || '',
-      apiArr: moduleData.apiArr.map((apiData: any) => ({
-        id: generateId(),
-        apiKey: apiData.apiKey,
-        apiName: apiData.apiName,
-        apiUrl: apiData.apiUrl,
-        redirectURL: apiData.redirectURL,
-        method: apiData.method.toUpperCase() as any,
-        filterType: apiData.filterType,
-        delay: apiData.delay,
-        isOpen: apiData.isOpen,
-        mockWay: apiData.mockWay,
-        statusCode: apiData.statusCode,
-        arrDepth: apiData.arrDepth || 4,
-        arrLength: apiData.arrLength || 3,
-        mockResponseData: apiData.mockResponseData || '',
-        requestBody: apiData.requestBody || '',
-        requestHeaders: apiData.requestHeaders || ''
-      }))
-    }));
+    const duplicateModules: string[] = []
+    const duplicateApis: string[] = []
 
+    const newModules: ModuleConfig[] = importData.map((moduleData) => {
+      // 检查模块标签是否重复
+      if (isModuleLabelDuplicate(config.modules, moduleData.label)) {
+        duplicateModules.push(moduleData.label)
+      }
+
+      return {
+        id: generateId(),
+        apiDocKey: moduleData.apiDocKey,
+        apiDocUrl: moduleData.apiDocUrl || "",
+        dataWrapper: moduleData.dataWrapper || "",
+        label: moduleData.label,
+        pageDomain: moduleData.pageDomain || "",
+        requestHeaders: moduleData.requestHeaders || "",
+        apiArr: moduleData.apiArr.map((apiData: any) => {
+          // 检查API URL是否重复
+          if (isApiUrlDuplicate(config.modules, apiData.apiUrl)) {
+            duplicateApis.push(`${apiData.apiName} (${apiData.apiUrl})`)
+          }
+
+          return {
+            id: generateId(),
+            apiKey: apiData.apiKey,
+            apiName: apiData.apiName,
+            apiUrl: apiData.apiUrl,
+            redirectURL: apiData.redirectURL,
+            method: apiData.method.toUpperCase() as any,
+            filterType: apiData.filterType,
+            delay: apiData.delay,
+            isOpen: apiData.isOpen,
+            mockWay: apiData.mockWay,
+            statusCode: apiData.statusCode,
+            arrDepth: apiData.arrDepth || 4,
+            arrLength: apiData.arrLength || 3,
+            mockResponseData: apiData.mockResponseData || "",
+            requestBody: apiData.requestBody || "",
+            requestHeaders: apiData.requestHeaders || "",
+          }
+        }),
+      }
+    })
+
+    // 显示重复项警告
+    if (duplicateModules.length > 0 || duplicateApis.length > 0) {
+      let warningMessage = "发现重复项：\n"
+      if (duplicateModules.length > 0) {
+        warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
+      }
+      if (duplicateApis.length > 0) {
+        warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
+      }
+      warningMessage += "这些重复项将被跳过，是否继续导入？"
+
+      Modal.confirm({
+        title: '发现重复项',
+        content: warningMessage,
+        onOk() {
+          // 继续导入
+          performImport(newModules)
+        },
+        onCancel() {
+          // 取消导入
+        },
+      })
+      return
+    }
+
+    // 没有重复项，直接导入
+    performImport(newModules)
+  }
+
+  // 执行导入操作
+  const performImport = (newModules: ModuleConfig[]) => {
     const newConfig = {
       ...config,
-      modules: [...config.modules, ...newModules]
-    };
+      modules: [...config.modules, ...newModules],
+    }
 
-    setConfig(newConfig);
-    saveConfig(newConfig);
+    setConfig(newConfig)
+    saveConfig(newConfig)
 
     if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id);
+      setActiveModuleId(newModules[0].id)
     }
-  };
+  }
 
   // 导出配置
   const handleExport = () => {
-    const exportData = config.modules.map(module => ({
+    const exportData = config.modules.map((module) => ({
       apiDocKey: module.apiDocKey,
-      apiDocUrl: module.apiDocUrl || '',
-      dataWrapper: module.dataWrapper || '',
+      apiDocUrl: module.apiDocUrl || "",
+      dataWrapper: module.dataWrapper || "",
       label: module.label,
-      pageDomain: module.pageDomain || '',
-      requestHeaders: module.requestHeaders || '',
-      apiArr: module.apiArr.map(api => ({
+      pageDomain: module.pageDomain || "",
+      requestHeaders: module.requestHeaders || "",
+      apiArr: module.apiArr.map((api) => ({
         apiKey: api.apiKey,
         apiName: api.apiName,
         apiUrl: api.apiUrl,
@@ -346,24 +403,28 @@ export default function Popup() {
         filterType: api.filterType,
         isOpen: api.isOpen,
         method: api.method.toLowerCase(),
-        mockResponseData: api.mockResponseData || '',
+        mockResponseData: api.mockResponseData || "",
         mockWay: api.mockWay,
         redirectURL: api.redirectURL,
-        requestBody: api.requestBody || '',
-        statusCode: api.statusCode
-      }))
-    }));
+        requestBody: api.requestBody || "",
+        statusCode: api.statusCode,
+      })),
+    }))
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `proxy-config-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `proxy-config-${new Date().toISOString().split("T")[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
-  const activeModule = config.modules.find(module => module.id === activeModuleId);
+  const activeModule = config.modules.find(
+    (module) => module.id === activeModuleId
+  )
 
   return (
     <div className="proxy-tool">
@@ -378,7 +439,6 @@ export default function Popup() {
             <Switch
               checked={config.isGlobalEnabled}
               onChange={handleToggleGlobal}
-              size="small"
             />
             <span className="text-white text-sm">开启</span>
           </div>
@@ -399,26 +459,24 @@ export default function Popup() {
         {/* 搜索和操作栏 */}
         <div className="bg-white px-4 py-3 border-b">
           <div className="flex items-center justify-between mb-2">
-            <a href="#" className="text-blue-600 text-sm">编辑分组</a>
+            <a href="#" className="text-blue-600 text-sm">
+              编辑分组
+            </a>
             <Space>
-              <Button 
-                danger 
-                size="small" 
-                onClick={() => activeModule && handleResetModule(activeModule.id)}
+              <Button
+                danger
+                onClick={() =>
+                  activeModule && handleResetModule(activeModule.id)
+                }
                 disabled={!activeModule}
               >
                 重置
               </Button>
-              <Button 
-                danger 
-                size="small" 
-                onClick={handleResetAll}
-              >
+              <Button danger onClick={handleResetAll}>
                 一键重置
               </Button>
-              <Button 
-                type="primary" 
-                size="small" 
+              <Button
+                type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setAddModalVisible(true)}
                 disabled={!activeModule}
@@ -432,36 +490,24 @@ export default function Popup() {
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             prefix={<SearchOutlined />}
-            size="small"
           />
         </div>
 
         {/* 操作按钮栏 */}
         <div className="bg-white px-4 py-2 border-b">
           <Space>
-            <Button 
-              icon={<ImportOutlined />} 
-              size="small"
+            <Button
+              icon={<ImportOutlined />}
               type="primary"
               onClick={() => setImportModalVisible(true)}
             >
               导入
             </Button>
-            <Button 
-              icon={<ExportOutlined />} 
-              size="small"
-              onClick={handleExport}
-            >
+            <Button icon={<ExportOutlined />} onClick={handleExport}>
               导出
             </Button>
-            <Button 
-              icon={<SettingOutlined />} 
-              size="small"
-            />
-            <Button 
-              icon={<MoreOutlined />} 
-              size="small"
-            />
+            <Button icon={<SettingOutlined />} />
+            <Button icon={<MoreOutlined />} />
           </Space>
         </div>
 
@@ -496,8 +542,8 @@ export default function Popup() {
         visible={editModalVisible}
         api={editingApi}
         onCancel={() => {
-          setEditModalVisible(false);
-          setEditingApi(null);
+          setEditModalVisible(false)
+          setEditingApi(null)
         }}
         onOk={handleUpdateApi}
       />
@@ -509,5 +555,5 @@ export default function Popup() {
         onOk={handleImport}
       />
     </div>
-  );
+  )
 }

@@ -10,6 +10,7 @@ import {
   Drawer,
   Row,
   Select,
+  Modal,
 } from "antd"
 import {
   ArrowLeftOutlined,
@@ -23,7 +24,12 @@ import {
   EditOutlined,
 } from "@ant-design/icons"
 import { GlobalConfig, ModuleConfig, ApiConfig } from "../../types"
-import { ChromeApiService, generateId } from "../../utils/chromeApi"
+import {
+  ChromeApiService,
+  generateId,
+  isModuleLabelDuplicate,
+  isApiUrlDuplicate,
+} from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
 import AddApiModal from "./components/AddApiModal"
@@ -370,10 +376,19 @@ export default function Options() {
   // 导入配置
   const handleImport = (importData: any[]) => {
     try {
-      console.log('开始导入数据:', importData);
-      
+      console.log("开始导入数据:", importData)
+
+      const duplicateModules: string[] = []
+      const duplicateApis: string[] = []
+
       const newModules: ModuleConfig[] = importData.map((moduleData) => {
-        console.log('处理模块:', moduleData);
+        console.log("处理模块:", moduleData)
+
+        // 检查模块标签是否重复
+        if (isModuleLabelDuplicate(config.modules, moduleData.label)) {
+          duplicateModules.push(moduleData.label)
+        }
+
         return {
           id: generateId(),
           apiDocKey: moduleData.apiDocKey,
@@ -383,7 +398,13 @@ export default function Options() {
           pageDomain: moduleData.pageDomain || "",
           requestHeaders: moduleData.requestHeaders || "",
           apiArr: moduleData.apiArr.map((apiData: any) => {
-            console.log('处理API:', apiData);
+            console.log("处理API:", apiData)
+
+            // 检查API URL是否重复
+            if (isApiUrlDuplicate(config.modules, apiData.apiUrl)) {
+              duplicateApis.push(`${apiData.apiName} (${apiData.apiUrl})`)
+            }
+
             return {
               id: generateId(),
               apiKey: apiData.apiKey,
@@ -401,30 +422,63 @@ export default function Options() {
               mockResponseData: apiData.mockResponseData || "",
               requestBody: apiData.requestBody || "",
               requestHeaders: apiData.requestHeaders || "",
-            };
+            }
           }),
-        };
-      });
+        }
+      })
 
-      console.log('转换后的模块:', newModules);
+      // 显示重复项警告
+      if (duplicateModules.length > 0 || duplicateApis.length > 0) {
+        let warningMessage = "发现重复项：\n"
+        if (duplicateModules.length > 0) {
+          warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
+        }
+        if (duplicateApis.length > 0) {
+          warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
+        }
+        warningMessage += "这些重复项将被跳过，是否继续导入？"
 
-      const newConfig = {
-        ...config,
-        modules: [...config.modules, ...newModules],
+        Modal.confirm({
+          title: '发现重复项',
+          content: warningMessage,
+          onOk() {
+            // 继续导入
+            performImport(newModules)
+          },
+          onCancel() {
+            // 取消导入
+          },
+        })
+        return
       }
 
-      setConfig(newConfig)
-      saveConfig(newConfig)
-
-      if (newModules.length > 0) {
-        setActiveModuleId(newModules[0].id)
-      }
-      
-      message.success(`成功导入 ${newModules.length} 个模块`);
+      // 没有重复项，直接导入
+      performImport(newModules)
     } catch (error) {
-      console.error('导入失败:', error);
-      message.error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
+      console.error("导入失败:", error)
+      message.error(
+        `导入失败: ${error instanceof Error ? error.message : "未知错误"}`
+      )
     }
+  }
+
+  // 执行导入操作
+  const performImport = (newModules: ModuleConfig[]) => {
+    console.log("转换后的模块:", newModules)
+
+    const newConfig = {
+      ...config,
+      modules: [...config.modules, ...newModules],
+    }
+
+    setConfig(newConfig)
+    saveConfig(newConfig)
+
+    if (newModules.length > 0) {
+      setActiveModuleId(newModules[0].id)
+    }
+
+    message.success(`成功导入 ${newModules.length} 个模块`)
   }
 
   // 导出配置
@@ -471,47 +525,49 @@ export default function Options() {
 
   // 处理全局搜索
   const handleSearch = (value: string) => {
-    setSearchKeyword(value);
+    setSearchKeyword(value)
     if (!value.trim()) {
-      setSearchResults([]);
-      return;
+      setSearchResults([])
+      return
     }
 
-    const keyword = value.toLowerCase();
-    const results: ApiConfig[] = [];
-    
-    config.modules.forEach(module => {
-      module.apiArr.forEach(api => {
+    const keyword = value.toLowerCase()
+    const results: ApiConfig[] = []
+
+    config.modules.forEach((module) => {
+      module.apiArr.forEach((api) => {
         if (
           api.apiName.toLowerCase().includes(keyword) ||
           api.apiUrl.toLowerCase().includes(keyword) ||
           api.redirectURL.toLowerCase().includes(keyword)
         ) {
-          results.push(api);
+          results.push(api)
         }
-      });
-    });
+      })
+    })
 
-    setSearchResults(results);
-  };
+    setSearchResults(results)
+  }
 
   // 处理搜索结果选择
   const handleSearchResultClick = (api: ApiConfig) => {
     // 找到API所在的模块
-    const module = config.modules.find(m => m.apiArr.some(a => a.id === api.id));
+    const module = config.modules.find((m) =>
+      m.apiArr.some((a) => a.id === api.id)
+    )
     if (module) {
-      setActiveModuleId(module.id);
-      setSearchKeyword('');
-      setSearchResults([]);
+      setActiveModuleId(module.id)
+      setSearchKeyword("")
+      setSearchResults([])
       // 这里可以添加滚动到对应API的逻辑
       setTimeout(() => {
-        const element = document.querySelector(`[data-api-id="${api.id}"]`);
+        const element = document.querySelector(`[data-api-id="${api.id}"]`)
         if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
         }
-      }, 100);
+      }, 100)
     }
-  };
+  }
 
   return (
     <div className="proxy-tool">
@@ -530,7 +586,7 @@ export default function Options() {
               onSearch={handleSearch}
               onChange={(value, option) => {
                 if (option && !Array.isArray(option) && option.api) {
-                  handleSearchResultClick(option.api);
+                  handleSearchResultClick(option.api)
                 }
               }}
               size="middle"
@@ -561,19 +617,15 @@ export default function Options() {
             />
             <Button
               icon={<ImportOutlined />}
-              size="small"
+              type="primary"
               onClick={() => setImportModalVisible(true)}
             >
               导入
             </Button>
-            <Button
-              icon={<ExportOutlined />}
-              size="small"
-              onClick={handleExport}
-            >
+            <Button icon={<ExportOutlined />} onClick={handleExport}>
               导出
             </Button>
-            <Button danger size="small" onClick={handleResetAll}>
+            <Button danger onClick={handleResetAll}>
               一键重置
             </Button>
           </Space>
@@ -595,7 +647,6 @@ export default function Options() {
         <Row justify="end">
           <Button
             type="primary"
-            size="small"
             icon={<PlusOutlined />}
             onClick={() => setAddDrawerVisible(true)}
             disabled={!activeModule}
@@ -636,6 +687,7 @@ export default function Options() {
         <AddApiForm
           onOk={handleAddApi}
           onCancel={() => setAddDrawerVisible(false)}
+          config={config}
         />
       </Drawer>
 
@@ -648,6 +700,7 @@ export default function Options() {
           setEditingApi(null)
         }}
         onOk={handleUpdateApi}
+        config={config}
       />
 
       {/* 导入模态框 */}
@@ -659,3 +712,4 @@ export default function Options() {
     </div>
   )
 }
+

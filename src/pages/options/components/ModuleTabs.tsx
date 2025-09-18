@@ -65,7 +65,6 @@ export default function ModuleTabs({
         activeKey={activeModuleId}
         onChange={onModuleChange}
         items={items}
-        size="small"
         type="editable-card"
         onEdit={(targetKey, action) => {
           if (action === "add") {

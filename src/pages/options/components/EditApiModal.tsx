@@ -1,18 +1,40 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Button, Space, message } from 'antd';
-import { ApiConfig } from '../../../types';
-import { isValidUrl, isValidPath, generateId } from '../../../utils/chromeApi';
+import React, { useState, useEffect } from "react"
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  InputNumber,
+  Button,
+  Space,
+  message,
+} from "antd"
+import { ApiConfig, GlobalConfig } from "../../../types"
+import {
+  isValidUrl,
+  isValidPath,
+  generateId,
+  isApiUrlDuplicate,
+  isApiKeyDuplicate,
+} from "../../../utils/chromeApi"
 
 interface EditApiModalProps {
-  visible: boolean;
-  api: ApiConfig | null;
-  onCancel: () => void;
-  onOk: (apiData: Omit<ApiConfig, 'id'>) => void;
+  visible: boolean
+  api: ApiConfig | null
+  onCancel: () => void
+  onOk: (apiData: Omit<ApiConfig, "id">) => void
+  config: GlobalConfig
 }
 
-export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiModalProps) {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+export default function EditApiModal({
+  visible,
+  api,
+  onCancel,
+  onOk,
+  config,
+}: EditApiModalProps) {
+  const [form] = Form.useForm()
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (visible && api) {
@@ -23,58 +45,77 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
         method: api.method,
         filterType: api.filterType,
         delay: api.delay,
-        statusCode: api.statusCode
-      });
+        statusCode: api.statusCode,
+      })
     }
-  }, [visible, api, form]);
+  }, [visible, api, form])
 
   const handleOk = async () => {
     try {
-      setLoading(true);
-      const values = await form.validateFields();
-      
+      setLoading(true)
+      const values = await form.validateFields()
+
       // 验证URL格式
-      if (values.apiUrl && !isValidUrl(values.apiUrl) && !isValidPath(values.apiUrl)) {
-        message.error('请输入有效的URL或路径');
-        return;
-      }
-      
-      if (values.redirectURL && !isValidUrl(values.redirectURL)) {
-        message.error('请输入有效的重定向URL');
-        return;
+      if (
+        values.apiUrl &&
+        !isValidUrl(values.apiUrl) &&
+        !isValidPath(values.apiUrl)
+      ) {
+        message.error("请输入有效的URL或路径")
+        return
       }
 
-      const apiData: Omit<ApiConfig, 'id'> = {
-        apiKey: values.apiUrl || '',
-        apiName: values.apiName || '',
-        apiUrl: values.apiUrl || '',
-        redirectURL: values.redirectURL || '',
-        method: values.method || 'GET',
-        filterType: values.filterType || 'contains',
+      if (values.redirectURL && !isValidUrl(values.redirectURL)) {
+        message.error("请输入有效的重定向URL")
+        return
+      }
+
+      // 检查API URL是否重复（排除当前编辑的API）
+      if (isApiUrlDuplicate(config.modules, values.apiUrl, api?.id)) {
+        message.error("该接口地址已存在，请使用不同的地址")
+        return
+      }
+
+      // 检查API Key是否重复（排除当前编辑的API）
+      if (
+        values.apiKey &&
+        isApiKeyDuplicate(config.modules, values.apiKey, api?.id)
+      ) {
+        message.error("该接口Key已存在，请使用不同的Key")
+        return
+      }
+
+      const apiData: Omit<ApiConfig, "id"> = {
+        apiKey: values.apiUrl || "",
+        apiName: values.apiName || "",
+        apiUrl: values.apiUrl || "",
+        redirectURL: values.redirectURL || "",
+        method: values.method || "GET",
+        filterType: values.filterType || "contains",
         delay: values.delay || 0,
         isOpen: api?.isOpen || true,
-        mockWay: api?.mockWay || 'redirect',
+        mockWay: api?.mockWay || "redirect",
         statusCode: values.statusCode || 200,
         arrDepth: api?.arrDepth || 4,
         arrLength: api?.arrLength || 3,
-        mockResponseData: api?.mockResponseData || '',
-        requestBody: api?.requestBody || '',
-        requestHeaders: api?.requestHeaders || ''
-      };
+        mockResponseData: api?.mockResponseData || "",
+        requestBody: api?.requestBody || "",
+        requestHeaders: api?.requestHeaders || "",
+      }
 
-      onOk(apiData);
-      form.resetFields();
+      onOk(apiData)
+      form.resetFields()
     } catch (error) {
-      console.error('Form validation failed:', error);
+      console.error("Form validation failed:", error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleCancel = () => {
-    form.resetFields();
-    onCancel();
-  };
+    form.resetFields()
+    onCancel()
+  }
 
   return (
     <Modal
@@ -91,26 +132,26 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
         form={form}
         layout="vertical"
         initialValues={{
-          method: 'GET',
-          filterType: 'contains',
+          method: "GET",
+          filterType: "contains",
           delay: 0,
-          statusCode: 200
+          statusCode: 200,
         }}
       >
         <Form.Item
           label="接口地址"
           name="apiUrl"
           rules={[
-            { required: true, message: '请输入接口地址' },
+            { required: true, message: "请输入接口地址" },
             {
               validator: (_, value) => {
-                if (!value) return Promise.resolve();
+                if (!value) return Promise.resolve()
                 if (isValidUrl(value) || isValidPath(value)) {
-                  return Promise.resolve();
+                  return Promise.resolve()
                 }
-                return Promise.reject(new Error('请输入有效的URL或路径'));
-              }
-            }
+                return Promise.reject(new Error("请输入有效的URL或路径"))
+              },
+            },
           ]}
         >
           <Input placeholder="请输入接口地址" />
@@ -120,16 +161,16 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
           label="redirect地址"
           name="redirectURL"
           rules={[
-            { required: true, message: '请输入重定向地址' },
+            { required: true, message: "请输入重定向地址" },
             {
               validator: (_, value) => {
-                if (!value) return Promise.resolve();
+                if (!value) return Promise.resolve()
                 if (isValidUrl(value)) {
-                  return Promise.resolve();
+                  return Promise.resolve()
                 }
-                return Promise.reject(new Error('请输入有效的URL'));
-              }
-            }
+                return Promise.reject(new Error("请输入有效的URL"))
+              },
+            },
           ]}
         >
           <Input placeholder="请输入" />
@@ -138,17 +179,13 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
         <Form.Item
           label="接口名称"
           name="apiName"
-          rules={[{ required: true, message: '请输入接口名称' }]}
+          rules={[{ required: true, message: "请输入接口名称" }]}
         >
           <Input placeholder="请输入" />
         </Form.Item>
 
         <Space.Compact className="w-full">
-          <Form.Item
-            label="请求方式"
-            name="method"
-            className="w-1/3"
-          >
+          <Form.Item label="请求方式" name="method" className="w-1/3">
             <Select>
               <Select.Option value="GET">GET</Select.Option>
               <Select.Option value="POST">POST</Select.Option>
@@ -158,11 +195,7 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
             </Select>
           </Form.Item>
 
-          <Form.Item
-            label="匹配方式"
-            name="filterType"
-            className="w-1/3"
-          >
+          <Form.Item label="匹配方式" name="filterType" className="w-1/3">
             <Select>
               <Select.Option value="contains">contains</Select.Option>
               <Select.Option value="exact">exact</Select.Option>
@@ -170,31 +203,15 @@ export default function EditApiModal({ visible, api, onCancel, onOk }: EditApiMo
             </Select>
           </Form.Item>
 
-          <Form.Item
-            label="延迟时间(ms)"
-            name="delay"
-            className="w-1/3"
-          >
-            <InputNumber
-              min={0}
-              max={30000}
-              step={100}
-              className="w-full"
-            />
+          <Form.Item label="延迟时间(ms)" name="delay" className="w-1/3">
+            <InputNumber min={0} max={30000} step={100} className="w-full" />
           </Form.Item>
         </Space.Compact>
 
-        <Form.Item
-          label="状态码"
-          name="statusCode"
-        >
-          <InputNumber
-            min={100}
-            max={599}
-            className="w-full"
-          />
+        <Form.Item label="状态码" name="statusCode">
+          <InputNumber min={100} max={599} className="w-full" />
         </Form.Item>
       </Form>
     </Modal>
-  );
+  )
 }
