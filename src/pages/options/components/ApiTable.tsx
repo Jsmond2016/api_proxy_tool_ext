@@ -1,6 +1,6 @@
 import React from "react"
 import { Table, Switch, Button, Space, Tag, Typography } from "antd"
-import { EditOutlined, CopyOutlined, DeleteOutlined } from "@ant-design/icons"
+import { EditOutlined, CopyOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "../../../types"
 import { formatDelay } from "../../../utils/chromeApi"
@@ -16,6 +16,7 @@ interface ApiTableProps {
   onDeleteApi: (apiId: string) => void
   onEditApi: (apiId: string) => void
   onCloneApi: (apiId: string) => void
+  onMigrateApi: (apiId: string) => void
 }
 
 export default function ApiTable({
@@ -26,6 +27,7 @@ export default function ApiTable({
   onDeleteApi,
   onEditApi,
   onCloneApi,
+  onMigrateApi,
 }: ApiTableProps) {
   // 过滤API数据
   const filteredApis = apis.filter((api) => {
@@ -119,7 +121,7 @@ export default function ApiTable({
     {
       title: "操作",
       key: "actions",
-      width: 160,
+      width: 200,
       render: (_: any, record: ApiConfig) => (
         <Space>
           <Button
@@ -137,6 +139,14 @@ export default function ApiTable({
             onClick={() => onCloneApi(record.id)}
           >
             克隆
+          </Button>
+          <Button
+            type="link"
+            className="p-0"
+            icon={<SwapOutlined />}
+            onClick={() => onMigrateApi(record.id)}
+          >
+            迁移
           </Button>
           <Button
             type="link"
