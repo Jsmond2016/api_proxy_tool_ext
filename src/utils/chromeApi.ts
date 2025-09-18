@@ -94,3 +94,28 @@ export function formatDelay(delay: number): string {
   if (delay < 1000) return `${delay}ms`;
   return `${(delay / 1000).toFixed(1)}s`;
 }
+
+// 检查模块标签是否重复
+export function isModuleLabelDuplicate(modules: any[], label: string, excludeId?: string): boolean {
+  return modules.some(module => 
+    module.label === label && module.id !== excludeId
+  );
+}
+
+// 检查API URL是否重复
+export function isApiUrlDuplicate(modules: any[], apiUrl: string, excludeId?: string): boolean {
+  return modules.some(module => 
+    module.apiArr.some((api: any) => 
+      api.apiUrl === apiUrl && api.id !== excludeId
+    )
+  );
+}
+
+// 检查API Key是否重复
+export function isApiKeyDuplicate(modules: any[], apiKey: string, excludeId?: string): boolean {
+  return modules.some(module => 
+    module.apiArr.some((api: any) => 
+      api.apiKey === apiKey && api.id !== excludeId
+    )
+  );
+}

@@ -90,7 +90,7 @@ export default function ApiTable({
       width: 200,
       render: (_: any, record: ApiConfig) => (
         <Space direction="vertical">
-          <Paragraph copyable={{ text: record.apiUrl }} type='secondary'>
+          <Paragraph copyable={{ text: record.apiUrl }} type="secondary">
             {record.apiUrl}
           </Paragraph>
 
@@ -121,10 +121,9 @@ export default function ApiTable({
       key: "actions",
       width: 160,
       render: (_: any, record: ApiConfig) => (
-        <Space size="small">
+        <Space>
           <Button
             type="link"
-            size="small"
             className="p-0"
             icon={<EditOutlined />}
             onClick={() => onEditApi(record.id)}
@@ -133,7 +132,6 @@ export default function ApiTable({
           </Button>
           <Button
             type="link"
-            size="small"
             className="p-0"
             icon={<CopyOutlined />}
             onClick={() => onCloneApi(record.id)}
@@ -142,7 +140,6 @@ export default function ApiTable({
           </Button>
           <Button
             type="link"
-            size="small"
             danger
             className="p-0"
             icon={<DeleteOutlined />}
@@ -160,7 +157,6 @@ export default function ApiTable({
       dataSource={filteredApis}
       columns={columns}
       rowKey="id"
-      size="small"
       pagination={false}
       scroll={{ y: 400 }}
       className="api-table"

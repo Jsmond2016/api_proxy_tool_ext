@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import { Tabs, Button, Popconfirm } from 'antd';
-import { PlusOutlined, CloseOutlined, EditOutlined } from '@ant-design/icons';
-import { ModuleConfig } from '../../../types';
-import EditModuleModal from './EditModuleModal';
+import React, { useState } from "react"
+import { Tabs, Button, Popconfirm } from "antd"
+import { PlusOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons"
+import { ModuleConfig } from "../../../types"
+import EditModuleModal from "./EditModuleModal"
 
 interface ModuleTabsProps {
-  modules: ModuleConfig[];
-  activeModuleId: string;
-  onModuleChange: (moduleId: string) => void;
-  onAddModule: () => void;
-  onDeleteModule: (moduleId: string) => void;
-  onEditModule: (moduleId: string, newName: string) => void;
+  modules: ModuleConfig[]
+  activeModuleId: string
+  onModuleChange: (moduleId: string) => void
+  onAddModule: () => void
+  onDeleteModule: (moduleId: string) => void
+  onEditModule: (moduleId: string, newName: string) => void
 }
 
 export default function ModuleTabs({
@@ -19,31 +19,31 @@ export default function ModuleTabs({
   onModuleChange,
   onAddModule,
   onDeleteModule,
-  onEditModule
+  onEditModule,
 }: ModuleTabsProps) {
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [editingModule, setEditingModule] = useState<ModuleConfig | null>(null);
+  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [editingModule, setEditingModule] = useState<ModuleConfig | null>(null)
 
   const handleEditClick = (e: React.MouseEvent, module: ModuleConfig) => {
-    e.stopPropagation();
-    setEditingModule(module);
-    setEditModalVisible(true);
-  };
+    e.stopPropagation()
+    setEditingModule(module)
+    setEditModalVisible(true)
+  }
 
   const handleEditOk = (newName: string) => {
     if (editingModule) {
-      onEditModule(editingModule.id, newName);
+      onEditModule(editingModule.id, newName)
     }
-    setEditModalVisible(false);
-    setEditingModule(null);
-  };
+    setEditModalVisible(false)
+    setEditingModule(null)
+  }
 
   const handleEditCancel = () => {
-    setEditModalVisible(false);
-    setEditingModule(null);
-  };
+    setEditModalVisible(false)
+    setEditingModule(null)
+  }
 
-  const items = modules.map(module => ({
+  const items = modules.map((module) => ({
     key: module.id,
     label: (
       <div className="flex items-center space-x-1">
@@ -55,14 +55,14 @@ export default function ModuleTabs({
         <CloseOutlined
           className="text-gray-400 hover:text-red-500 cursor-pointer"
           onClick={(e) => {
-            e.stopPropagation();
-            onDeleteModule(module.id);
+            e.stopPropagation()
+            onDeleteModule(module.id)
           }}
         />
       </div>
     ),
-    children: null
-  }));
+    children: null,
+  }))
 
   return (
     <>
@@ -71,7 +71,6 @@ export default function ModuleTabs({
           activeKey={activeModuleId}
           onChange={onModuleChange}
           items={items}
-          size="small"
           className="flex-1"
           tabBarStyle={{ margin: 0 }}
         />
@@ -79,17 +78,16 @@ export default function ModuleTabs({
           type="text"
           icon={<PlusOutlined />}
           onClick={onAddModule}
-          size="small"
           className="text-gray-600"
         />
       </div>
-      
+
       <EditModuleModal
         visible={editModalVisible}
-        moduleName={editingModule?.label || ''}
+        moduleName={editingModule?.label || ""}
         onCancel={handleEditCancel}
         onOk={handleEditOk}
       />
     </>
-  );
+  )
 }

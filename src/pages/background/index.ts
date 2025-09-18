@@ -117,10 +117,10 @@ async function updateDeclarativeRules() {
       
       switch (apiConfig.filterType) {
         case 'exact':
-          condition.urlEquals = apiConfig.apiUrl;
+          condition.urlFilter = apiConfig.apiUrl;
           break;
         case 'contains':
-          condition.urlContains = apiConfig.apiUrl;
+          condition.urlFilter = `*${apiConfig.apiUrl}*`;
           break;
         case 'regex':
           condition.regexFilter = apiConfig.apiUrl;
@@ -131,7 +131,6 @@ async function updateDeclarativeRules() {
 
       // 添加方法过滤
       if (apiConfig.method) {
-        condition.initiatorDomains = undefined; // 清除默认值
         condition.requestMethods = [apiConfig.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod];
       }
 
@@ -145,7 +144,7 @@ async function updateDeclarativeRules() {
           }
         },
         condition: {
-          urlFilter: condition,
+          ...condition,
           resourceTypes: [
             chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST
           ]
