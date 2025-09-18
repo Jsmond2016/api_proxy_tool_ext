@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { Form, Input, Select, InputNumber, Button, Space, message } from "antd"
+const { TextArea } = Input
 import { ApiConfig, GlobalConfig } from "../../../types"
 import {
   isValidUrl,
@@ -108,7 +109,11 @@ export default function AddApiForm({
         name="apiUrl"
         rules={[{ required: true, message: "请输入接口地址" }]}
       >
-        <Input placeholder="请输入接口地址，如：/api/users 或 http://localhost:3000/api/users" />
+        <TextArea
+          placeholder="请输入接口地址，如：/api/users 或 http://localhost:3000/api/users"
+          rows={1}
+          autoSize={{ minRows: 1, maxRows: 3 }}
+        />
       </Form.Item>
 
       <Form.Item
@@ -116,12 +121,18 @@ export default function AddApiForm({
         name="redirectURL"
         rules={[{ required: true, message: "请输入重定向URL" }]}
       >
-        <Input placeholder="请输入Mock URL，如：http://127.0.0.1:4523/mock/api/users" />
+        <TextArea
+          placeholder="请输入Mock URL，如：http://127.0.0.1:4523/mock/api/users"
+          rows={1}
+          autoSize={{ minRows: 1, maxRows: 3 }}
+        />
       </Form.Item>
 
+      {/* 请求方式字段已隐藏，默认使用 GET */}
       <Form.Item
         label="请求方式"
         name="method"
+        initialValue="GET"
         rules={[{ required: true, message: "请选择请求方式" }]}
       >
         <Select>

@@ -34,8 +34,7 @@ import {
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
 import AddApiModal from "./components/AddApiModal"
-import AddApiForm from "./components/AddApiForm"
-import EditApiModal from "./components/EditApiModal"
+import ApiFormDrawer from "./components/ApiFormDrawer"
 import ImportModal from "./components/ImportModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
@@ -52,8 +51,7 @@ export default function Options() {
   const [activeModuleId, setActiveModuleId] = useState<string>("")
   const [searchKeyword, setSearchKeyword] = useState("")
   const [searchResults, setSearchResults] = useState<ApiConfig[]>([])
-  const [addDrawerVisible, setAddDrawerVisible] = useState(false)
-  const [editModalVisible, setEditModalVisible] = useState(false)
+  const [apiFormVisible, setApiFormVisible] = useState(false)
   const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
   const [importModalVisible, setImportModalVisible] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -246,7 +244,7 @@ export default function Options() {
 
     setConfig(newConfig)
     saveConfig(newConfig)
-    setAddDrawerVisible(false)
+    setApiFormVisible(false)
   }
 
   // 编辑API
@@ -257,7 +255,7 @@ export default function Options() {
 
     if (api) {
       setEditingApi(api)
-      setEditModalVisible(true)
+      setApiFormVisible(true)
     }
   }
 
@@ -277,8 +275,17 @@ export default function Options() {
 
     setConfig(newConfig)
     saveConfig(newConfig)
-    setEditModalVisible(false)
+    setApiFormVisible(false)
     setEditingApi(null)
+  }
+
+  // 统一的API表单处理
+  const handleApiFormOk = (apiData: Omit<ApiConfig, "id">) => {
+    if (editingApi) {
+      handleUpdateApi(apiData)
+    } else {
+      handleAddApi(apiData)
+    }
   }
 
   // 克隆API
@@ -657,7 +664,10 @@ export default function Options() {
           <Button
             type="primary"
             icon={<PlusOutlined />}
-            onClick={() => setAddDrawerVisible(true)}
+            onClick={() => {
+              setEditingApi(null)
+              setApiFormVisible(true)
+            }}
             disabled={!activeModule}
           >
             添加
@@ -684,32 +694,17 @@ export default function Options() {
         </Content>
       </Layout>
 
-      {/* 添加API抽屉 */}
-      <Drawer
-        title="添加Mock URL"
-        placement="right"
-        width={600}
-        open={addDrawerVisible}
-        onClose={() => setAddDrawerVisible(false)}
-        destroyOnClose
-      >
-        <AddApiForm
-          onOk={handleAddApi}
-          onCancel={() => setAddDrawerVisible(false)}
-          config={config}
-        />
-      </Drawer>
-
-      {/* 编辑API模态框 */}
-      <EditApiModal
-        visible={editModalVisible}
-        api={editingApi}
-        onCancel={() => {
-          setEditModalVisible(false)
+      {/* 统一的API表单抽屉 */}
+      <ApiFormDrawer
+        visible={apiFormVisible}
+        onClose={() => {
+          setApiFormVisible(false)
           setEditingApi(null)
         }}
-        onOk={handleUpdateApi}
+        onOk={handleApiFormOk}
         config={config}
+        editingApi={editingApi}
+        title={editingApi ? "编辑接口" : "添加接口"}
       />
 
       {/* 导入模态框 */}
