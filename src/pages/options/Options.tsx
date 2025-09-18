@@ -11,6 +11,7 @@ import {
   Row,
   Select,
   Modal,
+  AutoComplete,
 } from "antd"
 import {
   ArrowLeftOutlined,
@@ -439,7 +440,7 @@ export default function Options() {
         warningMessage += "这些重复项将被跳过，是否继续导入？"
 
         Modal.confirm({
-          title: '发现重复项',
+          title: "发现重复项",
           content: warningMessage,
           onOk() {
             // 继续导入
@@ -581,25 +582,33 @@ export default function Options() {
             <ArrowLeftOutlined className="text-white cursor-pointer text-lg" />
           </div>
           <div className="flex items-center space-x-6">
-            <Select
+            <AutoComplete
+              allowClear
               placeholder="全局搜索:接口名字、接口地址"
               onSearch={handleSearch}
-              onChange={(value, option) => {
-                if (option && !Array.isArray(option) && option.api) {
+              onSelect={(value, option) => {
+                if (option && option.api) {
                   handleSearchResultClick(option.api)
+                } else {
+                  // 如果通过 option 找不到 api，通过 URL 查找
+                  const api = searchResults.find((api) => api.apiUrl === value)
+                  if (api) {
+                    handleSearchResultClick(api)
+                  }
                 }
               }}
-              size="middle"
-              className="w-[300px]"
-              showSearch
+              size="large"
+              className="w-[650px]"
               filterOption={false}
               notFoundContent={searchKeyword ? "未找到匹配的接口" : null}
               options={searchResults.map((api) => ({
-                value: api.id,
+                value: api.apiUrl,
                 label: (
-                  <div>
+                  <div className="py-2">
                     <div className="font-medium text-sm">{api.apiName}</div>
-                    <div className="text-xs text-gray-500">{api.apiUrl}</div>
+                    <div className="text-xs text-gray-500 truncate">
+                      {api.apiUrl}
+                    </div>
                   </div>
                 ),
                 api: api,
@@ -712,4 +721,3 @@ export default function Options() {
     </div>
   )
 }
-
