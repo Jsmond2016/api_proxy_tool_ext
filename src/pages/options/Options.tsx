@@ -26,6 +26,7 @@ import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
 import ApiFormDrawer from "./components/ApiFormDrawer"
 import ImportModal from "./components/ImportModal"
+import MigrateApiModal from "./components/MigrateApiModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
@@ -42,6 +43,8 @@ export default function Options() {
   const [apiFormVisible, setApiFormVisible] = useState(false)
   const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
   const [importModalVisible, setImportModalVisible] = useState(false)
+  const [migrateModalVisible, setMigrateModalVisible] = useState(false)
+  const [migratingApi, setMigratingApi] = useState<ApiConfig | null>(null)
   const [loading, setLoading] = useState(false)
 
   // 加载配置
@@ -314,6 +317,49 @@ export default function Options() {
     }
     setConfig(newConfig)
     saveConfig(newConfig)
+  }
+
+  // 迁移API
+  const handleMigrateApi = (apiId: string) => {
+    const api = config.modules
+      .flatMap((module) => module.apiArr)
+      .find((api) => api.id === apiId)
+
+    if (api) {
+      setMigratingApi(api)
+      setMigrateModalVisible(true)
+    }
+  }
+
+  // 确认迁移API
+  const handleConfirmMigrateApi = (targetModuleId: string) => {
+    if (!migratingApi) return
+
+    const newConfig = {
+      ...config,
+      modules: config.modules.map((module) => {
+        if (module.id === activeModuleId) {
+          // 从当前模块移除API
+          return {
+            ...module,
+            apiArr: module.apiArr.filter((api) => api.id !== migratingApi.id),
+          }
+        } else if (module.id === targetModuleId) {
+          // 添加到目标模块
+          return {
+            ...module,
+            apiArr: [...module.apiArr, migratingApi],
+          }
+        }
+        return module
+      }),
+    }
+
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setMigrateModalVisible(false)
+    setMigratingApi(null)
+    message.success("接口迁移成功")
   }
 
   // 重置模块
@@ -663,6 +709,7 @@ export default function Options() {
             onDeleteApi={handleDeleteApi}
             onEditApi={handleEditApi}
             onCloneApi={handleCloneApi}
+            onMigrateApi={handleMigrateApi}
           />
         </Content>
       </Layout>
@@ -685,6 +732,19 @@ export default function Options() {
         visible={importModalVisible}
         onCancel={() => setImportModalVisible(false)}
         onOk={handleImport}
+      />
+
+      {/* 迁移接口模态框 */}
+      <MigrateApiModal
+        visible={migrateModalVisible}
+        onCancel={() => {
+          setMigrateModalVisible(false)
+          setMigratingApi(null)
+        }}
+        onOk={handleConfirmMigrateApi}
+        api={migratingApi}
+        modules={config.modules}
+        currentModuleId={activeModuleId}
       />
     </div>
   )
