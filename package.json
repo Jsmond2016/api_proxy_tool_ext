@@ -23,7 +23,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@ant-design/icons": "^6.0.0",
+    "@ant-design/icons": "^6.0.2",
     "ahooks": "^3.9.0",
     "antd": "^5.26.5",
     "ramda": "^0.31.3",
