@@ -1,0 +1,115 @@
+name: Release API Proxy Tool
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-release:
+    name: Build and Release
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Chrome Extension
+        run: pnpm run build:chrome
+
+      - name: Build Firefox Extension
+        run: pnpm run build:firefox
+
+      - name: Get version from tag or input
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Chrome Extension ZIP
+        run: |
+          cd dist_chrome
+          zip -r "../api_proxy_helper_${{ steps.get_version.outputs.version }}.zip" .
+          cd ..
+
+      - name: Create Firefox Extension ZIP
+        run: |
+          cd dist_firefox
+          zip -r "../api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip" .
+          cd ..
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: API Proxy Tool ${{ steps.get_version.outputs.version }}
+          body: |
+            ## 🚀 API Proxy Tool ${{ steps.get_version.outputs.version }}
+            
+            ### 📦 Downloads
+            - **Chrome Extension**: `api_proxy_helper_${{ steps.get_version.outputs.version }}.zip`
+            - **Firefox Extension**: `api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip`
+            
+            ### 📋 Installation Instructions
+            
+            #### Chrome
+            1. Download `api_proxy_helper_${{ steps.get_version.outputs.version }}.zip`
+            2. Extract the ZIP file
+            3. Open Chrome and go to `chrome://extensions/`
+            4. Enable "Developer mode"
+            5. Click "Load unpacked extension"
+            6. Select the extracted folder
+            
+            #### Firefox
+            1. Download `api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip`
+            2. Extract the ZIP file
+            3. Open Firefox and go to `about:debugging#/runtime/this-firefox`
+            4. Click "Load temporary Add-on"
+            5. Select the `manifest.json` file from the extracted folder
+            
+            ### 🔧 Features
+            - API request interception and redirection
+            - Modular configuration management
+            - Mock data support
+            - Modern UI with Ant Design
+            - Cross-browser support (Chrome & Firefox)
+            
+            ### 📖 Documentation
+            - [English README](README.md)
+            - [中文文档](README_CN.md)
+          files: |
+            api_proxy_helper_${{ steps.get_version.outputs.version }}.zip
+            api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
