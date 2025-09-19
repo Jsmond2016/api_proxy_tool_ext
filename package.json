@@ -13,7 +13,13 @@
     "build:firefox": "vite build --config vite.config.firefox.ts",
     "dev": "nodemon --config nodemon.chrome.json",
     "dev:chrome": "nodemon --config nodemon.chrome.json",
-    "dev:firefox": "nodemon --config nodemon.firefox.json"
+    "dev:firefox": "nodemon --config nodemon.firefox.json",
+    "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "release": "bash scripts/release.sh",
+    "version:patch": "npm version patch --no-git-tag-version && git add package.json && git commit -m 'chore: bump patch version'",
+    "version:minor": "npm version minor --no-git-tag-version && git add package.json && git commit -m 'chore: bump minor version'",
+    "version:major": "npm version major --no-git-tag-version && git add package.json && git commit -m 'chore: bump major version'"
   },
   "type": "module",
   "dependencies": {

@@ -9,3 +9,5 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    # Use pnpm for dependency updates
+    open-pull-requests-limit: 10
