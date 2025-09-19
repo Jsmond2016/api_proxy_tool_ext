@@ -1,181 +1,351 @@
 <div align="center">
-<img src="public/icon-128.png" alt="logo"/>
-<h1> Minimalist Chrome/Firefox Extension Boilerplate with<br/>React + Vite + TypeScript + TailwindCSS</h1>
+<img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128"/>
+<h1>API Proxy Tool - Chrome Extension</h1>
 
-<h5>
-This template repository is a side product of my Chrome Extension <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">Supatabs</a>.
-<br />
-If you tend to have tons of tabs open, or are a OneTab user, make sure to check it out <a target="_blank" rel="noopener noreferrer" href="https://chrome.google.com/webstore/detail/supatabs/icbcnjlaegndjabnjbaeihnnmidbfigk">here</a>!
-</h5>
+<h3>Modern Browser Extension with React + Vite + TypeScript + TailwindCSS</h3>
 
-<h5>Supatabs is an example and showcase of what you can develop with this template. (anything you want, really 🚀)</h5>
+<p>A powerful Chrome extension for intercepting and redirecting API requests to Mock servers, providing convenient interface proxy tools for frontend development.</p>
+
+[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF.svg)](https://vitejs.dev/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-5.26.5-0170FE.svg)](https://ant.design/)
+[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.8-38B2AC.svg)](https://tailwindcss.com/)
+
+<p><strong>📖 中文文档: <a href="README_CN.md">README_CN.md</a></strong></p>
 
 </div>
 
-## Table of Contents
+## 📋 Table of Contents
 
-- [Intro](#intro)
+- [Project Introduction](#project-introduction)
 - [Features](#features)
-- [Usage](#usage)
-  - [Getting Started](#gettingStarted) 
-  - [Customization](#customization)
-  - [Publish](#publish)
-- [Tech Docs](#tech)
-- [Credit](#credit)
+- [Tech Stack](#tech-stack)
+- [Quick Start](#quick-start)
+  - [Requirements](#requirements)
+  - [Install Dependencies](#install-dependencies)
+  - [Development Mode](#development-mode)
+  - [Production Build](#production-build)
+- [Install Extension](#install-extension)
+- [User Guide](#user-guide)
+- [Project Structure](#project-structure)
+- [Development Guide](#development-guide)
+- [Configuration Format](#configuration-format)
+- [Notes](#notes)
+- [License](#license)
 - [Contributing](#contributing)
 
 
-## Intro <a name="intro"></a>
-This boilerplate is meant to be a minimal quick start for creating chrome/firefox extensions using React, Typescript and Tailwind CSS.
+## 🚀 Project Introduction
 
-It includes all possible pages such as **new tab**, **dev panel**, **pop up**, etc., as well as corresponding manifest settings by default.
-You will likely have to customize/delete some of the pages (see docs below).
+API Proxy Tool is a Chrome browser extension developed based on modern frontend technology stack, mainly used for API interface proxy and Mock data management during frontend development. This extension is built based on the [vite-web-extension](https://github.com/JohnBra/vite-web-extension) template, providing a complete Chrome extension development solution.
 
-You can build dist files for both Chrome and Firefox with manifest v3.
+### Core Values
+- **Improve Development Efficiency**: Quickly configure API proxy, switch Mock data without modifying code
+- **Modular Management**: Support multi-project, multi-module API configuration management
+- **Modern Interface**: Intuitive operation interface based on Ant Design
+- **Flexible Configuration**: Support multiple matching methods and custom responses
 
-If you are looking for a React focused way to access the local storage, I also implemented a chrome local/sync storage hook. The hook works
-well with this template. [Check it out here](https://gist.github.com/JohnBra/c81451ea7bc9e77f8021beb4f198ab96).
+## ✨ Features
 
-## Features <a name="features"></a>
-- [React 19](https://reactjs.org/)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS 4](https://tailwindcss.com/)
-- [i18n (optional)](https://developer.chrome.com/docs/extensions/reference/api/i18n)
-- [Cross browser development with polyfill (optional)](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#basic-setup-with-module-bundlers)
-- [ESLint](https://eslint.org/)
-- [Chrome Extension Manifest Version 3](https://developer.chrome.com/docs/extensions/mv3/intro/)
-- [Github Action](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml) to build and zip your extension (manual trigger)
+### 🎯 Core Features
+- **API Request Interception**: Automatically intercept API requests in pages and redirect to specified Mock URLs
+- **Modular Management**: Support creating multiple modules to categorize different API configurations
+- **Flexible Matching**: Support multiple URL matching methods (contains, exact, regex)
+- **Delay Control**: Configurable API response delay time to simulate real network environment
+- **Mock Response**: Support direct Mock data return without external server
 
-## Usage <a name="usage"></a>
+### 🔧 Management Features
+- **Interface Management**: Add, edit, delete, clone API configurations
+- **Batch Operations**: Support module-level batch switch and reset
+- **Import/Export**: Support JSON format configuration import/export
+- **Global Control**: One-click enable/disable all proxy functions
+- **Real-time Search**: Support quick search by interface name and address
 
-### Getting Started <a name="gettingStarted"></a>
+### 🎨 User Interface
+- **Full-screen Configuration**: Click extension icon to open configuration interface in new tab
+- **Modern UI**: Modern interface design based on Ant Design
+- **Responsive Layout**: Adapt to different screen sizes
+- **Intuitive Operations**: Drag-and-drop sorting, one-click copy and other convenient operations
+- **Real-time Preview**: Configuration changes take effect immediately
 
-#### Developing and building
-This template comes with build configs for both Chrome and Firefox. Running
-`dev` or `build` commands without specifying the browser target will build
-for Chrome by default.
+## 🛠 Tech Stack
 
-1. Clone this repository or click "Use this template"
-2. Change `name` and `description` in `manifest.json`
-3. Run `yarn` or `npm i` (check your node version >= 16)
-4. Run `yarn dev[:chrome|:firefox]`, or `npm run dev[:chrome|:firefox]`
+### Frontend Framework
+- **React 18.3.1** - Modern user interface library
+- **TypeScript 5.8.3** - Type-safe JavaScript superset
+- **Ant Design 5.26.5** - Enterprise-level UI design language and component library
 
-Running a `dev` command will build your extension and watch for changes in the 
-source files. Changing the source files will refresh the corresponding 
-`dist_<chrome|firefox>` folder.
+### Build Tools
+- **Vite 6.3.5** - Fast build tool and development server
+- **@crxjs/vite-plugin** - Chrome extension Vite plugin
+- **TailwindCSS 4.1.8** - Utility-first CSS framework
 
-To create an optimized production build, run `yarn build[:chrome|:firefox]`, or
-`npm run build[:chrome|:firefox]`.
+### Development Tools
+- **ESLint** - Code quality checking tool
+- **Nodemon** - File change monitoring and auto-restart
+- **pnpm** - Efficient package manager
 
-#### Load your extension
-For Chrome
-1. Open - Chrome browser
-2. Access - [chrome://extensions](chrome://extensions)
-3. Tick - Developer mode
-4. Find - Load unpacked extension
-5. Select - `dist_chrome` folder in this project (after dev or build)
+### Extension APIs
+- **Chrome Extension Manifest V3** - Latest extension manifest format
+- **declarativeNetRequest** - Declarative network request interception
+- **Chrome Storage API** - Data persistence storage
 
-For Firefox
-1. Open - Firefox browser
-2. Access - [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
-3. Click - Load temporary Add-on
-4. Select - any file in `dist_firefox` folder (i.e. `manifest.json`) in this project (after dev or build)
+## 🚀 Quick Start
 
-### Customization <a name="customization"></a>
+### Requirements
 
-#### Adding / removing pages
-The template includes source code for **all** of the extension pages (i.e. New Tab, Dev Tools, Popup, Side Panel
-etc.). You will likely have to customize it to fit your needs.
+- **Node.js**: >= 16.0.0
+- **pnpm**: >= 8.0.0 (Recommended to use pnpm)
+- **Chrome**: >= 88.0.0 (Supports Manifest V3)
 
-E.g. you don't want the newtab page to activate whenever you open a new tab:
-1. remove the directory `newtab` and its contents in `src/pages`
-2. remove `chrome_url_overrides: { newtab: 'src/pages/newtab/index.html' },` in `manifest.json`
+### Install Dependencies
 
-Some pages like the "Side Panel" don't work the exact same in Chrome and Firefox. While this template includes
-the source code for the side panel, it won't automatically be included in the dist file to prevent cross browser
-build warnings.
+```bash
+# Clone project
+git clone <repository-url>
+cd vite-web-extension
 
-To include the side panel for Chrome add the following to the `manifest.json`:
-
-```typescript
-{
-  "manifest_version": 3,
-  // ...
-  "permissions": [
-    "activeTab",
-    "sidePanel" // <-- permission for sidepanel
-  ],
-  // ...
-  "side_panel": {
-    "default_path": "src/pages/panel/index.html" // <-- tell vite to include it in the build files
-  },
-  // ...
-}
+# Install dependencies
+pnpm install
 ```
 
-If you need to declare pages in addition to the manifest pages, e.g. a custom `app` page, create a 
-new folder in the `pages` directory and add the corresponding `.html`, `.tsx` and `.css` 
-files (see `options/*` for an example to copy). Then include the root html in the `vite.config.base.ts` 
-file under `build.rollupOptions.input` like so:
+### Development Mode
 
-```typescript
-// ...
-build: {
-   rollupOptions: {
-      input: {
-         app: resolve(pagesDir, "app", "index.html"),
-      },
-      output: {
-         entryFileNames: (chunk) => `src/pages/${chunk.name}/index.js`,
-      },
-   },
-}
-// ...
+```bash
+# Start Chrome extension development mode (hot reload)
+pnpm run dev
+
+# Or specify browser
+pnpm run dev:chrome
+pnpm run dev:firefox
 ```
 
-#### Styling
-CSS files in the `src/pages/*` directories are not necessary. They are left in there in case you want 
-to use it in combination with Tailwind CSS. **Feel free to delete them**.
+Development mode will:
+- Automatically monitor file changes
+- Real-time rebuild extension
+- Generate development version in `dist_chrome` directory
 
-Tailwind can be configured, themed and extended according to the [docs](https://tailwindcss.com/docs/theme).
+### Production Build
 
-#### Internationalization (i18n)
-To enable internationalization set the `localize` flag in the `vite.config.base.ts` to `true`.
+```bash
+# Build Chrome extension
+pnpm run build
 
-The template includes a directory `locales` with a basic setup for english i18n. Enabling i18n
-will pull the name and description for your extension from the english translation files instead
-of the manifest.
+# Or specify browser
+pnpm run build:chrome
+pnpm run build:firefox
+```
 
-Follow the instructions in the [official docs](https://developer.chrome.com/docs/extensions/reference/api/i18n#description) 
-to add other translations and retrieve them in the extension.
+Production build will:
+- Optimize code and resources
+- Generate compressed version
+- Generate production version in `dist_chrome` directory
 
-If you don't need i18n you can ignore the `locales` directory until you need it, as it won't
-be copied into the build folder unless the `localize` flag is set to `true`.
+## 📦 Install Extension
 
-### Publish your extension to the CWS<a name="publish"></a>
-To upload an extension to the Chrome store you have to pack (zip) it and then upload it to your item 
-in the Chrome Web Store.
+### Chrome Browser
 
-This repo includes a Github Action Workflow to create a 
-[optimized prod build and the zip file](https://github.com/JohnBra/vite-web-extension/actions/workflows/ci.yml).
+1. Open Chrome browser
+2. Visit `chrome://extensions/`
+3. Enable "Developer mode" in the top right corner
+4. Click "Load unpacked extension"
+5. Select the project's `dist_chrome` directory
+6. Extension will appear in toolbar after installation
 
-To run the workflow do the following:
-1. Go to the **"Actions"** tab in your forked repository from this template
-2. In the left sidebar click on **"Build and Zip Chrome Extension"**
-3. Click on **"Run Workflow"** and select the main branch, then **"Run Workflow"**
-4. Refresh the page and click the most recent run
-5. In the summary page **"Artifacts"** section click on the generated **"vite-web-extension-chrome"**
-6. Upload this file to the Chrome Web Store as described [here](https://developer.chrome.com/docs/webstore/publish/)
+### Firefox Browser
 
-# Tech Docs <a name="tech"></a>
-- [Vite](https://vitejs.dev/)
-- [Vite Plugins](https://vitejs.dev/guide/api-plugin.html)
-- [Chrome Extension with manifest 3](https://developer.chrome.com/docs/extensions/mv3/)
-- [Chrome Extension i18n](https://developer.chrome.com/docs/extensions/reference/api/i18n#description)
-- [Cross browser development with webextension-polyfill](https://github.com/mozilla/webextension-polyfill?tab=readme-ov-file#webextension-browser-api-polyfill)
-- [@crxjs/vite-plugin](https://crxjs.dev/vite-plugin)
-- [Rollup](https://rollupjs.org/guide/en/)
-- [Tailwind CSS 4](https://tailwindcss.com/docs/configuration)
+1. Open Firefox browser
+2. Visit `about:debugging#/runtime/this-firefox`
+3. Click "Load temporary Add-on"
+4. Select any file in `dist_firefox` directory (e.g., `manifest.json`)
 
-# Contributing <a name="contributing"></a>
-Feel free to open PRs or raise issues!
+## 📖 User Guide
+
+### 1. Open Configuration Interface
+- Click the extension icon in Chrome toolbar
+- System will automatically open configuration interface in new tab
+- Default will have a "Default Module" example
+
+### 2. Create Module
+- Click the "+" button on the right side of module tabs
+- Enter module name (e.g., order.management)
+- Module will automatically switch to new module after creation
+
+### 3. Add API Configuration
+Click "Add" button in the module and fill in the following information:
+
+- **Interface Address**: Original API address (supports relative paths and complete URLs)
+- **Redirect Address**: Mock server address
+- **Interface Name**: Easy-to-identify name
+- **Request Method**: GET, POST, PUT, DELETE, PATCH
+- **Matching Method**: contains (contains), exact (exact), regex (regex)
+- **Delay Time**: Response delay (milliseconds)
+- **Mock Method**: redirect (redirect) or mockResponse (direct data return)
+
+### 4. Manage API
+- **Switch Control**: Click switch button to enable/disable individual API
+- **Edit**: Click "Edit" button to modify API configuration
+- **Clone**: Click "Clone" button to quickly copy API configuration
+- **Delete**: Click "Delete" button to remove API configuration
+
+### 5. Global Control
+- **Global Switch**: Top switch controls all proxy functions
+- **Module Switch**: Can individually control proxy for a specific module
+- **Reset Function**: Support module reset and global reset
+
+### 6. Import/Export
+- **Export**: Click "Export" button to download current configuration as JSON file
+- **Import**: Click "Import" button to upload JSON configuration file
+
+## 📁 Project Structure
+
+```
+vite-web-extension/
+├── public/                     # Static resources
+│   ├── icon-128.png           # Extension icon
+│   └── icon-32.png
+├── src/                       # Source code
+│   ├── assets/                # Resource files
+│   │   ├── img/              # Image resources
+│   │   └── styles/           # Style files
+│   ├── locales/              # Internationalization files
+│   ├── pages/                # Extension pages
+│   │   ├── background/       # Background Script
+│   │   ├── options/          # Configuration page
+│   │   │   ├── components/   # Configuration page components
+│   │   │   ├── index.html    # Configuration page HTML
+│   │   │   └── index.tsx     # Configuration page entry
+│   │   └── popup/            # Popup page (deprecated)
+│   ├── types/                # TypeScript type definitions
+│   ├── utils/                # Utility functions
+│   └── global.d.ts           # Global type declarations
+├── dist_chrome/              # Chrome extension build output
+├── dist_firefox/             # Firefox extension build output
+├── manifest.json             # Extension manifest file
+├── vite.config.base.ts       # Vite base configuration
+├── vite.config.chrome.ts     # Chrome build configuration
+├── vite.config.firefox.ts    # Firefox build configuration
+├── tailwind.config.js        # TailwindCSS configuration
+├── tsconfig.json             # TypeScript configuration
+└── package.json              # Project dependency configuration
+```
+
+## 🔧 Development Guide
+
+### Main Features
+1. **Extension Behavior**: Click icon to open configuration interface in new tab instead of popup
+2. **Default Module**: Automatically create default module with example API on startup
+3. **Full-screen Layout**: Configuration interface uses full-screen layout for better operation experience
+4. **Hot Reload**: Support automatic rebuild on file changes in development mode
+
+### Adding New Features
+1. Define types in `src/types/index.ts`
+2. Add utility functions in `src/utils/`
+3. Create components in `src/pages/options/components/`
+4. Update main interface to integrate new features
+
+### Debugging Tips
+- Use Chrome DevTools to view Background Script logs
+- Use React DevTools in configuration page
+- Check Network panel to view request interception effects
+- Use `console.log` to debug in Background Script
+
+### Custom Configuration
+- Modify `manifest.json` to adjust extension permissions and configuration
+- Update `vite.config.*.ts` to customize build behavior
+- Edit `tailwind.config.js` to customize style theme
+
+## 📄 Configuration Format
+
+### Import Format Example
+
+- Reference project file: `example-config.json` for import example file;
+- Example json:
+
+```json
+[
+  {
+    "apiDocKey": "order.management",
+    "label": "Order Management",
+    "apiArr": [
+      {
+        "apiKey": "/api/orders",
+        "apiName": "Get Order List",
+        "apiUrl": "http://localhost:3000/api/orders",
+        "redirectURL": "http://127.0.0.1:4523/mock/api/orders",
+        "method": "get",
+        "filterType": "contains",
+        "delay": 0,
+        "isOpen": true,
+        "mockWay": "redirect",
+        "statusCode": 200
+      }
+    ]
+  }
+]
+```
+
+### Configuration Field Description
+- `apiDocKey`: Module unique identifier
+- `label`: Module display name
+- `apiKey`: API unique identifier
+- `apiName`: API display name
+- `apiUrl`: Original API address
+- `redirectURL`: Redirect target address
+- `method`: HTTP request method
+- `filterType`: URL matching method
+- `delay`: Response delay time (milliseconds)
+- `isOpen`: Whether enabled
+- `mockWay`: Mock method (redirect/mockResponse)
+
+## ⚠️ Notes
+
+### Permission Requirements
+- Extension needs access to all websites to intercept API requests
+- Requires `declarativeNetRequest` permission for network request interception
+- Requires `storage` permission to save configuration data
+
+### Usage Limitations
+- Some HTTPS websites may limit extension functionality
+- Large number of API interceptions may affect page performance
+- Do not use sensitive data Mock configuration in production environment
+
+### Browser Compatibility
+- Chrome >= 88.0.0 (Supports Manifest V3)
+- Firefox >= 109.0.0 (Supports Manifest V3)
+- Other Chromium-based browsers
+
+### Development Recommendations
+- Use `pnpm` as package manager for better performance
+- Use `pnpm run dev` to start hot reload during development
+- Regularly backup important configuration data
+- Test with different websites to verify functionality
+
+## 📄 License
+
+MIT License
+
+## 🤝 Contributing
+
+Welcome to submit Issues and Pull Requests to improve this project!
+
+### Contributing Guide
+1. Fork this repository
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+### Development Environment Setup
+1. Clone repository
+2. Run `pnpm install`
+3. Run `pnpm run dev`
+4. Load extension in Chrome for testing
+
+---
+
+<div align="center">
+<p>If this project helps you, please give it a ⭐️ Star!</p>
+<p>Made with ❤️ by the development team</p>
+</div>
