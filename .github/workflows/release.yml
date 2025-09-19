@@ -52,22 +52,58 @@ jobs:
         id: get_version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
           else
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+            # 从 package.json 获取版本
+            VERSION=$(node -p "require('./package.json').version")
           fi
+          
+          # 确保版本格式正确（移除 v 前缀如果存在）
+          VERSION=${VERSION#v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Detected version: $VERSION"
+
+      - name: Verify build outputs
+        run: |
+          echo "Checking dist_chrome directory..."
+          ls -la dist_chrome/ || echo "dist_chrome not found"
+          echo "Checking dist_firefox directory..."
+          ls -la dist_firefox/ || echo "dist_firefox not found"
+          
+          if [ ! -d "dist_chrome" ]; then
+            echo "ERROR: dist_chrome directory not found"
+            exit 1
+          fi
+          
+          if [ ! -d "dist_firefox" ]; then
+            echo "ERROR: dist_firefox directory not found"
+            exit 1
+          fi
+
+      - name: Verify builds
+        run: |
+          echo "Chrome build verification:"
+          ls -la dist_chrome/
+          echo "Firefox build verification:"
+          ls -la dist_firefox/
 
       - name: Create Chrome Extension ZIP
         run: |
+          echo "Creating Chrome ZIP for version: ${{ steps.get_version.outputs.version }}"
           cd dist_chrome
           zip -r "../api_proxy_helper_${{ steps.get_version.outputs.version }}.zip" .
           cd ..
+          ls -la *.zip
 
       - name: Create Firefox Extension ZIP
         run: |
+          echo "Creating Firefox ZIP for version: ${{ steps.get_version.outputs.version }}"
           cd dist_firefox
           zip -r "../api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip" .
           cd ..
+          ls -la *.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
