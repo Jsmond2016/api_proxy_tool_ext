@@ -1,11 +1,12 @@
-name: Release API Proxy Tool
+name: Build and Release Extension
 
+# 触发条件：
+# 1. 推送tag (格式: v*)
+# 2. 手动触发 (workflow_dispatch)
 on:
   push:
     tags:
       - 'v*'
-  repository_dispatch:
-    types: [release-trigger]
   workflow_dispatch:
     inputs:
       version:
@@ -56,13 +57,14 @@ jobs:
           elif [[ "$GITHUB_REF" == refs/tags/* ]]; then
             VERSION="${GITHUB_REF#refs/tags/}"
           else
-            # 从 package.json 获取版本
-            VERSION=$(node -p "require('./package.json').version")
+            echo "ERROR: No valid version source found"
+            exit 1
           fi
           
           # 确保版本格式正确（移除 v 前缀如果存在）
           VERSION=${VERSION#v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
           echo "Detected version: $VERSION"
 
       - name: Verify build outputs
@@ -81,6 +83,19 @@ jobs:
             echo "ERROR: dist_firefox directory not found"
             exit 1
           fi
+          
+          # 检查关键文件是否存在
+          if [ ! -f "dist_chrome/manifest.json" ]; then
+            echo "ERROR: Chrome manifest.json not found"
+            exit 1
+          fi
+          
+          if [ ! -f "dist_firefox/manifest.json" ]; then
+            echo "ERROR: Firefox manifest.json not found"
+            exit 1
+          fi
+          
+          echo "✅ All build outputs verified successfully"
 
       - name: Verify builds
         run: |
@@ -95,6 +110,14 @@ jobs:
           cd dist_chrome
           zip -r "../api_proxy_helper_${{ steps.get_version.outputs.version }}.zip" .
           cd ..
+          
+          # 验证ZIP文件是否创建成功
+          if [ ! -f "api_proxy_helper_${{ steps.get_version.outputs.version }}.zip" ]; then
+            echo "ERROR: Chrome ZIP file not created"
+            exit 1
+          fi
+          
+          echo "✅ Chrome ZIP created successfully"
           ls -la *.zip
 
       - name: Create Firefox Extension ZIP
@@ -103,12 +126,20 @@ jobs:
           cd dist_firefox
           zip -r "../api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip" .
           cd ..
+          
+          # 验证ZIP文件是否创建成功
+          if [ ! -f "api_proxy_helper_firefox_${{ steps.get_version.outputs.version }}.zip" ]; then
+            echo "ERROR: Firefox ZIP file not created"
+            exit 1
+          fi
+          
+          echo "✅ Firefox ZIP created successfully"
           ls -la *.zip
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.get_version.outputs.version }}
+          tag_name: ${{ steps.get_version.outputs.tag_name }}
           name: API Proxy Tool ${{ steps.get_version.outputs.version }}
           body: |
             ## 🚀 API Proxy Tool ${{ steps.get_version.outputs.version }}
