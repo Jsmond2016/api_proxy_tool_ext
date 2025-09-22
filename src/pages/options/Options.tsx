@@ -14,6 +14,7 @@ import {
   PlusOutlined,
   ImportOutlined,
   ExportOutlined,
+  SyncOutlined,
 } from "@ant-design/icons"
 import { GlobalConfig, ModuleConfig, ApiConfig } from "../../types"
 import {
@@ -27,6 +28,7 @@ import ApiTable from "./components/ApiTable"
 import ApiFormDrawer from "./components/ApiFormDrawer"
 import ImportModal from "./components/ImportModal"
 import MigrateApiModal from "./components/MigrateApiModal"
+import SyncApifoxModal from "./components/SyncApifoxModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
@@ -46,6 +48,7 @@ export default function Options() {
   const [migrateModalVisible, setMigrateModalVisible] = useState(false)
   const [migratingApi, setMigratingApi] = useState<ApiConfig | null>(null)
   const [loading, setLoading] = useState(false)
+  const [syncApifoxModalVisible, setSyncApifoxModalVisible] = useState(false)
 
   // 加载配置
   useEffect(() => {
@@ -593,6 +596,79 @@ export default function Options() {
     }, 100)
   }
 
+  // 处理同步Apifox接口
+  const handleSyncApifox = (newModules: ModuleConfig[]) => {
+    try {
+      const duplicateModules: string[] = []
+      const duplicateApis: string[] = []
+
+      // 检查模块标签是否重复
+      newModules.forEach(module => {
+        if (isModuleLabelDuplicate(config.modules, module.label)) {
+          duplicateModules.push(module.label)
+        }
+        
+        // 检查API URL是否重复
+        module.apiArr.forEach(api => {
+          if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
+            duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
+          }
+        })
+      })
+
+      // 显示重复项警告
+      if (duplicateModules.length > 0 || duplicateApis.length > 0) {
+        let warningMessage = "发现重复项：\n"
+        if (duplicateModules.length > 0) {
+          warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
+        }
+        if (duplicateApis.length > 0) {
+          warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
+        }
+        warningMessage += "这些重复项将被跳过，是否继续同步？"
+
+        Modal.confirm({
+          title: "发现重复项",
+          content: warningMessage,
+          onOk() {
+            // 继续同步
+            performSync(newModules)
+          },
+          onCancel() {
+            // 取消同步
+          },
+        })
+        return
+      }
+
+      // 没有重复项，直接同步
+      performSync(newModules)
+    } catch (error) {
+      console.error("同步失败:", error)
+      message.error(
+        `同步失败: ${error instanceof Error ? error.message : "未知错误"}`
+      )
+    }
+  }
+
+  // 执行同步操作
+  const performSync = (newModules: ModuleConfig[]) => {
+    const newConfig = {
+      ...config,
+      modules: [...config.modules, ...newModules],
+    }
+
+    setConfig(newConfig)
+    saveConfig(newConfig)
+
+    if (newModules.length > 0) {
+      setActiveModuleId(newModules[0].id)
+    }
+
+    message.success(`成功同步 ${newModules.length} 个模块`)
+    setSyncApifoxModalVisible(false)
+  }
+
   // 自定义筛选函数
   const filterOption = (inputValue: string, option: any) => {
     const searchText = inputValue.toLowerCase()
@@ -656,6 +732,13 @@ export default function Options() {
               checkedChildren="开启"
               unCheckedChildren="关闭"
             />
+            <Button
+              icon={<SyncOutlined />}
+              type="primary"
+              onClick={() => setSyncApifoxModalVisible(true)}
+            >
+              同步 Apifox 接口
+            </Button>
             <Button
               icon={<ImportOutlined />}
               type="primary"
@@ -745,6 +828,14 @@ export default function Options() {
         api={migratingApi}
         modules={config.modules}
         currentModuleId={activeModuleId}
+      />
+
+      {/* 同步Apifox接口模态框 */}
+      <SyncApifoxModal
+        visible={syncApifoxModalVisible}
+        onCancel={() => setSyncApifoxModalVisible(false)}
+        onOk={handleSyncApifox}
+        config={config}
       />
     </div>
   )
