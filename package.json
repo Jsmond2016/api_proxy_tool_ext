@@ -17,9 +17,9 @@
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "release": "bash scripts/release.sh",
-    "version:patch": "npm version patch --no-git-tag-version && git add package.json && git commit -m 'chore: bump patch version'",
-    "version:minor": "npm version minor --no-git-tag-version && git add package.json && git commit -m 'chore: bump minor version'",
-    "version:major": "npm version major --no-git-tag-version && git add package.json && git commit -m 'chore: bump major version'"
+    "version:patch": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
+    "version:minor": "npm version minor --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
+    "version:major": "npm version major --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\""
   },
   "type": "module",
   "dependencies": {

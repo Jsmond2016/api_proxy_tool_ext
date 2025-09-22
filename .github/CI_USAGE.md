@@ -11,10 +11,13 @@
 当推送 tag 到仓库时，会自动触发构建和发布：
 
 ```bash
-# 1. 更新 package.json 中的版本号
-npm version patch  # 或 minor, major
+# 方法1：使用项目脚本（推荐）
+npm run version:patch  # 或 version:minor, version:major
+git push origin main
+git push origin --tags
 
-# 2. 推送代码和 tag
+# 方法2：使用 npm version
+npm version patch  # 或 minor, major
 git push origin main
 git push origin --tags
 ```
@@ -57,11 +60,45 @@ git push origin v1.0.0
 - `api_proxy_helper_{version}.zip` - Chrome 扩展包
 - `api_proxy_helper_firefox_{version}.zip` - Firefox 扩展包
 
-## 版本号格式
+## 版本管理
+
+### 版本号格式
 
 - 使用语义化版本号：`v1.0.0`
 - 支持 patch、minor、major 版本更新
 - tag 必须以 `v` 开头
+
+### 版本更新脚本
+
+项目提供了便捷的版本更新脚本：
+
+```bash
+# Patch 版本更新 (1.0.0 -> 1.0.1)
+npm run version:patch
+
+# Minor 版本更新 (1.0.0 -> 1.1.0)
+npm run version:minor
+
+# Major 版本更新 (1.0.0 -> 2.0.0)
+npm run version:major
+```
+
+这些脚本会：
+1. 自动更新 `package.json` 中的版本号
+2. 自动创建 commit，格式为：`chore(release): [version]`
+3. 不会自动创建 git tag（需要手动推送）
+
+### 完整的发布流程
+
+```bash
+# 1. 更新版本并创建 commit
+npm run version:patch
+
+# 2. 创建并推送 tag
+git tag v$(node -p "require('./package.json').version")
+git push origin main
+git push origin --tags
+```
 
 ## 故障排除
 
