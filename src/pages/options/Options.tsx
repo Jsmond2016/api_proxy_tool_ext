@@ -11,7 +11,7 @@ import MigrateApiModal from "./components/MigrateApiModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
-import OperateButtons from "./components/operateButtons/OperateButtons"
+import NavButtons from "./components/navButtons/NavButtons"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 
@@ -353,7 +353,7 @@ export default function Options() {
         {/* 顶部导航栏 */}
         <div className="bg-gray-800 px-6 py-4 flex items-center justify-between h-[64px] min-h-[64px]">
           <div className="flex items-center space-x-6">
-            <ArrowLeftOutlined className="text-white cursor-pointer text-lg" />
+            <ArrowLeftOutlined className="cursor-pointer text-lg" style={{ color: "white" }} />
           </div>
           <div className="flex items-center space-x-6">
             <AutoComplete
@@ -385,7 +385,7 @@ export default function Options() {
               }))}
             />
           </div>
-          <OperateButtons />
+          <NavButtons />
         </div>
 
         {/* 模块标签页区域 */}

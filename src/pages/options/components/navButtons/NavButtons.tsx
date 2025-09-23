@@ -10,7 +10,7 @@ import ExportButton from "./exportButton/ExportButton"
 
 type OperateButtonsProps = {}
 
-const OperateButtons: React.FC<OperateButtonsProps> = () => {
+const NavButtons: React.FC<OperateButtonsProps> = () => {
   const { config, setConfig } = useConfigStore()
 
   // 切换全局开关
@@ -55,4 +55,4 @@ const OperateButtons: React.FC<OperateButtonsProps> = () => {
   )
 }
 
-export default OperateButtons
+export default NavButtons
