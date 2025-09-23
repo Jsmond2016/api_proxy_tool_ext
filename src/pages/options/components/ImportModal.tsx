@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
 import { Modal, Upload, Button, message, Alert } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import { ImportExportFormat } from '../../../types';
+import { ImportModuleData } from '../../../utils/dataProcessor';
 
 interface ImportModalProps {
   visible: boolean;
   onCancel: () => void;
-  onOk: (data: ImportExportFormat[]) => void;
+  onOk: (data: ImportModuleData[]) => void;
 }
 
 export default function ImportModal({ visible, onCancel, onOk }: ImportModalProps) {
   const [fileList, setFileList] = useState<any[]>([]);
-  const [importData, setImportData] = useState<ImportExportFormat[]>([]);
+  const [importData, setImportData] = useState<ImportModuleData[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleFileChange = (info: any) => {

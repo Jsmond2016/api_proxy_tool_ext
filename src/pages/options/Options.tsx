@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
+import { useMount, useAsyncEffect, useRequest, useUpdateEffect } from "ahooks"
 import {
   Layout,
   Button,
@@ -16,13 +17,22 @@ import {
   ExportOutlined,
   SyncOutlined,
 } from "@ant-design/icons"
-import { GlobalConfig, ModuleConfig, ApiConfig } from "../../types"
+import {
+  GlobalConfig,
+  ModuleConfig,
+  ApiConfig,
+} from "../../types"
 import {
   ChromeApiService,
   generateId,
   isModuleLabelDuplicate,
   isApiUrlDuplicate,
 } from "../../utils/chromeApi"
+import {
+  transformImportDataToModuleConfig,
+  transformModuleConfigToExportData,
+  ImportModuleData,
+} from "../../utils/dataProcessor"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
 import ApiFormDrawer from "./components/ApiFormDrawer"
@@ -32,6 +42,7 @@ import SyncApifoxModal from "./components/SyncApifoxModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
+import { DefaultMockApiModule } from "@src/constant/constant"
 
 const { Content } = Layout
 
@@ -47,29 +58,30 @@ export default function Options() {
   const [importModalVisible, setImportModalVisible] = useState(false)
   const [migrateModalVisible, setMigrateModalVisible] = useState(false)
   const [migratingApi, setMigratingApi] = useState<ApiConfig | null>(null)
-  const [loading, setLoading] = useState(false)
   const [syncApifoxModalVisible, setSyncApifoxModalVisible] = useState(false)
 
   // 加载配置
-  useEffect(() => {
-    loadConfig()
-  }, [])
-
-  const loadConfig = async () => {
-    try {
-      setLoading(true)
+  const { run: loadConfig } = useRequest(
+    async () => {
       const configData = await ChromeApiService.getConfig()
       setConfig(configData)
       if (configData.modules.length > 0 && !activeModuleId) {
         setActiveModuleId(configData.modules[0].id)
       }
-    } catch (error) {
-      message.error("加载配置失败")
-      console.error("Load config error:", error)
-    } finally {
-      setLoading(false)
+      return configData
+    },
+    {
+      manual: true,
+      onError: (error) => {
+        message.error("加载配置失败")
+        console.error("Load config error:", error)
+      },
     }
-  }
+  )
+
+  useMount(() => {
+    loadConfig()
+  })
 
   // 保存配置到background script
   const saveConfig = async (newConfig: GlobalConfig) => {
@@ -90,31 +102,6 @@ export default function Options() {
     } catch (error) {
       message.error("操作失败")
       console.error("Toggle global error:", error)
-    }
-  }
-
-  // 切换模块开关
-  const handleToggleModule = async (moduleId: string, enabled: boolean) => {
-    try {
-      await ChromeApiService.toggleModule(moduleId, enabled)
-      setConfig((prev) => ({
-        ...prev,
-        modules: prev.modules.map((module) =>
-          module.id === moduleId
-            ? {
-                ...module,
-                apiArr: module.apiArr.map((api) => ({
-                  ...api,
-                  isOpen: enabled,
-                })),
-              }
-            : module
-        ),
-      }))
-      message.success(enabled ? "已开启模块代理" : "已关闭模块代理")
-    } catch (error) {
-      message.error("操作失败")
-      console.error("Toggle module error:", error)
     }
   }
 
@@ -381,37 +368,7 @@ export default function Options() {
   const handleResetAll = () => {
     const newConfig = {
       isGlobalEnabled: false,
-      modules: [
-        {
-          id: "default-module",
-          apiDocKey: "default.module",
-          label: "默认模块",
-          apiDocUrl: "",
-          dataWrapper: "",
-          pageDomain: "",
-          requestHeaders: "",
-          apiArr: [
-            {
-              id: "example-api-1",
-              apiKey: "/api/example",
-              apiName: "示例接口",
-              apiUrl: "http://localhost:3000/api/example",
-              redirectURL: "http://127.0.0.1:4523/mock/api/example",
-              method: "GET",
-              filterType: "contains",
-              delay: 0,
-              isOpen: false,
-              mockWay: "redirect",
-              statusCode: 200,
-              arrDepth: 4,
-              arrLength: 3,
-              mockResponseData: "",
-              requestBody: "",
-              requestHeaders: "",
-            },
-          ],
-        },
-      ],
+      modules: DefaultMockApiModule,
     }
     setConfig(newConfig as GlobalConfig)
     saveConfig(newConfig as GlobalConfig)
@@ -419,57 +376,30 @@ export default function Options() {
   }
 
   // 导入配置
-  const handleImport = (importData: any[]) => {
+  const handleImport = (importData: ImportModuleData[]) => {
     try {
       console.log("开始导入数据:", importData)
 
       const duplicateModules: string[] = []
       const duplicateApis: string[] = []
 
-      const newModules: ModuleConfig[] = importData.map((moduleData) => {
-        console.log("处理模块:", moduleData)
+      // 使用工具函数转换数据
+      const newModules: ModuleConfig[] =
+        transformImportDataToModuleConfig(importData)
 
+      // 检查重复项
+      newModules.forEach((module) => {
         // 检查模块标签是否重复
-        if (isModuleLabelDuplicate(config.modules, moduleData.label)) {
-          duplicateModules.push(moduleData.label)
+        if (isModuleLabelDuplicate(config.modules, module.label)) {
+          duplicateModules.push(module.label)
         }
 
-        return {
-          id: generateId(),
-          apiDocKey: moduleData.apiDocKey,
-          apiDocUrl: moduleData.apiDocUrl || "",
-          dataWrapper: moduleData.dataWrapper || "",
-          label: moduleData.label,
-          pageDomain: moduleData.pageDomain || "",
-          requestHeaders: moduleData.requestHeaders || "",
-          apiArr: moduleData.apiArr.map((apiData: any) => {
-            console.log("处理API:", apiData)
-
-            // 检查API URL是否重复
-            if (isApiUrlDuplicate(config.modules, apiData.apiUrl)) {
-              duplicateApis.push(`${apiData.apiName} (${apiData.apiUrl})`)
-            }
-
-            return {
-              id: generateId(),
-              apiKey: apiData.apiKey,
-              apiName: apiData.apiName,
-              apiUrl: apiData.apiUrl,
-              redirectURL: apiData.redirectURL,
-              method: apiData.method.toUpperCase() as any,
-              filterType: apiData.filterType,
-              delay: apiData.delay,
-              isOpen: apiData.isOpen,
-              mockWay: apiData.mockWay,
-              statusCode: apiData.statusCode,
-              arrDepth: apiData.arrDepth || 4,
-              arrLength: apiData.arrLength || 3,
-              mockResponseData: apiData.mockResponseData || "",
-              requestBody: apiData.requestBody || "",
-              requestHeaders: apiData.requestHeaders || "",
-            }
-          }),
-        }
+        // 检查API URL是否重复
+        module.apiArr.forEach((api) => {
+          if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
+            duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
+          }
+        })
       })
 
       // 显示重复项警告
@@ -528,30 +458,8 @@ export default function Options() {
 
   // 导出配置
   const handleExport = () => {
-    const exportData = config.modules.map((module) => ({
-      apiDocKey: module.apiDocKey,
-      apiDocUrl: module.apiDocUrl || "",
-      dataWrapper: module.dataWrapper || "",
-      label: module.label,
-      pageDomain: module.pageDomain || "",
-      requestHeaders: module.requestHeaders || "",
-      apiArr: module.apiArr.map((api) => ({
-        apiKey: api.apiKey,
-        apiName: api.apiName,
-        apiUrl: api.apiUrl,
-        arrDepth: api.arrDepth || 4,
-        arrLength: api.arrLength || 3,
-        delay: api.delay,
-        filterType: api.filterType,
-        isOpen: api.isOpen,
-        method: api.method.toLowerCase(),
-        mockResponseData: api.mockResponseData || "",
-        mockWay: api.mockWay,
-        redirectURL: api.redirectURL,
-        requestBody: api.requestBody || "",
-        statusCode: api.statusCode,
-      })),
-    }))
+    // 使用工具函数转换数据
+    const exportData = transformModuleConfigToExportData(config.modules)
 
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: "application/json",
@@ -844,7 +752,7 @@ export default function Options() {
       <ImportModal
         visible={importModalVisible}
         onCancel={() => setImportModalVisible(false)}
-        onOk={handleImport}
+        onOk={(data) => handleImport(data as ImportModuleData[])}
       />
 
       {/* 迁移接口模态框 */}
