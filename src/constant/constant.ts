@@ -1,0 +1,31 @@
+export const DefaultMockApiModule = [
+  {
+    id: "default-module",
+    apiDocKey: "default.module",
+    label: "默认模块",
+    apiDocUrl: "",
+    dataWrapper: "",
+    pageDomain: "",
+    requestHeaders: "",
+    apiArr: [
+      {
+        id: "example-api-1",
+        apiKey: "/api/example",
+        apiName: "示例接口",
+        apiUrl: "http://localhost:3000/api/example",
+        redirectURL: "http://127.0.0.1:4523/mock/api/example",
+        method: "GET",
+        filterType: "contains",
+        delay: 0,
+        isOpen: false,
+        mockWay: "redirect",
+        statusCode: 200,
+        arrDepth: 4,
+        arrLength: 3,
+        mockResponseData: "",
+        requestBody: "",
+        requestHeaders: "",
+      },
+    ],
+  },
+]
