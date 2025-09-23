@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Modal, Form, Input, Select, Button, message, Spin, Alert } from "antd"
-import { GlobalConfig, ModuleConfig, ApiConfig } from "../../../types"
-import { generateId } from "../../../utils/chromeApi"
+import { GlobalConfig, ModuleConfig, ApiConfig } from "../../../../../types"
+import { generateId } from "../../../../../utils/chromeApi"
 
 const { TextArea } = Input
 

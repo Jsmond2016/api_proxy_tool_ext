@@ -1,64 +1,31 @@
 import React, { useState } from "react"
-import { useMount, useAsyncEffect, useRequest, useUpdateEffect } from "ahooks"
-import {
-  Layout,
-  Button,
-  Switch,
-  Space,
-  message,
-  Row,
-  Modal,
-  AutoComplete,
-} from "antd"
-import {
-  ArrowLeftOutlined,
-  PlusOutlined,
-  ImportOutlined,
-  ExportOutlined,
-  SyncOutlined,
-} from "@ant-design/icons"
-import {
-  GlobalConfig,
-  ModuleConfig,
-  ApiConfig,
-} from "../../types"
-import {
-  ChromeApiService,
-  generateId,
-  isModuleLabelDuplicate,
-  isApiUrlDuplicate,
-} from "../../utils/chromeApi"
-import {
-  transformImportDataToModuleConfig,
-  transformModuleConfigToExportData,
-  ImportModuleData,
-} from "../../utils/dataProcessor"
+import { useMount, useRequest } from "ahooks"
+import { Layout, Button, message, Row, AutoComplete } from "antd"
+import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons"
+import { ModuleConfig, ApiConfig } from "../../types"
+import { ChromeApiService, generateId } from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/ApiTable"
 import ApiFormDrawer from "./components/ApiFormDrawer"
-import ImportModal from "./components/ImportModal"
 import MigrateApiModal from "./components/MigrateApiModal"
-import SyncApifoxModal from "./components/SyncApifoxModal"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
-import { DefaultMockApiModule } from "@src/constant/constant"
+import OperateButtons from "./components/operateButtons/OperateButtons"
+import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { saveConfig } from "@src/utils/configUtil"
 
 const { Content } = Layout
 
 export default function Options() {
-  const [config, setConfig] = useState<GlobalConfig>({
-    isGlobalEnabled: false,
-    modules: [],
-  })
-  const [activeModuleId, setActiveModuleId] = useState<string>("")
+  const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
   const [searchKeyword, setSearchKeyword] = useState("")
   const [apiFormVisible, setApiFormVisible] = useState(false)
   const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
-  const [importModalVisible, setImportModalVisible] = useState(false)
   const [migrateModalVisible, setMigrateModalVisible] = useState(false)
   const [migratingApi, setMigratingApi] = useState<ApiConfig | null>(null)
-  const [syncApifoxModalVisible, setSyncApifoxModalVisible] = useState(false)
+
+  const { config, setConfig } = useConfigStore()
 
   // 加载配置
   const { run: loadConfig } = useRequest(
@@ -83,41 +50,19 @@ export default function Options() {
     loadConfig()
   })
 
-  // 保存配置到background script
-  const saveConfig = async (newConfig: GlobalConfig) => {
-    try {
-      await ChromeApiService.updateConfig(newConfig)
-    } catch (error) {
-      message.error("保存配置失败")
-      console.error("Save config error:", error)
-    }
-  }
-
-  // 切换全局开关
-  const handleToggleGlobal = async (enabled: boolean) => {
-    try {
-      await ChromeApiService.toggleGlobal(enabled)
-      setConfig((prev) => ({ ...prev, isGlobalEnabled: enabled }))
-      message.success(enabled ? "已开启全局代理" : "已关闭全局代理")
-    } catch (error) {
-      message.error("操作失败")
-      console.error("Toggle global error:", error)
-    }
-  }
-
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
     try {
       await ChromeApiService.toggleApi(apiId, enabled)
-      setConfig((prev) => ({
-        ...prev,
-        modules: prev.modules.map((module) => ({
+      setConfig({
+        ...config,
+        modules: config.modules.map((module) => ({
           ...module,
           apiArr: module.apiArr.map((api) =>
             api.id === apiId ? { ...api, isOpen: enabled } : api
           ),
         })),
-      }))
+      })
     } catch (error) {
       message.error("操作失败")
       console.error("Toggle API error:", error)
@@ -352,126 +297,6 @@ export default function Options() {
     message.success("接口迁移成功")
   }
 
-  // 重置模块
-  const handleResetModule = (moduleId: string) => {
-    const newConfig = {
-      ...config,
-      modules: config.modules.map((module) =>
-        module.id === moduleId ? { ...module, apiArr: [] } : module
-      ),
-    }
-    setConfig(newConfig)
-    saveConfig(newConfig)
-  }
-
-  // 全局重置 - 还原示例数据
-  const handleResetAll = () => {
-    const newConfig = {
-      isGlobalEnabled: false,
-      modules: DefaultMockApiModule,
-    }
-    setConfig(newConfig as GlobalConfig)
-    saveConfig(newConfig as GlobalConfig)
-    setActiveModuleId("default-module")
-  }
-
-  // 导入配置
-  const handleImport = (importData: ImportModuleData[]) => {
-    try {
-      console.log("开始导入数据:", importData)
-
-      const duplicateModules: string[] = []
-      const duplicateApis: string[] = []
-
-      // 使用工具函数转换数据
-      const newModules: ModuleConfig[] =
-        transformImportDataToModuleConfig(importData)
-
-      // 检查重复项
-      newModules.forEach((module) => {
-        // 检查模块标签是否重复
-        if (isModuleLabelDuplicate(config.modules, module.label)) {
-          duplicateModules.push(module.label)
-        }
-
-        // 检查API URL是否重复
-        module.apiArr.forEach((api) => {
-          if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
-            duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
-          }
-        })
-      })
-
-      // 显示重复项警告
-      if (duplicateModules.length > 0 || duplicateApis.length > 0) {
-        let warningMessage = "发现重复项：\n"
-        if (duplicateModules.length > 0) {
-          warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
-        }
-        if (duplicateApis.length > 0) {
-          warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
-        }
-        warningMessage += "这些重复项将被跳过，是否继续导入？"
-
-        Modal.confirm({
-          title: "发现重复项",
-          content: warningMessage,
-          onOk() {
-            // 继续导入
-            performImport(newModules)
-          },
-          onCancel() {
-            // 取消导入
-          },
-        })
-        return
-      }
-
-      // 没有重复项，直接导入
-      performImport(newModules)
-    } catch (error) {
-      console.error("导入失败:", error)
-      message.error(
-        `导入失败: ${error instanceof Error ? error.message : "未知错误"}`
-      )
-    }
-  }
-
-  // 执行导入操作
-  const performImport = (newModules: ModuleConfig[]) => {
-    console.log("转换后的模块:", newModules)
-
-    const newConfig = {
-      ...config,
-      modules: [...config.modules, ...newModules],
-    }
-
-    setConfig(newConfig)
-    saveConfig(newConfig)
-
-    if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id)
-    }
-
-    message.success(`成功导入 ${newModules.length} 个模块`)
-  }
-
-  // 导出配置
-  const handleExport = () => {
-    // 使用工具函数转换数据
-    const exportData = transformModuleConfigToExportData(config.modules)
-
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url
-    a.download = `proxy-config-${new Date().toISOString().split("T")[0]}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId
   )
@@ -506,79 +331,6 @@ export default function Options() {
     }, 100)
   }
 
-  // 处理同步Apifox接口
-  const handleSyncApifox = (newModules: ModuleConfig[]) => {
-    try {
-      const duplicateModules: string[] = []
-      const duplicateApis: string[] = []
-
-      // 检查模块标签是否重复
-      newModules.forEach((module) => {
-        if (isModuleLabelDuplicate(config.modules, module.label)) {
-          duplicateModules.push(module.label)
-        }
-
-        // 检查API URL是否重复
-        module.apiArr.forEach((api) => {
-          if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
-            duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
-          }
-        })
-      })
-
-      // 显示重复项警告
-      if (duplicateModules.length > 0 || duplicateApis.length > 0) {
-        let warningMessage = "发现重复项：\n"
-        if (duplicateModules.length > 0) {
-          warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
-        }
-        if (duplicateApis.length > 0) {
-          warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
-        }
-        warningMessage += "这些重复项将被跳过，是否继续同步？"
-
-        Modal.confirm({
-          title: "发现重复项",
-          content: warningMessage,
-          onOk() {
-            // 继续同步
-            performSync(newModules)
-          },
-          onCancel() {
-            // 取消同步
-          },
-        })
-        return
-      }
-
-      // 没有重复项，直接同步
-      performSync(newModules)
-    } catch (error) {
-      console.error("同步失败:", error)
-      message.error(
-        `同步失败: ${error instanceof Error ? error.message : "未知错误"}`
-      )
-    }
-  }
-
-  // 执行同步操作
-  const performSync = (newModules: ModuleConfig[]) => {
-    const newConfig = {
-      ...config,
-      modules: [...config.modules, ...newModules],
-    }
-
-    setConfig(newConfig)
-    saveConfig(newConfig)
-
-    if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id)
-    }
-
-    message.success(`成功同步 ${newModules.length} 个模块`)
-    setSyncApifoxModalVisible(false)
-  }
-
   // 自定义筛选函数
   const filterOption = (inputValue: string, option: any) => {
     const searchText = inputValue.toLowerCase()
@@ -593,34 +345,6 @@ export default function Options() {
       api.redirectURL.toLowerCase().includes(searchText) ||
       api.moduleName.toLowerCase().includes(searchText)
     )
-  }
-
-  const isOnlyHaveDefaultMock =
-    config.modules.length === 1 &&
-    config.modules[0].label === "默认模块" &&
-    config.modules[0].apiArr.length === 1
-
-  const handlePreSyncApifox = () => {
-    // 检查是否有模块-有 mock 数据，若有，提示：是否先导出所有 mock 接口进行备份？
-    if (!isOnlyHaveDefaultMock) {
-      Modal.confirm({
-        title: "发现有模块有 mock 数据",
-        content: (
-          <Space direction="vertical">
-            <div>
-              发现有模块有 mock 数据, 无法直接同步 Apifox 接口，建议操作:{" "}
-            </div>
-            <Space direction="vertical">
-              <div>1. 先导出所有 mock 接口进行备份</div>
-              <div>2. 一键重置所有 mock 接口</div>
-              <div>3. 同步 Apifox 接口</div>
-            </Space>
-          </Space>
-        ),
-      })
-    } else {
-      setSyncApifoxModalVisible(true)
-    }
   }
 
   return (
@@ -661,36 +385,7 @@ export default function Options() {
               }))}
             />
           </div>
-          <Space direction="horizontal">
-            <span className="text-white text-sm">全局Mock开关</span>
-            <Switch
-              checked={config.isGlobalEnabled}
-              onChange={handleToggleGlobal}
-              size="default"
-              checkedChildren="开启"
-              unCheckedChildren="关闭"
-            />
-            <Button
-              icon={<SyncOutlined />}
-              type="primary"
-              onClick={() => handlePreSyncApifox()}
-            >
-              同步 Apifox 接口
-            </Button>
-            <Button
-              icon={<ImportOutlined />}
-              type="primary"
-              onClick={() => setImportModalVisible(true)}
-            >
-              导入
-            </Button>
-            <Button icon={<ExportOutlined />} onClick={handleExport}>
-              导出
-            </Button>
-            <Button danger onClick={handleResetAll}>
-              一键重置
-            </Button>
-          </Space>
+          <OperateButtons />
         </div>
 
         {/* 模块标签页区域 */}
@@ -748,13 +443,6 @@ export default function Options() {
         title={editingApi ? "编辑接口" : "添加接口"}
       />
 
-      {/* 导入模态框 */}
-      <ImportModal
-        visible={importModalVisible}
-        onCancel={() => setImportModalVisible(false)}
-        onOk={(data) => handleImport(data as ImportModuleData[])}
-      />
-
       {/* 迁移接口模态框 */}
       <MigrateApiModal
         visible={migrateModalVisible}
@@ -766,14 +454,6 @@ export default function Options() {
         api={migratingApi}
         modules={config.modules}
         currentModuleId={activeModuleId}
-      />
-
-      {/* 同步Apifox接口模态框 */}
-      <SyncApifoxModal
-        visible={syncApifoxModalVisible}
-        onCancel={() => setSyncApifoxModalVisible(false)}
-        onOk={handleSyncApifox}
-        config={config}
       />
     </div>
   )

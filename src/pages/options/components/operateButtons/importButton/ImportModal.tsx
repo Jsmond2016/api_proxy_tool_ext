@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Upload, Button, message, Alert } from 'antd';
 import { InboxOutlined } from '@ant-design/icons';
-import { ImportModuleData } from '../../../utils/dataProcessor';
+import { ImportModuleData } from '@src/utils/dataProcessor';
 
 interface ImportModalProps {
   visible: boolean;
