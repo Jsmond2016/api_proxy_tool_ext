@@ -584,7 +584,9 @@ export default function Options() {
   }
 
   // 处理搜索结果选择
-  const handleSearchResultClick = (api: ApiConfig & { moduleId: string; moduleName: string }) => {
+  const handleSearchResultClick = (
+    api: ApiConfig & { moduleId: string; moduleName: string }
+  ) => {
     setActiveModuleId(api.moduleId)
     setSearchKeyword("")
     // 滚动到对应API
@@ -603,13 +605,13 @@ export default function Options() {
       const duplicateApis: string[] = []
 
       // 检查模块标签是否重复
-      newModules.forEach(module => {
+      newModules.forEach((module) => {
         if (isModuleLabelDuplicate(config.modules, module.label)) {
           duplicateModules.push(module.label)
         }
-        
+
         // 检查API URL是否重复
-        module.apiArr.forEach(api => {
+        module.apiArr.forEach((api) => {
           if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
             duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
           }
@@ -672,8 +674,11 @@ export default function Options() {
   // 自定义筛选函数
   const filterOption = (inputValue: string, option: any) => {
     const searchText = inputValue.toLowerCase()
-    const api = option.api as ApiConfig & { moduleId: string; moduleName: string }
-    
+    const api = option.api as ApiConfig & {
+      moduleId: string
+      moduleName: string
+    }
+
     return (
       api.apiName.toLowerCase().includes(searchText) ||
       api.apiUrl.toLowerCase().includes(searchText) ||
@@ -682,14 +687,39 @@ export default function Options() {
     )
   }
 
+  const isOnlyHaveDefaultMock =
+    config.modules.length === 1 &&
+    config.modules[0].label === "默认模块" &&
+    config.modules[0].apiArr.length === 1
+
+  const handlePreSyncApifox = () => {
+    // 检查是否有模块-有 mock 数据，若有，提示：是否先导出所有 mock 接口进行备份？
+    if (!isOnlyHaveDefaultMock) {
+      Modal.confirm({
+        title: "发现有模块有 mock 数据",
+        content: (
+          <Space direction="vertical">
+            <div>
+              发现有模块有 mock 数据, 无法直接同步 Apifox 接口，建议操作:{" "}
+            </div>
+            <Space direction="vertical">
+              <div>1. 先导出所有 mock 接口进行备份</div>
+              <div>2. 一键重置所有 mock 接口</div>
+              <div>3. 同步 Apifox 接口</div>
+            </Space>
+          </Space>
+        ),
+      })
+    } else {
+      setSyncApifoxModalVisible(true)
+    }
+  }
+
   return (
     <div className="proxy-tool">
       <Layout className="h-screen">
         {/* 顶部导航栏 */}
-        <div
-          className="bg-gray-800 px-6 py-4 flex items-center justify-between"
-          style={{ height: "64px", minHeight: "64px" }}
-        >
+        <div className="bg-gray-800 px-6 py-4 flex items-center justify-between h-[64px] min-h-[64px]">
           <div className="flex items-center space-x-6">
             <ArrowLeftOutlined className="text-white cursor-pointer text-lg" />
           </div>
@@ -724,7 +754,7 @@ export default function Options() {
             />
           </div>
           <Space direction="horizontal">
-            <span className="text-white text-sm">Mock 方式</span>
+            <span className="text-white text-sm">全局Mock开关</span>
             <Switch
               checked={config.isGlobalEnabled}
               onChange={handleToggleGlobal}
@@ -735,7 +765,7 @@ export default function Options() {
             <Button
               icon={<SyncOutlined />}
               type="primary"
-              onClick={() => setSyncApifoxModalVisible(true)}
+              onClick={() => handlePreSyncApifox()}
             >
               同步 Apifox 接口
             </Button>
