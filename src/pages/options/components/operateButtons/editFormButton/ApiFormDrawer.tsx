@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from "react"
 import { Drawer, Form, Input, Select, InputNumber, Button, message } from "antd"
 const { TextArea } = Input
-import { ApiConfig, GlobalConfig } from "../../../types"
+import { ApiConfig, GlobalConfig } from "../../../../../types"
 import {
   isValidUrl,
   isValidPath,
   isApiUrlDuplicate,
   isApiKeyDuplicate,
-} from "../../../utils/chromeApi"
+} from "../../../../../utils/chromeApi"
 
 interface ApiFormDrawerProps {
   visible: boolean
   onClose: () => void
   onOk: (apiData: Omit<ApiConfig, "id">) => void
   config: GlobalConfig
-  editingApi?: ApiConfig | null
+  data?: ApiConfig | null
   title?: string
 }
 
@@ -23,7 +23,7 @@ export default function ApiFormDrawer({
   onClose,
   onOk,
   config,
-  editingApi,
+  data,
   title = "添加接口",
 }: ApiFormDrawerProps) {
   const [form] = Form.useForm()
@@ -31,21 +31,21 @@ export default function ApiFormDrawer({
 
   // 当编辑时，设置表单初始值
   useEffect(() => {
-    if (visible && editingApi) {
+    if (visible && data) {
       form.setFieldsValue({
-        apiName: editingApi.apiName,
-        apiUrl: editingApi.apiUrl,
-        redirectURL: editingApi.redirectURL,
-        method: editingApi.method,
-        filterType: editingApi.filterType,
-        delay: editingApi.delay,
-        statusCode: editingApi.statusCode,
+        apiName: data.apiName,
+        apiUrl: data.apiUrl,
+        redirectURL: data.redirectURL,
+        method: data.method,
+        filterType: data.filterType,
+        delay: data.delay,
+        statusCode: data.statusCode,
       })
     } else if (visible) {
       // 添加时重置表单
       form.resetFields()
     }
-  }, [visible, editingApi, form])
+  }, [visible, data, form])
 
   const handleSubmit = async () => {
     try {
@@ -68,7 +68,7 @@ export default function ApiFormDrawer({
       }
 
       // 检查API URL是否重复（编辑时排除当前API）
-      if (isApiUrlDuplicate(config.modules, values.apiUrl, editingApi?.id)) {
+      if (isApiUrlDuplicate(config.modules, values.apiUrl, data?.id)) {
         message.error("该接口地址已存在，请使用不同的地址")
         return
       }
@@ -76,7 +76,7 @@ export default function ApiFormDrawer({
       // 检查API Key是否重复（编辑时排除当前API）
       if (
         values.apiKey &&
-        isApiKeyDuplicate(config.modules, values.apiKey, editingApi?.id)
+        isApiKeyDuplicate(config.modules, values.apiKey, data?.id)
       ) {
         message.error("该接口Key已存在，请使用不同的Key")
         return
@@ -90,14 +90,14 @@ export default function ApiFormDrawer({
         method: values.method || "GET",
         filterType: values.filterType || "contains",
         delay: values.delay || 0,
-        isOpen: editingApi?.isOpen || false,
-        mockWay: editingApi?.mockWay || "redirect",
+        isOpen: data?.isOpen || false,
+        mockWay: data?.mockWay || "redirect",
         statusCode: values.statusCode || 200,
-        arrDepth: editingApi?.arrDepth || 4,
-        arrLength: editingApi?.arrLength || 3,
-        mockResponseData: editingApi?.mockResponseData || "",
-        requestBody: editingApi?.requestBody || "",
-        requestHeaders: editingApi?.requestHeaders || "",
+        arrDepth: data?.arrDepth || 4,
+        arrLength: data?.arrLength || 3,
+        mockResponseData: data?.mockResponseData || "",
+        requestBody: data?.requestBody || "",
+        requestHeaders: data?.requestHeaders || "",
       }
 
       onOk(apiData)
@@ -117,7 +117,7 @@ export default function ApiFormDrawer({
 
   return (
     <Drawer
-      title={editingApi ? "编辑接口" : title}
+      title={data ? "编辑接口" : title}
       placement="right"
       width={600}
       open={visible}
@@ -127,7 +127,7 @@ export default function ApiFormDrawer({
         <div className="flex justify-end space-x-2">
           <Button onClick={handleCancel}>取消</Button>
           <Button type="primary" loading={loading} onClick={handleSubmit}>
-            {editingApi ? "更新" : "添加"}
+            {data ? "更新" : "添加"}
           </Button>
         </div>
       }

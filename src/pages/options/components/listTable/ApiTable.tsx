@@ -1,11 +1,15 @@
 import React from "react"
-import { Table, Switch, Button, Space, Tag, Typography } from "antd"
-import { EditOutlined, CopyOutlined, DeleteOutlined, SwapOutlined } from "@ant-design/icons"
+import { Table, Switch, Space, Tag, Typography } from "antd"
 
-import { ApiConfig } from "../../../types"
-import { formatDelay } from "../../../utils/chromeApi"
+import { ApiConfig } from "../../../../types"
+import { formatDelay } from "../../../../utils/chromeApi"
 import "antd/dist/reset.css"
-import "../../../assets/styles/tailwind.css"
+// import "../../../assets/styles/tailwind.css"
+import "@src/assets/styles/tailwind.css"
+import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
+import CloneButton from "./cloneButon/CloneButton"
+import MigrateButton from "./migrateButton/MigrateButton"
+import DeleteButton from "./deleteButton/DeleteButton"
 
 const { Paragraph } = Typography
 interface ApiTableProps {
@@ -13,10 +17,6 @@ interface ApiTableProps {
   searchKeyword: string
   onToggleApi: (apiId: string, enabled: boolean) => void
   onToggleAllApis: (enabled: boolean) => void
-  onDeleteApi: (apiId: string) => void
-  onEditApi: (apiId: string) => void
-  onCloneApi: (apiId: string) => void
-  onMigrateApi: (apiId: string) => void
 }
 
 export default function ApiTable({
@@ -24,10 +24,6 @@ export default function ApiTable({
   searchKeyword,
   onToggleApi,
   onToggleAllApis,
-  onDeleteApi,
-  onEditApi,
-  onCloneApi,
-  onMigrateApi,
 }: ApiTableProps) {
   // 过滤API数据
   const filteredApis = apis.filter((api) => {
@@ -124,39 +120,10 @@ export default function ApiTable({
       width: 200,
       render: (_: any, record: ApiConfig) => (
         <Space>
-          <Button
-            type="link"
-            className="p-0"
-            icon={<EditOutlined />}
-            onClick={() => onEditApi(record.id)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            className="p-0"
-            icon={<CopyOutlined />}
-            onClick={() => onCloneApi(record.id)}
-          >
-            克隆
-          </Button>
-          <Button
-            type="link"
-            className="p-0"
-            icon={<SwapOutlined />}
-            onClick={() => onMigrateApi(record.id)}
-          >
-            迁移
-          </Button>
-          <Button
-            type="link"
-            danger
-            className="p-0"
-            icon={<DeleteOutlined />}
-            onClick={() => onDeleteApi(record.id)}
-          >
-            删除
-          </Button>
+          <EditFormButton apiId={record.id} />
+          <CloneButton apiId={record.id} />
+          <MigrateButton apiId={record.id} />
+          <DeleteButton apiId={record.id} />
         </Space>
       ),
     },
