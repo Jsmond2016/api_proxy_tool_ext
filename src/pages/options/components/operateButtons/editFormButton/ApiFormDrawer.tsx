@@ -156,9 +156,10 @@ export default function ApiFormDrawer({
           label="接口地址"
           name="apiUrl"
           rules={[{ required: true, message: "请输入接口地址" }]}
+          extra='示例：/api/users 或 http://localhost:3000/api/users'
         >
           <TextArea
-            placeholder="请输入接口地址，如：/api/users 或 http://localhost:3000/api/users"
+            placeholder="请输入接口地址"
             rows={1}
             autoSize={{ minRows: 1, maxRows: 5 }}
           />
@@ -168,9 +169,10 @@ export default function ApiFormDrawer({
           label="重定向URL"
           name="redirectURL"
           rules={[{ required: true, message: "请输入重定向URL" }]}
+          extra='示例：http://127.0.0.1:4523/mock/api/users'
         >
           <TextArea
-            placeholder="请输入Mock URL，如：http://127.0.0.1:4523/mock/api/users"
+            placeholder="请输入Mock URL"
             rows={1}
             autoSize={{ minRows: 1, maxRows: 5 }}
           />

@@ -1,48 +1,62 @@
-import React, { useState } from "react"
-import { Tabs, Button, Popconfirm } from "antd"
+import React, { useRef, useState } from "react"
+import { Tabs, Button, Popconfirm, GetRef } from "antd"
 import { PlusOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons"
 import { ModuleConfig } from "../../../types"
 import EditModuleModal from "./EditModuleModal"
 import "antd/dist/reset.css"
 import "../../../assets/styles/tailwind.css"
+import { generateId } from "@src/utils/chromeApi"
+import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { saveConfig } from "@src/utils/configUtil"
 
 interface ModuleTabsProps {
   modules: ModuleConfig[]
-  activeModuleId: string
   onModuleChange: (moduleId: string) => void
-  onAddModule: () => void
-  onDeleteModule: (moduleId: string) => void
-  onEditModule: (moduleId: string, newName: string) => void
 }
 
 export default function ModuleTabs({
   modules,
-  activeModuleId,
   onModuleChange,
-  onAddModule,
-  onDeleteModule,
-  onEditModule,
 }: ModuleTabsProps) {
-  const [editModalVisible, setEditModalVisible] = useState(false)
-  const [editingModule, setEditingModule] = useState<ModuleConfig | null>(null)
+  const editModuleModalRef = useRef<GetRef<typeof EditModuleModal>>(null)
 
-  const handleEditClick = (e: React.MouseEvent, module: ModuleConfig) => {
-    e.stopPropagation()
-    setEditingModule(module)
-    setEditModalVisible(true)
-  }
+  const { config, setConfig } = useConfigStore()
+  const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
 
-  const handleEditOk = (newName: string) => {
-    if (editingModule) {
-      onEditModule(editingModule.id, newName)
+  // 添加模块
+  const handleAddModule = () => {
+    const newModule: ModuleConfig = {
+      id: generateId(),
+      apiDocKey: `module_${Date.now()}`,
+      label: `新模块_${Date.now()}`,
+      apiArr: [],
     }
-    setEditModalVisible(false)
-    setEditingModule(null)
+
+    const newConfig = {
+      ...config,
+      modules: [...config.modules, newModule],
+    }
+
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    setActiveModuleId(newModule.id)
   }
 
-  const handleEditCancel = () => {
-    setEditModalVisible(false)
-    setEditingModule(null)
+  // 删除模块
+  const handleDeleteModule = (moduleId: string) => {
+    const newConfig = {
+      ...config,
+      modules: config.modules.filter((module) => module.id !== moduleId),
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+
+    if (activeModuleId === moduleId) {
+      const remainingModules = newConfig.modules
+      setActiveModuleId(
+        remainingModules.length > 0 ? remainingModules[0].id : ""
+      )
+    }
   }
 
   const items = modules.map((module) => ({
@@ -52,7 +66,12 @@ export default function ModuleTabs({
         <span>{module.label}</span>
         <EditOutlined
           className="text-gray-400 hover:text-blue-500 cursor-pointer text-xs ml-1"
-          onClick={(e) => handleEditClick(e, module)}
+          onClick={(e) =>
+            editModuleModalRef.current?.open({
+              moduleName: module.label,
+              moduleId: module.id,
+            })
+          }
         />
       </div>
     ),
@@ -68,24 +87,19 @@ export default function ModuleTabs({
         type="editable-card"
         onEdit={(targetKey, action) => {
           if (action === "add") {
-            onAddModule()
+            handleAddModule()
           } else if (action === "remove") {
             // 当只有1个tab时，不允许删除
             if (modules.length <= 1) {
               return
             }
-            onDeleteModule(targetKey as string)
+            handleDeleteModule(targetKey as string)
           }
         }}
         tabBarStyle={{ margin: 0 }}
       />
 
-      <EditModuleModal
-        visible={editModalVisible}
-        moduleName={editingModule?.label || ""}
-        onCancel={handleEditCancel}
-        onOk={handleEditOk}
-      />
+      <EditModuleModal ref={editModuleModalRef} />
     </>
   )
 }

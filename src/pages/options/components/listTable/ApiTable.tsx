@@ -1,30 +1,32 @@
 import React from "react"
-import { Table, Switch, Space, Tag, Typography } from "antd"
+import { Table, Switch, Space, Tag, Typography, message } from "antd"
 
-import { ApiConfig } from "../../../../types"
-import { formatDelay } from "../../../../utils/chromeApi"
+import { ApiConfig } from "@src/types"
+import { ChromeApiService, formatDelay } from "@src/utils/chromeApi"
 import "antd/dist/reset.css"
-// import "../../../assets/styles/tailwind.css"
 import "@src/assets/styles/tailwind.css"
 import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
 import CloneButton from "./cloneButon/CloneButton"
 import MigrateButton from "./migrateButton/MigrateButton"
 import DeleteButton from "./deleteButton/DeleteButton"
+import {
+  useActiveModuleIdStore,
+  useConfigStore,
+  useSearchKeywordStore,
+} from "@src/store"
+import { saveConfig } from '@src/utils/configUtil'
 
 const { Paragraph } = Typography
-interface ApiTableProps {
-  apis: ApiConfig[]
-  searchKeyword: string
-  onToggleApi: (apiId: string, enabled: boolean) => void
-  onToggleAllApis: (enabled: boolean) => void
-}
+ 
 
-export default function ApiTable({
-  apis,
-  searchKeyword,
-  onToggleApi,
-  onToggleAllApis,
-}: ApiTableProps) {
+export default function ApiTable() {
+  const { searchKeyword } = useSearchKeywordStore()
+  const { config, setConfig } = useConfigStore()
+  const { activeModuleId } = useActiveModuleIdStore()
+  const activeModule = config.modules.find(
+    (module) => module.id === activeModuleId
+  )
+  const apis = activeModule?.apiArr || []
   // 过滤API数据
   const filteredApis = apis.filter((api) => {
     if (!searchKeyword) return true
@@ -41,13 +43,65 @@ export default function ApiTable({
     filteredApis.length > 0 && filteredApis.every((api) => api.isOpen)
   const someApisEnabled = filteredApis.some((api) => api.isOpen)
 
+  // 切换API开关
+  const handleToggleApi = async (apiId: string, enabled: boolean) => {
+    try {
+      await ChromeApiService.toggleApi(apiId, enabled)
+      setConfig({
+        ...config,
+        modules: config.modules.map((module) => ({
+          ...module,
+          apiArr: module.apiArr.map((api) =>
+            api.id === apiId ? { ...api, isOpen: enabled } : api
+          ),
+        })),
+      })
+    } catch (error) {
+      message.error("操作失败")
+      console.error("Toggle API error:", error)
+    }
+  }
+
+  // 切换所有API开关
+  const handleToggleAllApis = async (enabled: boolean) => {
+    if (!activeModule) return
+
+    try {
+      const newConfig = {
+        ...config,
+        modules: config.modules.map((module) =>
+          module.id === activeModule.id
+            ? {
+                ...module,
+                apiArr: module.apiArr.map((api) => ({
+                  ...api,
+                  isOpen: enabled,
+                })),
+              }
+            : module
+        ),
+      }
+
+      setConfig(newConfig)
+      saveConfig(newConfig)
+
+      // 批量更新background script
+      for (const api of activeModule.apiArr) {
+        await ChromeApiService.toggleApi(api.id, enabled)
+      }
+    } catch (error) {
+      message.error("操作失败")
+      console.error("Toggle all APIs error:", error)
+    }
+  }
+
   const columns = [
     {
       title: (
         <Switch
           checked={allApisEnabled}
           value={someApisEnabled && !allApisEnabled}
-          onChange={onToggleAllApis}
+          onChange={handleToggleAllApis}
           checkedChildren="开启"
           unCheckedChildren="关闭"
         />
@@ -58,7 +112,7 @@ export default function ApiTable({
       render: (_: any, record: ApiConfig) => (
         <Switch
           checked={record.isOpen}
-          onChange={(checked) => onToggleApi(record.id, checked)}
+          onChange={(checked) => handleToggleApi(record.id, checked)}
           checkedChildren="开启"
           unCheckedChildren="关闭"
         />

@@ -19,3 +19,11 @@ export const useActiveModuleIdStore = create<{
   activeModuleId: "",
   setActiveModuleId: (activeModuleId: string) => set({ activeModuleId }),
 }))
+
+export const useSearchKeywordStore = create<{
+  searchKeyword: string
+  setSearchKeyword: (searchKeyword: string) => void
+}>((set) => ({
+  searchKeyword: "",
+  setSearchKeyword: (searchKeyword: string) => set({ searchKeyword }),
+}))
