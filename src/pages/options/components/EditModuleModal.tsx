@@ -1,71 +1,102 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Form, Input, Button, message } from 'antd';
+import React, {
+  useState,
+  useEffect,
+  forwardRef,
+  useImperativeHandle,
+} from "react"
+import { Modal, Form, Input, Button, message } from "antd"
+import { useBoolean } from "ahooks"
+import { saveConfig } from "@src/utils/configUtil"
+import { useConfigStore } from "@src/store"
 
-interface EditModuleModalProps {
-  visible: boolean;
-  moduleName: string;
-  onCancel: () => void;
-  onOk: (newName: string) => void;
+interface EditModuleModalProps {}
+
+type EditModuleModalRefProps = {
+  open: ({
+    moduleName,
+    moduleId,
+  }: {
+    moduleName: string
+    moduleId: string
+  }) => void
 }
 
-export default function EditModuleModal({ 
-  visible, 
-  moduleName, 
-  onCancel, 
-  onOk 
-}: EditModuleModalProps) {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+export default forwardRef<EditModuleModalRefProps, EditModuleModalProps>(
+  function EditModuleModal({}, ref) {
+    const [form] = Form.useForm()
+    const [moduleId, setModuleId] = useState<string>("")
 
-  useEffect(() => {
-    if (visible) {
-      form.setFieldsValue({ name: moduleName });
+    const [visible, visibleOperate] = useBoolean(false)
+    const { config, setConfig } = useConfigStore()
+
+    useImperativeHandle(ref, () => ({
+      open: ({
+        moduleName,
+        moduleId,
+      }: {
+        moduleName: string
+        moduleId: string
+      }) => {
+        visibleOperate.setTrue()
+        form.setFieldsValue({ name: moduleName })
+        setModuleId(moduleId)
+      },
+    }))
+
+    // 编辑模块
+    const updateModuleApi = (moduleId: string, newName: string) => {
+      const newConfig = {
+        ...config,
+        modules: config.modules.map((module) =>
+          module.id === moduleId
+            ? { ...module, label: newName, apiDocKey: newName }
+            : module
+        ),
+      }
+      setConfig(newConfig)
+      saveConfig(newConfig)
     }
-  }, [visible, moduleName, form]);
 
-  const handleOk = async () => {
-    try {
-      setLoading(true);
-      const values = await form.validateFields();
-      onOk(values.name);
-    } catch (error) {
-      console.error('Form validation failed:', error);
-    } finally {
-      setLoading(false);
+    const handleOk = async () => {
+      try {
+        const values = await form.validateFields()
+        updateModuleApi(moduleId, values.name)
+        handleCloseModal()
+        message.success("模块名称更新成功")
+      } catch (error) {
+        console.error("Form validation failed:", error)
+        message.error("模块名称更新失败")
+      }
     }
-  };
 
-  const handleCancel = () => {
-    form.resetFields();
-    onCancel();
-  };
+    const handleCloseModal = () => {
+      form.resetFields()
+      visibleOperate.setFalse()
+      setModuleId("")
+    }
 
-  return (
-    <Modal
-      title="编辑模块名称"
-      open={visible}
-      onOk={handleOk}
-      onCancel={handleCancel}
-      confirmLoading={loading}
-      okText="确定"
-      cancelText="取消"
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{ name: moduleName }}
+    return (
+      <Modal
+        title="编辑模块名称"
+        open={visible}
+        onOk={handleOk}
+        onCancel={handleCloseModal}
+        okText="确定"
+        cancelText="取消"
       >
-        <Form.Item
-          label="模块名称"
-          name="name"
-          rules={[
-            { required: true, message: '请输入模块名称' },
-            { min: 1, max: 50, message: '模块名称长度应在1-50个字符之间' }
-          ]}
-        >
-          <Input placeholder="请输入模块名称" />
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-}
+        <Form form={form} layout="vertical">
+          <Form.Item
+            label="模块名称"
+            name="name"
+            rules={[
+              { required: true, message: "请输入模块名称" },
+              { min: 1, max: 50, message: "模块名称长度应在1-50个字符之间" },
+            ]}
+          >
+            <Input placeholder="请输入模块名称" />
+          </Form.Item>
+        </Form>
+      </Modal>
+    )
+  }
+)
