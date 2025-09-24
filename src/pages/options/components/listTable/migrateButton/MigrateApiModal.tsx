@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Modal, Select, Form, message } from "antd"
-import { ApiConfig, ModuleConfig } from "../../../types"
+  import { ApiConfig, ModuleConfig } from "@src/types"
 
 interface MigrateApiModalProps {
   visible: boolean
