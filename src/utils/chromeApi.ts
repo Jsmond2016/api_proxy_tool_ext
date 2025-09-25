@@ -66,6 +66,19 @@ export class ChromeApiService {
       });
     });
   }
+
+  // 更新扩展图标
+  static async updateIcon(enabled: boolean): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: 'updateIcon', enabled }, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(chrome.runtime.lastError);
+        } else {
+          resolve(response.success);
+        }
+      });
+    });
+  }
 }
 
 // 生成唯一ID

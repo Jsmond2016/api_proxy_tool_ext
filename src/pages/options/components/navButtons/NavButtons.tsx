@@ -1,4 +1,4 @@
-import { Button, message, Space, Switch } from "antd"
+import { message, Space, Switch, Tooltip } from "antd"
 
 import { ChromeApiService } from "@src/utils/chromeApi"
 import { useConfigStore } from "@src/store"
@@ -18,6 +18,7 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
   const handleToggleGlobal = async (enabled: boolean) => {
     try {
       await ChromeApiService.toggleGlobal(enabled)
+      // await ChromeApiService.updateIcon(enabled)
       setConfig({ ...config, isGlobalEnabled: enabled })
       message.success(enabled ? "已开启全局代理" : "已关闭全局代理")
     } catch (error) {
@@ -40,14 +41,15 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
 
   return (
     <Space direction="horizontal">
-      <span className="text-white text-sm">全局Mock开关</span>
-      <Switch
-        checked={config.isGlobalEnabled}
-        onChange={handleToggleGlobal}
-        size="default"
-        checkedChildren="开启"
-        unCheckedChildren="关闭"
-      />
+      <Tooltip title="全局Mock开关, 开启后所有接口都会被代理">
+        <Switch
+          checked={config.isGlobalEnabled}
+          onChange={handleToggleGlobal}
+          size="default"
+          checkedChildren="开启"
+          unCheckedChildren="关闭"
+        />
+      </Tooltip>
       <SyncApifoxModalButton />
       <ImportButton />
       <ExportButton />
