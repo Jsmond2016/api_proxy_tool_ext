@@ -2,6 +2,7 @@ import { Row, Space } from "antd"
 
 import AddFormButton from "./editFormButton/AddFormButton"
 import CopyPermissionDropdownButton from "./copyPermissionButton/CopyPermissionDropdownButton"
+import ResetModuleButton from "./resetModuleButton/ResetModuleButton"
 
 const OperateButtons = () => {
   return (
@@ -9,6 +10,7 @@ const OperateButtons = () => {
       <Space>
         <AddFormButton />
         <CopyPermissionDropdownButton />
+        <ResetModuleButton />
       </Space>
     </Row>
   )
