@@ -172,7 +172,7 @@ async function updateDeclarativeRules() {
 async function updateIcon(enabled: boolean) {
   try {
     // 使用正确的32x32像素图标文件
-    const iconPath = enabled ? "icon-32.png" : "dev-icon-32.png"
+    const iconPath = enabled ? "icon-128.png" : "dev-icon-128.png"
     console.log(`Attempting to update icon to: ${iconPath}`)
     
     // 使用chrome.runtime.getURL获取完整的图标路径

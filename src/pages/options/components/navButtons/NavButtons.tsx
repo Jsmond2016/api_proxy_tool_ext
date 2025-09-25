@@ -18,7 +18,7 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
   const handleToggleGlobal = async (enabled: boolean) => {
     try {
       await ChromeApiService.toggleGlobal(enabled)
-      // await ChromeApiService.updateIcon(enabled)
+      await ChromeApiService.updateIcon(enabled)
       setConfig({ ...config, isGlobalEnabled: enabled })
       message.success(enabled ? "已开启全局代理" : "已关闭全局代理")
     } catch (error) {
