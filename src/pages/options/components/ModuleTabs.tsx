@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react"
-import { Tabs, Button, Popconfirm, GetRef } from "antd"
+import { Tabs, Button, Popconfirm, GetRef, Modal } from "antd"
 import { PlusOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons"
 import { ModuleConfig } from "../../../types"
 import EditModuleModal from "./EditModuleModal"
@@ -44,19 +44,26 @@ export default function ModuleTabs({
 
   // 删除模块
   const handleDeleteModule = (moduleId: string) => {
-    const newConfig = {
-      ...config,
-      modules: config.modules.filter((module) => module.id !== moduleId),
-    }
-    setConfig(newConfig)
-    saveConfig(newConfig)
+    // 二次确认
+    Modal.confirm({
+      title: "确定删除该模块吗？",
+      content: "删除后将无法恢复",
+      onOk: () => {
+        const newConfig = {
+          ...config,
+          modules: config.modules.filter((module) => module.id !== moduleId),
+        }
+        setConfig(newConfig)
+        saveConfig(newConfig)
 
-    if (activeModuleId === moduleId) {
-      const remainingModules = newConfig.modules
-      setActiveModuleId(
-        remainingModules.length > 0 ? remainingModules[0].id : ""
-      )
-    }
+        if (activeModuleId === moduleId) {
+          const remainingModules = newConfig.modules
+          setActiveModuleId(
+            remainingModules.length > 0 ? remainingModules[0].id : ""
+          )
+        }
+      },
+    })
   }
 
   const items = modules.map((module) => ({
