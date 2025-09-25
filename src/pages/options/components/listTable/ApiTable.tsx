@@ -1,5 +1,13 @@
-import React from "react"
-import { Table, Switch, Space, Tag, Typography, message } from "antd"
+import React, { useState } from "react"
+import {
+  Table,
+  Switch,
+  Space,
+  Tag,
+  Typography,
+  message,
+  PaginationProps,
+} from "antd"
 
 import { ApiConfig } from "@src/types"
 import { ChromeApiService, formatDelay } from "@src/utils/chromeApi"
@@ -16,17 +24,16 @@ import {
   useSearchKeywordStore,
   useSelectedApiStore,
 } from "@src/store"
-import { saveConfig } from '@src/utils/configUtil'
+import { saveConfig } from "@src/utils/configUtil"
 
 const { Paragraph } = Typography
- 
 
 export default function ApiTable() {
   const { searchKeyword } = useSearchKeywordStore()
   const { config, setConfig } = useConfigStore()
   const { activeModuleId } = useActiveModuleIdStore()
   const { selectedApiIds, setSelectedApiIds } = useSelectedApiStore()
-  
+
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId
   )
@@ -111,6 +118,13 @@ export default function ApiTable() {
   }
 
   const columns = [
+    {
+      title: "序号",
+      key: "index",
+      width: 20,
+      render: (_: any, record: ApiConfig, index: number) =>
+        index + 1 + (current - 1) * pageSize,
+    },
     {
       title: (
         <Switch
@@ -199,13 +213,28 @@ export default function ApiTable() {
     },
   ]
 
+  const [current, setCurrent] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
+  const pagination: PaginationProps = {
+    total: filteredApis.length,
+    showTotal: (total: number) => `共计 ${total} 个`,
+    defaultPageSize: 20,
+    defaultCurrent: 1,
+    current,
+    pageSize,
+    onChange: (page, pageSize) => {
+      setCurrent(page)
+      setPageSize(pageSize)
+    },
+  }
+
   return (
     <Table
       dataSource={filteredApis}
       columns={columns}
       rowKey="id"
+      pagination={pagination}
       rowSelection={rowSelection}
-      pagination={false}
       scroll={{ y: "calc(100vh - 400px)" }}
       size="small"
       onRow={(record) =>
@@ -213,8 +242,7 @@ export default function ApiTable() {
           "data-api-id": record.id,
         } as React.HTMLAttributes<HTMLTableRowElement>)
       }
-      bordered
-    />
+     />
   )
 }
 
