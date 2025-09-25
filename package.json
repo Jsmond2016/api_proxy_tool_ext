@@ -24,8 +24,10 @@
   "type": "module",
   "dependencies": {
     "@ant-design/icons": "^6.0.0",
+    "@types/change-case": "^2.3.5",
     "ahooks": "^3.9.0",
     "antd": "^5.26.5",
+    "change-case": "^5.4.4",
     "ramda": "^0.31.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",

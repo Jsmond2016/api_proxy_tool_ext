@@ -27,3 +27,11 @@ export const useSearchKeywordStore = create<{
   searchKeyword: "",
   setSearchKeyword: (searchKeyword: string) => set({ searchKeyword }),
 }))
+
+export const useSelectedApiStore = create<{
+  selectedApiIds: string[]
+  setSelectedApiIds: (selectedApiIds: string[]) => void
+}>((set) => ({
+  selectedApiIds: [],
+  setSelectedApiIds: (selectedApiIds: string[]) => set({ selectedApiIds }),
+}))

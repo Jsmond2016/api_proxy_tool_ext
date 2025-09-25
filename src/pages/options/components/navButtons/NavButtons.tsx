@@ -7,6 +7,7 @@ import SyncApifoxModalButton from "./syncApifoxModalButton/SyncApifoxModalButton
 import ImportButton from "./importButton/ImportButton"
 import ResetButton from "./resetButton/ResetButton"
 import ExportButton from "./exportButton/ExportButton"
+import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
 
 type OperateButtonsProps = {}
 
@@ -50,6 +51,7 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
       <SyncApifoxModalButton />
       <ImportButton />
       <ExportButton />
+      <CopyAllPermissionButton />
       <ResetButton />
     </Space>
   )

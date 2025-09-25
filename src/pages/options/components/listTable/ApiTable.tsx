@@ -9,10 +9,12 @@ import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
 import CloneButton from "./cloneButon/CloneButton"
 import MigrateButton from "./migrateButton/MigrateButton"
 import DeleteButton from "./deleteButton/DeleteButton"
+import CopyPermissionButton from "./copyButton/CopyPermissionButton"
 import {
   useActiveModuleIdStore,
   useConfigStore,
   useSearchKeywordStore,
+  useSelectedApiStore,
 } from "@src/store"
 import { saveConfig } from '@src/utils/configUtil'
 
@@ -23,6 +25,8 @@ export default function ApiTable() {
   const { searchKeyword } = useSearchKeywordStore()
   const { config, setConfig } = useConfigStore()
   const { activeModuleId } = useActiveModuleIdStore()
+  const { selectedApiIds, setSelectedApiIds } = useSelectedApiStore()
+  
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId
   )
@@ -42,6 +46,17 @@ export default function ApiTable() {
   const allApisEnabled =
     filteredApis.length > 0 && filteredApis.every((api) => api.isOpen)
   const someApisEnabled = filteredApis.some((api) => api.isOpen)
+
+  // 行选择配置
+  const rowSelection = {
+    selectedRowKeys: selectedApiIds,
+    onChange: (selectedRowKeys: React.Key[]) => {
+      setSelectedApiIds(selectedRowKeys as string[])
+    },
+    getCheckboxProps: (record: ApiConfig) => ({
+      name: record.apiName,
+    }),
+  }
 
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
@@ -177,6 +192,7 @@ export default function ApiTable() {
           <EditFormButton apiId={record.id} />
           <CloneButton apiId={record.id} />
           <MigrateButton apiId={record.id} />
+          <CopyPermissionButton apiId={record.id} apiConfig={record} />
           <DeleteButton apiId={record.id} />
         </Space>
       ),
@@ -188,6 +204,7 @@ export default function ApiTable() {
       dataSource={filteredApis}
       columns={columns}
       rowKey="id"
+      rowSelection={rowSelection}
       pagination={false}
       scroll={{ y: "calc(100vh - 400px)" }}
       size="small"
