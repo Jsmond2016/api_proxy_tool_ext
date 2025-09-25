@@ -168,6 +168,30 @@ async function updateDeclarativeRules() {
   console.log(`Updated ${rules.length} declarative rules`)
 }
 
+// 更新扩展图标
+async function updateIcon(enabled: boolean) {
+  try {
+    // 使用正确的32x32像素图标文件
+    const iconPath = enabled ? "icon-32.png" : "dev-icon-32.png"
+    console.log(`Attempting to update icon to: ${iconPath}`)
+    
+    // 使用chrome.runtime.getURL获取完整的图标路径
+    const fullIconPath = chrome.runtime.getURL(iconPath)
+    console.log(`Full icon path: ${fullIconPath}`)
+    
+    await chrome.action.setIcon({
+      path: {
+        "32": iconPath
+      }
+    })
+    
+    console.log(`Icon successfully updated to: ${iconPath}`)
+  } catch (error) {
+    console.error("Failed to update icon:", error)
+    console.error("Error details:", error instanceof Error ? error.message : String(error))
+  }
+}
+
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   switch (request.action) {
@@ -186,6 +210,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       globalConfig.isGlobalEnabled = request.enabled
       saveConfig()
       updateDeclarativeRules()
+      updateIcon(request.enabled)
       sendResponse({ success: true })
       break
 
@@ -217,6 +242,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       sendResponse({ success: false, error: "API not found" })
       break
 
+    case "updateIcon":
+      updateIcon(request.enabled)
+      sendResponse({ success: true })
+      break
+
     default:
       sendResponse({ success: false, error: "Unknown action" })
   }
@@ -236,6 +266,7 @@ chrome.action.onClicked.addListener((tab) => {
 async function initialize() {
   await loadConfig()
   await updateDeclarativeRules()
+  await updateIcon(globalConfig.isGlobalEnabled)
 }
 
 initialize()
