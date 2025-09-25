@@ -311,7 +311,7 @@ export default function SyncApifoxModal({
             <Form.Item
               label="选择标签"
               name="tags"
-              tooltip="选择要同步的接口标签，不选择则同步所有接口"
+              tooltip="请选择单个或多个需要同步的标签"
             >
               <Select
                 mode="multiple"
@@ -320,6 +320,7 @@ export default function SyncApifoxModal({
                 onChange={handleTagsChange}
                 showSearch
                 optionFilterProp="label"
+                autoClearSearchValue={false}
                 options={availableTags.map((tag) => ({
                   label: tag,
                   value: tag,

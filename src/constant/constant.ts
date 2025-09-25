@@ -2,7 +2,7 @@ export const DefaultMockApiModule = [
   {
     id: "default-module",
     apiDocKey: "default.module",
-    label: "默认模块",
+    label: "demo.default",
     apiDocUrl: "",
     dataWrapper: "",
     pageDomain: "",
