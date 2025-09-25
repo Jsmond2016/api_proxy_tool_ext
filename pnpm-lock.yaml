@@ -11,12 +11,18 @@ importers:
       '@ant-design/icons':
         specifier: ^6.0.0
         version: 6.0.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/change-case':
+        specifier: ^2.3.5
+        version: 2.3.5
       ahooks:
         specifier: ^3.9.0
         version: 3.9.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       antd:
         specifier: ^5.26.5
         version: 5.26.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      change-case:
+        specifier: ^5.4.4
+        version: 5.4.4
       ramda:
         specifier: ^0.31.3
         version: 0.31.3
@@ -809,6 +815,10 @@ packages:
   '@types/babel__traverse@7.20.7':
     resolution: {integrity: sha512-dkO5fhS7+/oos4ciWxyEyjWe48zmG6wbCheo/G2ZnHx4fs3EU6YC6UM8rk56gAjNJ9P3MTH2jo5jb92/K6wbng==}
 
+  '@types/change-case@2.3.5':
+    resolution: {integrity: sha512-JvctDvBuY3MVSEisGbSgaAdJTcs+2JjBKO60W1Isr3GnX2YZCyJYLDY96bV4eWensEUrQLRGEL+egAkIXYrW1Q==}
+    deprecated: This is a stub types definition. change-case provides its own type definitions, so you do not need this installed.
+
   '@types/chrome@0.1.1':
     resolution: {integrity: sha512-MLtFW++/n+OPQIaf5hA6pmURd3Zn+OxuvASyf2mYh8B8pHDpbhHjwlVHMw3H/aJC9Z7Z3itO0AFaZeegrGk0yA==}
 
@@ -1067,6 +1077,9 @@ packages:
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
+
+  change-case@5.4.4:
+    resolution: {integrity: sha512-HRQyTk2/YPEkt9TnUPbOpr64Uw3KOicFWPVBb+xiHvd6eBx/qPr9xqfBFDT8P2vWsvvz4jbEkfDe71W3VyNu2w==}
 
   cheerio-select@2.1.0:
     resolution: {integrity: sha512-9v9kG0LvzrlcungtnJtpGNxY+fzECQKhK4EGJX2vByejiMX84MFNQw4UxPJl3bFbTMw+Dfs37XaIkCwTZfLh4g==}
@@ -3308,6 +3321,10 @@ snapshots:
     dependencies:
       '@babel/types': 7.28.1
 
+  '@types/change-case@2.3.5':
+    dependencies:
+      change-case: 5.4.4
+
   '@types/chrome@0.1.1':
     dependencies:
       '@types/filesystem': 0.0.36
@@ -3677,6 +3694,8 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  change-case@5.4.4: {}
 
   cheerio-select@2.1.0:
     dependencies:

@@ -68,3 +68,6 @@ export interface ImportExportFormat {
     statusCode: number;
   }[];
 }
+
+// 导出权限点相关类型
+export * from './permission';

@@ -1,17 +1,15 @@
-import { PlusOutlined } from "@ant-design/icons"
-import { Button, Row } from "antd"
-import React, { useState } from "react"
+import { Row, Space } from "antd"
 
 import AddFormButton from "./editFormButton/AddFormButton"
-import { ApiConfig } from "@src/types"
+import CopyPermissionDropdownButton from "./copyPermissionButton/CopyPermissionDropdownButton"
 
 const OperateButtons = () => {
-  const [apiFormVisible, setApiFormVisible] = useState(false)
-  const [editingApi, setEditingApi] = useState<ApiConfig | null>(null)
-
   return (
-    <Row justify="end">
-      <AddFormButton />
+    <Row justify='end'>
+      <Space>
+        <AddFormButton />
+        <CopyPermissionDropdownButton />
+      </Space>
     </Row>
   )
 }
