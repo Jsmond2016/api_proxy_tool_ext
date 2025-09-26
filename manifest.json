@@ -1,17 +1,21 @@
 {
   "manifest_version": 3,
   "name": "API Proxy Tool",
-  "description": "A Chrome extension for proxying API requests to mock URLs",
+  "description": "A browser extension for proxying API requests to mock URLs",
+  "version": "1.4.6",
   "options_ui": {
     "page": "src/pages/options/index.html"
   },
   "action": {
     "default_title": "API Proxy Tool",
     "default_icon": {
+      "16": "icon-32.png",
       "32": "icon-32.png"
     }
   },
   "icons": {
+    "16": "icon-32.png",
+    "32": "icon-32.png",
     "128": "icon-128.png"
   },
   "permissions": [
@@ -27,7 +31,8 @@
     "<all_urls>"
   ],
   "background": {
-    "service_worker": "src/pages/background/index.ts"
+    "service_worker": "src/pages/background/index.ts",
+    "type": "module"
   },
   "web_accessible_resources": [
     {
