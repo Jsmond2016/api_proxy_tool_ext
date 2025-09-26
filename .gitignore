@@ -391,4 +391,7 @@ $RECYCLE.BIN/
 #generated manifest
 public/manifest.json
 
+# Vite build metadata
+**/.vite/
+
 .specstory/history
