@@ -19,6 +19,22 @@ export function stripDevIcons (isDev: boolean) {
   }
 }
 
+// plugin to clean .vite folder after build
+export function cleanViteFolder(): PluginOption {
+  return {
+    name: 'clean-vite-folder',
+    closeBundle() {
+      const outDir = process.env.VITE_OUT_DIR || 'dist_chrome'
+      const viteFolderPath = resolve(outDir, '.vite')
+      
+      if (fs.existsSync(viteFolderPath)) {
+        fs.rmSync(viteFolderPath, { recursive: true, force: true })
+        console.log(`Cleaned .vite folder from ${outDir}`)
+      }
+    }
+  }
+}
+
 // plugin to support i18n 
 export function crxI18n (options: { localize: boolean, src: string }): PluginOption {
   if (!options.localize) return null
