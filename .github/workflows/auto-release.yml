@@ -1,0 +1,232 @@
+name: Auto Release on Commit
+
+# 触发条件：
+# 1. 推送到 main 分支
+# 2. commit 消息格式为 "chore(release): x.x.x"
+on:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'README_CN.md'
+      - 'RELEASE_GUIDE.md'
+      - 'edge-market-description.md'
+      - 'edge-tester-info.md'
+      - '需求-*.md'
+
+jobs:
+  auto-release:
+    name: Auto Release
+    timeout-minutes: 20
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit message format
+        id: check_commit
+        run: |
+          # 获取最新的 commit 消息
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Latest commit message: $COMMIT_MSG"
+          
+          # 检查 commit 消息格式是否为 "chore(release): x.x.x" 或 "chore(release): x.x.x-beta.x"
+          if [[ $COMMIT_MSG =~ ^chore\(release\):\ ([0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?)$ ]]; then
+            VERSION=${BASH_REMATCH[1]}
+            echo "✅ Valid release commit detected: $VERSION"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "tag_name=v$VERSION" >> $GITHUB_OUTPUT
+            echo "should_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Commit message does not match release format"
+            echo "Expected format: chore(release): x.x.x"
+            echo "should_release=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check if tag already exists
+        if: steps.check_commit.outputs.should_release == 'true'
+        id: check_tag
+        run: |
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          if git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            echo "❌ Tag $TAG_NAME already exists"
+            echo "tag_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Tag $TAG_NAME does not exist, proceeding with release"
+            echo "tag_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup pnpm
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.5.2
+
+      - name: Setup Node.js environment
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.17.0
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Chrome Extension
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm run build:chrome
+
+      - name: Build Firefox Extension
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: pnpm run build:firefox
+
+      - name: Verify build outputs
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          echo "Checking dist_chrome directory..."
+          ls -la dist_chrome/ || echo "dist_chrome not found"
+          echo "Checking dist_firefox directory..."
+          ls -la dist_firefox/ || echo "dist_firefox not found"
+          
+          if [ ! -d "dist_chrome" ]; then
+            echo "ERROR: dist_chrome directory not found"
+            exit 1
+          fi
+          
+          if [ ! -d "dist_firefox" ]; then
+            echo "ERROR: dist_firefox directory not found"
+            exit 1
+          fi
+          
+          # 检查关键文件是否存在
+          if [ ! -f "dist_chrome/manifest.json" ]; then
+            echo "ERROR: Chrome manifest.json not found"
+            exit 1
+          fi
+          
+          if [ ! -f "dist_firefox/manifest.json" ]; then
+            echo "ERROR: Firefox manifest.json not found"
+            exit 1
+          fi
+          
+          echo "✅ All build outputs verified successfully"
+
+      - name: Create Chrome Extension ZIP
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          echo "Creating Chrome ZIP for version: ${{ steps.check_commit.outputs.version }}"
+          cd dist_chrome
+          zip -r "../api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip" .
+          cd ..
+          
+          # 验证ZIP文件是否创建成功
+          if [ ! -f "api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip" ]; then
+            echo "ERROR: Chrome ZIP file not created"
+            exit 1
+          fi
+          
+          echo "✅ Chrome ZIP created successfully"
+          ls -la *.zip
+
+      - name: Create Firefox Extension ZIP
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          echo "Creating Firefox ZIP for version: ${{ steps.check_commit.outputs.version }}"
+          cd dist_firefox
+          zip -r "../api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip" .
+          cd ..
+          
+          # 验证ZIP文件是否创建成功
+          if [ ! -f "api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip" ]; then
+            echo "ERROR: Firefox ZIP file not created"
+            exit 1
+          fi
+          
+          echo "✅ Firefox ZIP created successfully"
+          ls -la *.zip
+
+      - name: Create Git Tag
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          VERSION="${{ steps.check_commit.outputs.version }}"
+          
+          echo "Creating git tag: $TAG_NAME"
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          git tag -a "$TAG_NAME" -m "Release $VERSION"
+          git push origin "$TAG_NAME"
+          
+          echo "✅ Git tag $TAG_NAME created and pushed successfully"
+
+      - name: Create Release
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.check_commit.outputs.tag_name }}
+          name: API Proxy Tool ${{ steps.check_commit.outputs.version }}
+          body: |
+            ## 🚀 API Proxy Tool ${{ steps.check_commit.outputs.version }}
+            
+            ### 📦 Downloads
+            - **Chrome Extension**: `api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip`
+            - **Firefox Extension**: `api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            
+            ### 📋 Installation Instructions
+            
+            #### Chrome
+            1. Download `api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip`
+            2. Extract the ZIP file
+            3. Open Chrome and go to `chrome://extensions/`
+            4. Enable "Developer mode"
+            5. Click "Load unpacked extension"
+            6. Select the extracted folder
+            
+            #### Firefox
+            1. Download `api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            2. Extract the ZIP file
+            3. Open Firefox and go to `about:debugging#/runtime/this-firefox`
+            4. Click "Load temporary Add-on"
+            5. Select the `manifest.json` file from the extracted folder
+            
+            ### 🔧 Features
+            - API request interception and redirection
+            - Modular configuration management
+            - Mock data support
+            - Modern UI with Ant Design
+            - Cross-browser support (Chrome & Firefox)
+            
+            ### 📖 Documentation
+            - [English README](README.md)
+            - [中文文档](README_CN.md)
+            
+            ---
+            
+            **🤖 This release was automatically created from commit:** `${{ github.sha }}`
+          files: |
+            api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip
+            api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Skip Release (Invalid Commit)
+        if: steps.check_commit.outputs.should_release == 'false'
+        run: |
+          echo "ℹ️ Skipping release - commit message does not match release format"
+          echo "Expected format: chore(release): x.x.x"
+          echo "Current commit: $(git log -1 --pretty=%B)"
+
+      - name: Skip Release (Tag Exists)
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'true'
+        run: |
+          echo "ℹ️ Skipping release - tag ${{ steps.check_commit.outputs.tag_name }} already exists"
