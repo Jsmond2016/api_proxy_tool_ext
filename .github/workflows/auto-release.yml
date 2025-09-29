@@ -149,11 +149,11 @@ jobs:
         run: |
           echo "Creating Chrome ZIP for version: ${{ steps.check_commit.outputs.version }}"
           cd dist_chrome
-          zip -r "../api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip" .
+          zip -r "../api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip" .
           cd ..
           
           # 验证ZIP文件是否创建成功
-          if [ ! -f "api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip" ]; then
+          if [ ! -f "api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip" ]; then
             echo "ERROR: Chrome ZIP file not created"
             exit 1
           fi
@@ -166,11 +166,11 @@ jobs:
         run: |
           echo "Creating Firefox ZIP for version: ${{ steps.check_commit.outputs.version }}"
           cd dist_firefox
-          zip -r "../api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip" .
+          zip -r "../api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip" .
           cd ..
           
           # 验证ZIP文件是否创建成功
-          if [ ! -f "api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip" ]; then
+          if [ ! -f "api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip" ]; then
             echo "ERROR: Firefox ZIP file not created"
             exit 1
           fi
@@ -213,18 +213,18 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.check_commit.outputs.tag_name }}
-          name: API Proxy Tool ${{ steps.check_commit.outputs.version }}
+          name:  v${{ steps.check_commit.outputs.version }}
           body: |
             ## 🚀 API Proxy Tool ${{ steps.check_commit.outputs.version }}
             
             ### 📦 Downloads
-            - **Chrome Extension**: `api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip`
-            - **Firefox Extension**: `api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            - **Chrome Extension**: `api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip`
+            - **Firefox Extension**: `api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip`
             
             ### 📋 Installation Instructions
             
             #### Chrome
-            1. Download `api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip`
+            1. Download `api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip`
             2. Extract the ZIP file
             3. Open Chrome and go to `chrome://extensions/`
             4. Enable "Developer mode"
@@ -232,7 +232,7 @@ jobs:
             6. Select the extracted folder
             
             #### Firefox
-            1. Download `api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            1. Download `api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip`
             2. Extract the ZIP file
             3. Open Firefox and go to `about:debugging#/runtime/this-firefox`
             4. Click "Load temporary Add-on"
@@ -258,8 +258,8 @@ jobs:
             
             **🤖 This release was automatically created from commit:** `${{ github.sha }}`
           files: |
-            api_proxy_helper_${{ steps.check_commit.outputs.version }}.zip
-            api_proxy_helper_firefox_${{ steps.check_commit.outputs.version }}.zip
+            api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip
+            api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip
           draft: false
           prerelease: false
         env:

@@ -20,8 +20,8 @@ git push origin v1.0.0
 1. **GitHub Action triggers automatically**
 2. **Builds both Chrome and Firefox extensions**
 3. **Creates ZIP files:**
-   - `api_proxy_helper_v1.0.0.zip` (Chrome)
-   - `api_proxy_helper_firefox_v1.0.0.zip` (Firefox)
+   - `api_proxy_tool_v1.0.0.zip` (Chrome)
+   - `api_proxy_tool_firefox_v1.0.0.zip` (Firefox)
 4. **Creates GitHub release with:**
    - Download links
    - Installation instructions
@@ -64,8 +64,8 @@ If you prefer manual control:
 
 The CI system automatically creates ZIP files with the following naming:
 
-- **Chrome**: `api_proxy_helper_vX.X.X.zip`
-- **Firefox**: `api_proxy_helper_firefox_vX.X.X.zip`
+- **Chrome**: `api_proxy_tool_vX.X.X.zip`
+- **Firefox**: `api_proxy_tool_firefox_vX.X.X.zip`
 
 ## Prerequisites
 
