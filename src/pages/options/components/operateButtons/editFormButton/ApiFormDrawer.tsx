@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react"
-import { Drawer, Form, Input, Select, InputNumber, Button, message } from "antd"
+import {
+  Drawer,
+  Form,
+  Input,
+  Select,
+  InputNumber,
+  Button,
+  message,
+  Space,
+} from "antd"
 const { TextArea } = Input
 import { ApiConfig, GlobalConfig } from "../../../../../types"
 import {
@@ -103,6 +112,7 @@ export default function ApiFormDrawer({
       onOk(apiData)
       form.resetFields()
       onClose()
+      message.success("操作成功")
     } catch (error) {
       console.error("Form validation failed:", error)
     } finally {
@@ -122,14 +132,14 @@ export default function ApiFormDrawer({
       width={600}
       open={visible}
       onClose={handleCancel}
-      destroyOnClose
-      footer={
-        <div className="flex justify-end space-x-2">
+      destroyOnHidden
+      extra={
+        <Space>
           <Button onClick={handleCancel}>取消</Button>
-          <Button type="primary" loading={loading} onClick={handleSubmit}>
+          <Button onClick={handleSubmit} type="primary">
             {data ? "更新" : "添加"}
           </Button>
-        </div>
+        </Space>
       }
     >
       <Form
@@ -156,7 +166,7 @@ export default function ApiFormDrawer({
           label="接口地址"
           name="apiUrl"
           rules={[{ required: true, message: "请输入接口地址" }]}
-          extra='示例：/api/users 或 http://localhost:3000/api/users'
+          extra="示例：/api/users 或 http://localhost:3000/api/users"
         >
           <TextArea
             placeholder="请输入接口地址"
@@ -169,7 +179,7 @@ export default function ApiFormDrawer({
           label="重定向URL"
           name="redirectURL"
           rules={[{ required: true, message: "请输入重定向URL" }]}
-          extra='示例：http://127.0.0.1:4523/mock/api/users'
+          extra="示例：http://127.0.0.1:4523/mock/api/users"
         >
           <TextArea
             placeholder="请输入Mock URL"

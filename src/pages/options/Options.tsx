@@ -1,6 +1,6 @@
 import React from "react"
 import { useMount, useRequest } from "ahooks"
-import { Layout, message } from "antd"
+import { Layout, message, ConfigProvider } from "antd"
 import { ChromeApiService } from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/listTable/ApiTable"
@@ -11,6 +11,7 @@ import NavButtons from "./components/navButtons/NavButtons"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import OperateButtons from "./components/operateButtons/OperateButtons"
 import SearchSelect from "./components/SearchSelect"
+import zhCN from "antd/locale/zh_CN"
 
 const { Content } = Layout
 
@@ -43,26 +44,28 @@ export default function Options() {
   })
 
   return (
-    <div className="proxy-tool">
-      <Layout className="h-screen">
-        {/* 顶部导航栏 */}
-        <div className="bg-gray-800 px-6 py-4 flex items-center justify-between h-[64px] min-h-[64px]">
-          <SearchSelect />
-          <NavButtons />
-        </div>
+    <ConfigProvider locale={zhCN}>
+      <div className="proxy-tool">
+        <Layout className="h-screen">
+          {/* 顶部导航栏 */}
+          <div className="bg-gray-800 px-6 py-4 flex items-center justify-between h-[64px] min-h-[64px]">
+            <SearchSelect />
+            <NavButtons />
+          </div>
 
-        {/* 模块标签页区域 */}
-        <ModuleTabs
-          modules={config.modules}
-          onModuleChange={setActiveModuleId}
-        />
-        {/* 分组操作栏 */}
-        <OperateButtons />
-        {/* 主要内容区域 */}
-        <Content className="flex-1 overflow-hidden">
-          <ApiTable />
-        </Content>
-      </Layout>
-    </div>
+          {/* 模块标签页区域 */}
+          <ModuleTabs
+            modules={config.modules}
+            onModuleChange={setActiveModuleId}
+          />
+          {/* 分组操作栏 */}
+          <OperateButtons />
+          {/* 主要内容区域 */}
+          <Content className="flex-1 overflow-hidden">
+            <ApiTable />
+          </Content>
+        </Layout>
+      </div>
+    </ConfigProvider>
   )
 }
