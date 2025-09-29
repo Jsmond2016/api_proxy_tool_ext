@@ -118,6 +118,89 @@ jobs:
           
           echo "✅ All build outputs verified successfully"
 
+      - name: Generate Changelog
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        id: generate_changelog
+        run: |
+          VERSION="${{ steps.check_commit.outputs.version }}"
+          TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          
+          echo "🔍 Generating changelog for version: $VERSION"
+          
+          # 获取上一个标签
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+          
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "📝 No previous tag found, generating changelog from beginning"
+            COMMITS=$(git log --pretty=format:"- %s" --no-merges)
+          else
+            echo "📝 Generating changelog from $PREVIOUS_TAG to $TAG_NAME"
+            COMMITS=$(git log $PREVIOUS_TAG..HEAD --pretty=format:"- %s" --no-merges)
+          fi
+          
+          # 分类提交信息
+          FEATURES=""
+          FIXES=""
+          CHORES=""
+          DOCS=""
+          OTHER=""
+          
+          while IFS= read -r commit; do
+            if [[ $commit =~ ^- feat ]]; then
+              FEATURES="$FEATURES$commit"$'\n'
+            elif [[ $commit =~ ^- fix ]]; then
+              FIXES="$FIXES$commit"$'\n'
+            elif [[ $commit =~ ^- chore ]]; then
+              CHORES="$CHORES$commit"$'\n'
+            elif [[ $commit =~ ^- docs ]]; then
+              DOCS="$DOCS$commit"$'\n'
+            else
+              OTHER="$OTHER$commit"$'\n'
+            fi
+          done <<< "$COMMITS"
+          
+          # 构建changelog
+          CHANGELOG=""
+          
+          if [ -n "$FEATURES" ]; then
+            CHANGELOG="$CHANGELOG### ✨ Features"$'\n'"$FEATURES"$'\n'
+          fi
+          
+          if [ -n "$FIXES" ]; then
+            CHANGELOG="$CHANGELOG### 🐛 Bug Fixes"$'\n'"$FIXES"$'\n'
+          fi
+          
+          if [ -n "$CHORES" ]; then
+            CHANGELOG="$CHANGELOG### 🔧 Maintenance"$'\n'"$CHORES"$'\n'
+          fi
+          
+          if [ -n "$DOCS" ]; then
+            CHANGELOG="$CHANGELOG### 📚 Documentation"$'\n'"$DOCS"$'\n'
+          fi
+          
+          if [ -n "$OTHER" ]; then
+            CHANGELOG="$CHANGELOG### 📝 Other Changes"$'\n'"$OTHER"$'\n'
+          fi
+          
+          # 如果没有变更，添加默认信息
+          if [ -z "$CHANGELOG" ]; then
+            CHANGELOG="### 📝 Changes"$'\n'"- General improvements and bug fixes"$'\n'
+          fi
+          
+          # 输出到文件
+          echo "$CHANGELOG" > changelog.md
+          
+          # 设置输出变量
+          {
+            echo "changelog<<EOF"
+            echo "$CHANGELOG"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+          
+          echo "✅ Changelog generated successfully"
+          echo "📄 Changelog preview:"
+          echo "$CHANGELOG"
+
       - name: Create Chrome Extension ZIP
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         run: |
@@ -167,6 +250,42 @@ jobs:
           
           echo "✅ Git tag $TAG_NAME created and pushed successfully"
 
+      - name: Update CHANGELOG.md
+        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
+        run: |
+          VERSION="${{ steps.check_commit.outputs.version }}"
+          CHANGELOG_CONTENT="${{ steps.generate_changelog.outputs.changelog }}"
+          
+          echo "📝 Updating CHANGELOG.md for version: $VERSION"
+          
+          # 获取该版本release commit的日期
+          RELEASE_COMMIT=$(git log --grep="chore(release): $VERSION" --oneline -1 | cut -d' ' -f1)
+          if [ -n "$RELEASE_COMMIT" ]; then
+            CURRENT_DATE=$(git log -1 --date=short --pretty=format:"%ad" $RELEASE_COMMIT)
+          else
+            # 回退到最新commit日期
+            CURRENT_DATE=$(git log -1 --date=short --pretty=format:"%ad" HEAD)
+          fi
+          
+          # 创建新的changelog条目
+          NEW_ENTRY="## [$VERSION] - $CURRENT_DATE"$'\n'$'\n'"$CHANGELOG_CONTENT"$'\n'
+          
+          # 读取现有的CHANGELOG.md
+          if [ -f "CHANGELOG.md" ]; then
+            # 在"## [Unreleased]"之后插入新版本
+            sed -i "1a\\$NEW_ENTRY" CHANGELOG.md
+          else
+            # 如果文件不存在，创建新的
+            echo "# Changelog"$'\n'$'\n'"All notable changes to this project will be documented in this file."$'\n'$'\n'"The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),"$'\n'"and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)."$'\n'$'\n'"## [Unreleased]"$'\n'$'\n'"$NEW_ENTRY" > CHANGELOG.md
+          fi
+          
+          # 提交CHANGELOG.md的更新
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG.md for v$VERSION" || echo "No changes to commit"
+          git push origin main || echo "Failed to push CHANGELOG.md update"
+          
+          echo "✅ CHANGELOG.md updated successfully"
+
       - name: Create Release
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         uses: softprops/action-gh-release@v2
@@ -197,6 +316,10 @@ jobs:
             4. Click "Load temporary Add-on"
             5. Select the `manifest.json` file from the extracted folder
             
+            ### 📝 What's Changed
+            
+            ${{ steps.generate_changelog.outputs.changelog }}
+            
             ### 🔧 Features
             - API request interception and redirection
             - Modular configuration management
@@ -207,6 +330,7 @@ jobs:
             ### 📖 Documentation
             - [English README](README.md)
             - [中文文档](README_CN.md)
+            - [Changelog](CHANGELOG.md)
             
             ---
             
