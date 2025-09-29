@@ -98,8 +98,8 @@ feat: add new feature           # 不是发布类型
 
 每次发布会生成以下文件：
 
-- `api_proxy_helper_x.x.x.zip` - Chrome 扩展包
-- `api_proxy_helper_firefox_x.x.x.zip` - Firefox 扩展包
+- `api_proxy_tool_x.x.x.zip` - Chrome 扩展包
+- `api_proxy_tool_firefox_x.x.x.zip` - Firefox 扩展包
 
 ## 监控和调试
 
