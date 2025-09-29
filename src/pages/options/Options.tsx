@@ -1,6 +1,6 @@
 import React from "react"
 import { useMount, useRequest } from "ahooks"
-import { Layout, message, ConfigProvider } from "antd"
+import { Layout, message, ConfigProvider, Typography } from "antd"
 import { ChromeApiService } from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/listTable/ApiTable"
@@ -12,8 +12,10 @@ import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import OperateButtons from "./components/operateButtons/OperateButtons"
 import SearchSelect from "./components/SearchSelect"
 import zhCN from "antd/locale/zh_CN"
+import packageJson from "../../../package.json"
 
-const { Content } = Layout
+const { Content, Footer } = Layout
+const { Text } = Typography
 
 export default function Options() {
   const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
@@ -64,6 +66,23 @@ export default function Options() {
           <Content className="flex-1 overflow-hidden">
             <ApiTable />
           </Content>
+
+          {/* 页脚 */}
+          <Footer className="bg-gray-50 border-t border-gray-200 px-6 py-3 text-center">
+            <Text type="secondary" className="text-sm">
+              <a
+                href="https://github.com/Jsmond2016/api_proxy_tool_ext"
+                target="_blank"
+              >
+                Api Proxy Tool
+              </a>{" "}
+              | current version:{" "}
+              <a href="https://github.com/Jsmond2016/api_proxy_tool_ext/releases">
+                v{packageJson.version}
+              </a>{" "}
+              | Author: Jsmond2016
+            </Text>
+          </Footer>
         </Layout>
       </div>
     </ConfigProvider>
