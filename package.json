@@ -16,11 +16,19 @@
     "dev:firefox": "nodemon --config nodemon.firefox.json",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "commit": "cz",
+    "prepare": "husky",
     "release": "bash scripts/release.sh",
-    "changelog": "bash scripts/generate-changelog.sh",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
+    "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s",
     "version:patch": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
     "version:minor": "npm version minor --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
     "version:major": "npm version major --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\""
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "type": "module",
   "dependencies": {
@@ -37,6 +45,8 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.0.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@crxjs/vite-plugin": "^2.0.0-beta.32",
     "@tailwindcss/vite": "^4.1.11",
     "@types/chrome": "^0.1.0",
@@ -48,6 +58,9 @@
     "@typescript-eslint/eslint-plugin": "^7.8.0",
     "@typescript-eslint/parser": "^7.18.0",
     "@vitejs/plugin-react": "^4.6.0",
+    "commitizen": "^4.3.1",
+    "conventional-changelog-cli": "^5.0.0",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.31.0",
@@ -55,6 +68,8 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "fs-extra": "^11.3.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.3",
     "nodemon": "^3.1.10",
     "tailwindcss": "^4.1.8",
     "ts-node": "^10.9.2",
@@ -71,6 +86,16 @@
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
       "esbuild"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "git add"
+    ],
+    "*.{js,json,md}": [
+      "prettier --write",
+      "git add"
     ]
   }
 }
