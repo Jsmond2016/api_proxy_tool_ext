@@ -1,6 +1,23 @@
 import { ApiConfig, GlobalConfig } from "../../types"
 
-console.log("API Proxy Tool background script loaded")
+// 美化的控制台输出 - 显示扩展信息
+console.log(
+  `%c🚀 API Proxy Tool %c| %cVersion: v1.4.13 %c| %cAuthor: Jsmond2016`,
+  "color: #1890ff; font-weight: bold; font-size: 14px;",
+  "color: #666;",
+  "color: #52c41a; font-weight: bold;",
+  "color: #666;",
+  "color: #722ed1; font-weight: bold;"
+)
+console.log(
+  `%c📦 GitHub: %chttps://github.com/Jsmond2016/api_proxy_tool_ext`,
+  "color: #666;",
+  "color: #1890ff; text-decoration: underline;"
+)
+console.log(
+  `%c🎯 Background script loaded successfully!`,
+  "color: #52c41a; font-weight: bold;"
+)
 
 // 存储配置
 let globalConfig: GlobalConfig = {
@@ -173,22 +190,17 @@ async function updateIcon(enabled: boolean) {
   try {
     // 使用正确的32x32像素图标文件
     const iconPath = enabled ? "icon-128.png" : "dev-icon-128.png"
-    console.log(`Attempting to update icon to: ${iconPath}`)
-    
-    // 使用chrome.runtime.getURL获取完整的图标路径
-    const fullIconPath = chrome.runtime.getURL(iconPath)
-    console.log(`Full icon path: ${fullIconPath}`)
-    
     await chrome.action.setIcon({
       path: {
-        "32": iconPath
-      }
+        "32": iconPath,
+      },
     })
-    
-    console.log(`Icon successfully updated to: ${iconPath}`)
   } catch (error) {
     console.error("Failed to update icon:", error)
-    console.error("Error details:", error instanceof Error ? error.message : String(error))
+    console.error(
+      "Error details:",
+      error instanceof Error ? error.message : String(error)
+    )
   }
 }
 

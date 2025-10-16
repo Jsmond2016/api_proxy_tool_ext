@@ -25,11 +25,7 @@
     "declarativeNetRequestFeedback",
     "tabs"
   ],
-  "host_permissions": [
-    "http://*/*",
-    "https://*/*",
-    "<all_urls>"
-  ],
+  "host_permissions": ["http://*/*", "https://*/*", "<all_urls>"],
   "background": {
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
@@ -44,5 +40,8 @@
       ],
       "matches": []
     }
-  ]
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self'; connect-src 'self' https://github.com;"
+  }
 }
