@@ -22,8 +22,7 @@
     "activeTab",
     "storage",
     "declarativeNetRequest",
-    "declarativeNetRequestFeedback",
-    "tabs"
+    "declarativeNetRequestFeedback"
   ],
   "host_permissions": ["http://*/*", "https://*/*", "<all_urls>"],
   "background": {

@@ -268,7 +268,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 // 处理扩展图标点击事件
 chrome.action.onClicked.addListener((tab) => {
-  // 打开新标签页到配置页面
+  // 使用 activeTab 权限打开新标签页到配置页面
   chrome.tabs.create({
     url: chrome.runtime.getURL("src/pages/options/index.html"),
   })
