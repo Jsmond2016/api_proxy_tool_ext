@@ -1,0 +1,36 @@
+---
+alwaysApply: true
+---
+
+# API Proxy Tool - Chrome Extension
+
+## 项目概述
+这是一个基于现代前端技术栈开发的 Chrome 扩展，主要用于前端开发中的 API 接口代理和 Mock 数据管理。
+
+## 技术栈
+- React 18.3.1 + TypeScript 5.8.3
+- Ant Design 5.26.5 + TailwindCSS 4.1.8
+- Vite 6.3.5 + Chrome Extension Manifest V3
+- Zustand 5.0.8 + ahooks 3.9.0 + ramda 0.31.3
+
+## 开发规范
+- 优先使用 Ant Design 组件进行 UI 开发
+- 使用 TypeScript 确保类型安全
+- 遵循 React 函数式组件和 Hooks 模式
+- 使用 TailwindCSS 进行样式定制
+- 保持代码简洁、可读性强
+
+## 项目结构
+- `src/pages/options/`: 扩展配置页面
+- `src/components/`: 可复用组件
+- `src/utils/`: 工具函数
+- `src/types/`: TypeScript 类型定义
+- `src/store/`: 状态管理
+
+## AI 助手指导
+当协助开发时，请：
+1. 优先使用 Ant Design 组件
+2. 使用 TypeScript 类型定义
+3. 遵循 React 最佳实践
+4. 保持代码简洁和可维护性
+5. 注重用户体验和界面设计
