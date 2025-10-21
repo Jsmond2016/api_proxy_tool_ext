@@ -41,6 +41,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self'; connect-src 'self' https://github.com;"
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-src 'self'; connect-src 'self' *;"
   }
 }
