@@ -1,8 +1,9 @@
 import { ApiConfig, GlobalConfig } from "../../types"
+import packageJson from "../../../package.json"
 
 // 美化的控制台输出 - 显示扩展信息
 console.log(
-  `%c🚀 API Proxy Tool %c| %cVersion: v1.4.13 %c| %cAuthor: Jsmond2016`,
+  `%c🚀 API Proxy Tool %c| %cVersion: v${packageJson.version} %c| %cAuthor: Jsmond2016`,
   "color: #1890ff; font-weight: bold; font-size: 14px;",
   "color: #666;",
   "color: #52c41a; font-weight: bold;",
@@ -11,6 +12,20 @@ console.log(
 )
 console.log(
   `%c📦 GitHub: %chttps://github.com/Jsmond2016/api_proxy_tool_ext`,
+  "color: #666;",
+  "color: #1890ff; text-decoration: underline;"
+)
+// 安装地址：
+// chrome-https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak
+// edge-'https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN'
+
+console.log(
+  `%c🔗 Chrome Web Store: %chttps://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak`,
+  "color: #666;",
+  "color: #1890ff; text-decoration: underline;"
+)
+console.log(
+  `%c🔗 Edge Add-ons: %chttps://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN`,
   "color: #666;",
   "color: #1890ff; text-decoration: underline;"
 )
