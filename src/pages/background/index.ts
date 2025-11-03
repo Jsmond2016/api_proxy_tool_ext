@@ -3,6 +3,7 @@ import {
   GlobalConfig,
   BackgroundMessage,
   BackgroundMessageResponse,
+  BackgroundMessageAction,
 } from "../../types"
 import {
   getDefaultGlobalConfig,
@@ -358,95 +359,114 @@ async function handleUpdateIcon(
 
 /**
  * 消息处理器
+ * 注意：对于异步操作，必须立即返回 true 以保持消息通道开放
  */
-async function handleMessage(
+function handleMessage(
   request: BackgroundMessage,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: BackgroundMessageResponse) => void
-): Promise<boolean> {
-  try {
-    let response: BackgroundMessageResponse
-
-    switch (request.action) {
-      case "getConfig":
-        response = handleGetConfig()
-        sendResponse(response)
-        break
-
-      case "updateConfig":
-        if (!request.config) {
-          response = { success: false, error: ERROR_MESSAGES.CONFIG_REQUIRED }
-          sendResponse(response)
-          break
-        }
-        response = await handleUpdateConfig(request.config)
-        sendResponse(response)
-        break
-
-      case "toggleGlobal":
-        if (request.enabled === undefined) {
-          response = {
-            success: false,
-            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
-          }
-          sendResponse(response)
-          break
-        }
-        response = await handleToggleGlobal(request.enabled)
-        sendResponse(response)
-        break
-
-      case "toggleModule":
-        if (!request.moduleId || request.enabled === undefined) {
-          response = {
-            success: false,
-            error: ERROR_MESSAGES.MODULE_ID_AND_ENABLED_REQUIRED,
-          }
-          sendResponse(response)
-          break
-        }
-        response = await handleToggleModule(request.moduleId, request.enabled)
-        sendResponse(response)
-        break
-
-      case "toggleApi":
-        if (!request.apiId || request.enabled === undefined) {
-          response = {
-            success: false,
-            error: ERROR_MESSAGES.API_ID_AND_ENABLED_REQUIRED,
-          }
-          sendResponse(response)
-          break
-        }
-        response = await handleToggleApi(request.apiId, request.enabled)
-        sendResponse(response)
-        break
-
-      case "updateIcon":
-        if (request.enabled === undefined) {
-          response = {
-            success: false,
-            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
-          }
-          sendResponse(response)
-          break
-        }
-        response = await handleUpdateIcon(request.enabled)
-        sendResponse(response)
-        break
-
-      default:
-        response = { success: false, error: ERROR_MESSAGES.UNKNOWN_ACTION }
-        sendResponse(response)
+): boolean {
+  // 处理同步操作
+  if (request.action === BackgroundMessageAction.GET_CONFIG) {
+    try {
+      const response = handleGetConfig()
+      sendResponse(response)
+      return false // 同步操作，不需要保持通道开放
+    } catch (error) {
+      Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
+      sendResponse({
+        success: false,
+        error:
+          error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+      })
+      return false
     }
-  } catch (error) {
-    Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
-    sendResponse({
-      success: false,
-      error:
-        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
-    })
   }
+
+  // 处理异步操作 - 立即返回 true 保持通道开放
+  ;(async () => {
+    try {
+      let response: BackgroundMessageResponse
+
+      switch (request.action) {
+        case BackgroundMessageAction.UPDATE_CONFIG:
+          if (!request.config) {
+            response = {
+              success: false,
+              error: ERROR_MESSAGES.CONFIG_REQUIRED,
+            }
+            sendResponse(response)
+            return
+          }
+          response = await handleUpdateConfig(request.config)
+          sendResponse(response)
+          break
+
+        case BackgroundMessageAction.TOGGLE_GLOBAL:
+          if (request.enabled === undefined) {
+            response = {
+              success: false,
+              error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+            }
+            sendResponse(response)
+            return
+          }
+          response = await handleToggleGlobal(request.enabled)
+          sendResponse(response)
+          break
+
+        case BackgroundMessageAction.TOGGLE_MODULE:
+          if (!request.moduleId || request.enabled === undefined) {
+            response = {
+              success: false,
+              error: ERROR_MESSAGES.MODULE_ID_AND_ENABLED_REQUIRED,
+            }
+            sendResponse(response)
+            return
+          }
+          response = await handleToggleModule(request.moduleId, request.enabled)
+          sendResponse(response)
+          break
+
+        case BackgroundMessageAction.TOGGLE_API:
+          if (!request.apiId || request.enabled === undefined) {
+            response = {
+              success: false,
+              error: ERROR_MESSAGES.API_ID_AND_ENABLED_REQUIRED,
+            }
+            sendResponse(response)
+            return
+          }
+          response = await handleToggleApi(request.apiId, request.enabled)
+          sendResponse(response)
+          break
+
+        case BackgroundMessageAction.UPDATE_ICON:
+          if (request.enabled === undefined) {
+            response = {
+              success: false,
+              error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+            }
+            sendResponse(response)
+            return
+          }
+          response = await handleUpdateIcon(request.enabled)
+          sendResponse(response)
+          break
+
+        default:
+          response = { success: false, error: ERROR_MESSAGES.UNKNOWN_ACTION }
+          sendResponse(response)
+      }
+    } catch (error) {
+      Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
+      sendResponse({
+        success: false,
+        error:
+          error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+      })
+    }
+  })()
 
   return true // 保持消息通道开放以支持异步响应
 }
