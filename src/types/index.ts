@@ -73,13 +73,14 @@ export interface ImportExportFormat {
 export * from "./permission"
 
 // Background Script 消息类型
-export type BackgroundMessageAction =
-  | "getConfig"
-  | "updateConfig"
-  | "toggleGlobal"
-  | "toggleModule"
-  | "toggleApi"
-  | "updateIcon"
+export enum BackgroundMessageAction {
+  GET_CONFIG = "getConfig",
+  UPDATE_CONFIG = "updateConfig",
+  TOGGLE_GLOBAL = "toggleGlobal",
+  TOGGLE_MODULE = "toggleModule",
+  TOGGLE_API = "toggleApi",
+  UPDATE_ICON = "updateIcon",
+}
 
 export interface BackgroundMessage {
   action: BackgroundMessageAction
