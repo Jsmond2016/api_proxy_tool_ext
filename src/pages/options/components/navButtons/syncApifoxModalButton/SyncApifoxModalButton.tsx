@@ -67,7 +67,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   }
 
   // 执行同步操作
-  const performSync = (newModules: ModuleConfig[]) => {
+  const performSync = (newModules: ModuleConfig[], showMessage = true) => {
     // 使用函数式更新，自动获取最新 state，避免闭包问题
     setConfig((prev) => {
       const newConfig = {
@@ -82,15 +82,20 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       setActiveModuleId(newModules[0].id)
     }
 
-    message.success(`成功同步 ${newModules.length} 个模块`)
+    if (showMessage) {
+      message.success(`成功同步 ${newModules.length} 个模块`)
+    }
   }
 
   // 智能同步 Apifox 模块
-  const syncApifoxModules = (newModules: ModuleConfig[]) => {
+  const syncApifoxModules = (
+    newModules: ModuleConfig[],
+    showMessage = true
+  ) => {
     const apifoxUrl = config.apifoxConfig?.apifoxUrl
     if (!apifoxUrl) {
       // 没有配置，直接添加（首次设置场景）
-      performSync(newModules)
+      performSync(newModules, showMessage)
       return
     }
 
@@ -101,7 +106,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
     // 如果是首次设置（没有旧模块），直接添加
     if (oldApifoxModules.length === 0) {
-      performSync(newModules)
+      performSync(newModules, showMessage)
       return
     }
 
@@ -127,7 +132,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     })
   }
 
-  // 替换 Apifox 模块
+  // 替换 Apifox 模块（全量替换，不检测变化）
   const replaceApifoxModules = (
     oldModules: ModuleConfig[],
     newModules: ModuleConfig[]
@@ -153,7 +158,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       setActiveModuleId(newModules[0].id)
     }
 
-    message.success(`成功更新 ${newModules.length} 个模块`)
+    message.success(`成功修改配置并更新 ${newModules.length} 个模块`)
   }
 
   // 处理刷新 Apifox 接口
@@ -249,10 +254,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
               danger
               onClick={() => {
                 modal.destroy()
-                // 检查是否有模块有 mock 数据
-                if (checkMockDataAndConfirm()) {
-                  setSyncApifoxModalVisible(true)
-                }
+                // 用户已经选择修改设置，直接打开弹框
+                setSyncApifoxModalVisible(true)
               }}
             >
               修改设置
@@ -280,13 +283,30 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       return newConfig
     })
 
-    message.success("Apifox 配置已保存")
+    // 注意：不在这里显示成功提示，由 handleSyncApifox 统一显示
   }
 
   // 处理同步Apifox接口（从弹窗）
   const handleSyncApifox = (newModules: ModuleConfig[]) => {
     try {
-      syncApifoxModules(newModules)
+      const apifoxUrl = config.apifoxConfig?.apifoxUrl
+      // 找出旧的 Apifox 模块
+      const oldApifoxModules = config.modules.filter(
+        (m) => m.apiDocUrl === apifoxUrl
+      )
+
+      // 判断是否为首次设置（没有旧模块）
+      const isFirstSetup = oldApifoxModules.length === 0
+
+      if (isFirstSetup) {
+        // 首次设置：直接添加模块
+        performSync(newModules, false)
+        message.success(`成功保存配置并同步 ${newModules.length} 个模块`)
+      } else {
+        // 修改配置：全量替换旧模块，不检测变化
+        replaceApifoxModules(oldApifoxModules, newModules)
+      }
+
       setSyncApifoxModalVisible(false)
     } catch (error) {
       console.error("同步失败:", error)
