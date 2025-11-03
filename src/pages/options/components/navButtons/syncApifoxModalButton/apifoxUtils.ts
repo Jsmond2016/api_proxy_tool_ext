@@ -5,6 +5,7 @@ import { generateId } from "@src/utils/chromeApi"
  * 解析后的 API 类型
  */
 export interface ParsedApi {
+  apiId: string
   path: string
   method: string
   summary: string
@@ -51,24 +52,34 @@ export const convertParsedApisToModules = (
     dataWrapper: "",
     pageDomain: "",
     requestHeaders: "",
-    apiArr: apis.map((api) => ({
-      id: generateId(),
-      apiKey: api.path,
-      apiName: api.summary,
-      apiUrl: api.path,
-      redirectURL: `${apifoxConfig.mockPrefix}${api.path}`,
-      method: api.method as any,
-      filterType: "contains" as const,
-      delay: 0,
-      isOpen: true,
-      mockWay: "redirect" as const,
-      statusCode: 200,
-      arrDepth: 4,
-      arrLength: 3,
-      mockResponseData: "",
-      requestBody: "",
-      requestHeaders: "",
-    })),
+    apiArr: apis.map((api) => {
+      // 使用 Apifox 的 apiId 作为唯一标识，如果不存在则生成新ID
+      const finalId = api.apiId || generateId()
+      console.log(
+        `🔑 转换接口: ${api.summary}, 使用ID: ${finalId}, 来源: ${
+          api.apiId ? "Apifox" : "生成"
+        }`
+      )
+
+      return {
+        id: finalId,
+        apiKey: api.path,
+        apiName: api.summary,
+        apiUrl: api.path,
+        redirectURL: `${apifoxConfig.mockPrefix}${api.path}`,
+        method: api.method as any,
+        filterType: "contains" as const,
+        delay: 0,
+        isOpen: true,
+        mockWay: "redirect" as const,
+        statusCode: 200,
+        arrDepth: 4,
+        arrLength: 3,
+        mockResponseData: "",
+        requestBody: "",
+        requestHeaders: "",
+      }
+    }),
   }))
 }
 
@@ -80,12 +91,17 @@ export const parseSwaggerData = (
   selectedTags: string[]
 ): ParsedApi[] => {
   const apis: ParsedApi[] = []
+  console.log("swaggerData", swaggerData)
 
   Object.entries(swaggerData.paths).forEach(([path, methods]) => {
     Object.entries(methods).forEach(([method, apiInfo]) => {
       if (typeof apiInfo === "object" && apiInfo !== null) {
         const tags = apiInfo.tags || []
         const summary = apiInfo.summary || `${method.toUpperCase()} ${path}`
+        const xApifoxRunUrl = apiInfo["x-run-in-apifox"]
+        // eg: x-run-in-apifox: "https://apifox.com/web/project/3155205/apis/api-102913012-run"
+        // 提取中间的数字部分作为 apiId（如 102913012）
+        const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
 
         // 检查是否匹配选中的tags
         const hasMatchingTag =
@@ -104,6 +120,7 @@ export const parseSwaggerData = (
             summary,
             tags,
             groupName,
+            apiId,
           })
         }
       }
