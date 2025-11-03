@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { Modal, Form, Input, Select, Button, message, Spin, Alert } from "antd"
 import { GlobalConfig, ModuleConfig, ApiConfig } from "../../../../../types"
-import { generateId } from "../../../../../utils/chromeApi"
+import {
+  convertParsedApisToModules,
+  parseSwaggerData as parseSwaggerDataUtil,
+  type ParsedApi,
+  type SwaggerData,
+} from "./apifoxUtils"
 
 const { TextArea } = Input
 
@@ -9,26 +14,12 @@ interface SyncApifoxModalProps {
   visible: boolean
   onCancel: () => void
   onOk: (modules: ModuleConfig[]) => void
+  onSaveConfig?: (apifoxConfig: {
+    apifoxUrl: string
+    mockPrefix: string
+    selectedTags?: string[]
+  }) => void
   config: GlobalConfig
-}
-
-interface SwaggerData {
-  openapi: string
-  info: {
-    title: string
-    description: string
-    version: string
-  }
-  tags: Array<{ name: string }>
-  paths: Record<string, Record<string, any>>
-}
-
-interface ParsedApi {
-  path: string
-  method: string
-  summary: string
-  tags: string[]
-  groupName: string
 }
 
 const MOCK_PREFIX = "http://127.0.0.1:4523/m1/3155205-1504204-default"
@@ -40,6 +31,7 @@ export default function SyncApifoxModal({
   visible,
   onCancel,
   onOk,
+  onSaveConfig,
   config,
 }: SyncApifoxModalProps) {
   const [form] = Form.useForm()
@@ -103,39 +95,8 @@ export default function SyncApifoxModal({
   const parseSwaggerData = (
     swaggerData: SwaggerData,
     selectedTags: string[]
-  ) => {
-    const apis: ParsedApi[] = []
-
-    Object.entries(swaggerData.paths).forEach(([path, methods]) => {
-      Object.entries(methods).forEach(([method, apiInfo]) => {
-        if (typeof apiInfo === "object" && apiInfo !== null) {
-          const tags = apiInfo.tags || []
-          const summary = apiInfo.summary || `${method.toUpperCase()} ${path}`
-
-          // 检查是否匹配选中的tags
-          const hasMatchingTag =
-            selectedTags.length === 0 ||
-            tags.some((tag: string) => selectedTags.includes(tag))
-
-          if (hasMatchingTag) {
-            // 获取分组名，优先使用x-apifox-fe-general-model-base-action-type
-            const groupName =
-              apiInfo["x-apifox-fe-general-model-base-action-type"] ||
-              (tags.length > 0 ? tags[0] : "默认分组")
-
-            apis.push({
-              path,
-              method: method.toUpperCase(),
-              summary,
-              tags,
-              groupName,
-            })
-          }
-        }
-      })
-    })
-
-    return apis
+  ): ParsedApi[] => {
+    return parseSwaggerDataUtil(swaggerData, selectedTags)
   }
 
   // 检测冲突
@@ -204,53 +165,23 @@ export default function SyncApifoxModal({
       return
     }
 
-    // 按分组名分组APIs
-    const groupedApis = parsedApis.reduce((groups, api) => {
-      if (!groups[api.groupName]) {
-        groups[api.groupName] = []
-      }
-      groups[api.groupName].push(api)
-      return groups
-    }, {} as Record<string, ParsedApi[]>)
+    const apifoxUrl = form.getFieldValue("apifoxUrl")
+    const mockPrefix = form.getFieldValue("mockPrefix") || MOCK_PREFIX
 
-    // 转换为ModuleConfig格式
-    const newModules: ModuleConfig[] = Object.entries(groupedApis).map(
-      ([groupName, apis]) => {
-        const mockPrefix = form.getFieldValue("mockPrefix") || MOCK_PREFIX
+    // 保存配置
+    if (onSaveConfig) {
+      onSaveConfig({
+        apifoxUrl,
+        mockPrefix,
+        selectedTags: selectedTags.length > 0 ? selectedTags : undefined,
+      })
+    }
 
-        return {
-          id: generateId(),
-          apiDocKey: groupName.toLowerCase().replace(/\s+/g, "."),
-          label: groupName,
-          apiDocUrl: form.getFieldValue("apifoxUrl"),
-          dataWrapper: "",
-          pageDomain: "",
-          requestHeaders: "",
-          apiArr: apis.map((api) => {
-            // 从 Apifox 地址中提取基础 URL
-
-            return {
-              id: generateId(),
-              apiKey: api.path,
-              apiName: api.summary,
-              apiUrl: `${api.path}`,
-              redirectURL: `${mockPrefix}${api.path}`,
-              method: api.method as any,
-              filterType: "contains",
-              delay: 0,
-              isOpen: true,
-              mockWay: "redirect",
-              statusCode: 200,
-              arrDepth: 4,
-              arrLength: 3,
-              mockResponseData: "",
-              requestBody: "",
-              requestHeaders: "",
-            }
-          }),
-        }
-      }
-    )
+    // 转换为 ModuleConfig 格式
+    const newModules = convertParsedApisToModules(parsedApis, {
+      apifoxUrl,
+      mockPrefix,
+    })
 
     onOk(newModules)
     resetForm()
@@ -262,12 +193,33 @@ export default function SyncApifoxModal({
     onCancel()
   }
 
-  // 监听弹框显示状态
+  // 监听弹框显示状态，加载已保存的配置
   useEffect(() => {
-    if (!visible) {
+    if (visible) {
+      // 如果有已保存的配置，加载到表单
+      if (config.apifoxConfig) {
+        form.setFieldsValue({
+          apifoxUrl: config.apifoxConfig.apifoxUrl,
+          mockPrefix: config.apifoxConfig.mockPrefix,
+        })
+        setSelectedTags(config.apifoxConfig.selectedTags || [])
+        // 自动验证并加载数据
+        if (config.apifoxConfig.apifoxUrl) {
+          validateApifoxUrl(config.apifoxConfig.apifoxUrl).catch((error) => {
+            console.error("Failed to validate Apifox URL:", error)
+          })
+        }
+      } else {
+        // 使用默认值
+        form.setFieldsValue({
+          mockPrefix: MOCK_PREFIX,
+        })
+      }
+    } else {
       resetForm()
     }
-  }, [visible])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, config.apifoxConfig?.apifoxUrl])
 
   return (
     <Modal

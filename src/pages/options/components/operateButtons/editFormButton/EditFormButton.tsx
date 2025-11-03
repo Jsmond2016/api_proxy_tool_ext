@@ -1,4 +1,4 @@
-import { PlusOutlined } from "@ant-design/icons"
+import { EditOutlined, PlusOutlined } from "@ant-design/icons"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { ApiConfig } from "@src/types"
 import { saveConfig } from "@src/utils/configUtil"
@@ -49,7 +49,7 @@ const EditFormButton = ({ apiId }: { apiId: string }) => {
     <>
       <Button
         type="link"
-        icon={<PlusOutlined />}
+        icon={<EditOutlined />}
         onClick={() => {
           handleEditApi(apiId)
         }}

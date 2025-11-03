@@ -30,10 +30,18 @@ export interface ModuleConfig {
   apiArr: ApiConfig[]
 }
 
+// Apifox 配置类型
+export interface ApifoxConfig {
+  apifoxUrl: string
+  mockPrefix: string
+  selectedTags?: string[]
+}
+
 // 全局配置类型
 export interface GlobalConfig {
   isGlobalEnabled: boolean
   modules: ModuleConfig[]
+  apifoxConfig?: ApifoxConfig
 }
 
 // 搜索和筛选类型

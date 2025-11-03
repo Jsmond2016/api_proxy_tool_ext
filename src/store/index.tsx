@@ -2,18 +2,32 @@ import { GlobalConfig } from "@src/types"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
+// 配置更新类型：支持直接传值或函数式更新
+type SetConfigAction =
+  | GlobalConfig
+  | ((prevConfig: GlobalConfig) => GlobalConfig)
+
 // 配置 Store - 使用 Chrome Storage 持久化
 export const useConfigStore = create<{
   config: GlobalConfig
-  setConfig: (config: GlobalConfig) => void
+  setConfig: (configOrUpdater: SetConfigAction) => void
 }>()(
   persist(
     (set, get) => ({
       config: {
         isGlobalEnabled: false,
         modules: [],
+        apifoxConfig: undefined,
       },
-      setConfig: (config: GlobalConfig) => set({ config }),
+      setConfig: (configOrUpdater: SetConfigAction) => {
+        // 利用 Zustand 原生的函数式更新能力
+        set((state) => ({
+          config:
+            typeof configOrUpdater === "function"
+              ? configOrUpdater(state.config)
+              : configOrUpdater,
+        }))
+      },
     }),
     {
       name: "config-storage",
@@ -43,8 +57,10 @@ export const useConfigStore = create<{
           }
         },
       },
-      // 只持久化 config 数据，不持久化 loading 和 error 状态
+      // 只持久化 config 数据
       partialize: (state) => ({ config: state.config }),
+      // 禁用跨标签页同步，避免冲突
+      skipHydration: false,
     }
   )
 )
