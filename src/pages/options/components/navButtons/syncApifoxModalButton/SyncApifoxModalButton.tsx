@@ -7,7 +7,6 @@ import SyncApifoxModal from "./SyncApifoxModal"
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { saveConfig } from "@src/utils/configUtil"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
-import { isApiUrlDuplicate, isModuleLabelDuplicate } from "@src/utils/chromeApi"
 import { useOnlyHaveDefaultMockConfig } from "@src/hooks"
 import {
   SyncOutlined,
@@ -21,6 +20,8 @@ import {
   type ParsedApi,
   type SwaggerData,
 } from "./apifoxUtils"
+import { compareApifoxModules, hasChanges } from "./compareUtils"
+import { ChangeSummaryTable } from "./ChangeSummaryTable"
 
 type SyncApifoxModalComProps = {}
 
@@ -46,6 +47,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   const [refreshing, setRefreshing] = useState(false)
 
   const config = useConfigStore((state) => state.config)
+  console.log("config XXX==>>", config)
   const setConfig = useConfigStore((state) => state.setConfig)
   const { setActiveModuleId } = useActiveModuleIdStore()
 
@@ -82,48 +84,75 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     message.success(`成功同步 ${newModules.length} 个模块`)
   }
 
-  // 检查并处理重复项
-  const checkAndSync = (newModules: ModuleConfig[]) => {
-    const duplicateModules: string[] = []
-    const duplicateApis: string[] = []
-
-    // 检查模块标签是否重复
-    newModules.forEach((module) => {
-      if (isModuleLabelDuplicate(config.modules, module.label)) {
-        duplicateModules.push(module.label)
-      }
-
-      // 检查API URL是否重复
-      module.apiArr.forEach((api) => {
-        if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
-          duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
-        }
-      })
-    })
-
-    // 显示重复项警告
-    if (duplicateModules.length > 0 || duplicateApis.length > 0) {
-      let warningMessage = "发现重复项：\n"
-      if (duplicateModules.length > 0) {
-        warningMessage += `重复的模块: ${duplicateModules.join(", ")}\n`
-      }
-      if (duplicateApis.length > 0) {
-        warningMessage += `重复的接口: ${duplicateApis.join(", ")}\n`
-      }
-      warningMessage += "这些重复项将被跳过，是否继续同步？"
-
-      Modal.confirm({
-        title: "发现重复项",
-        content: warningMessage,
-        onOk() {
-          performSync(newModules)
-        },
-      })
+  // 智能同步 Apifox 模块
+  const syncApifoxModules = (newModules: ModuleConfig[]) => {
+    const apifoxUrl = config.apifoxConfig?.apifoxUrl
+    if (!apifoxUrl) {
+      // 没有配置，直接添加（首次设置场景）
+      performSync(newModules)
       return
     }
 
-    // 没有重复项，直接同步
-    performSync(newModules)
+    // 找出旧的 Apifox 模块（通过 apiDocUrl 识别）
+    const oldApifoxModules = config.modules.filter(
+      (m) => m.apiDocUrl === apifoxUrl
+    )
+
+    // 如果是首次设置（没有旧模块），直接添加
+    if (oldApifoxModules.length === 0) {
+      performSync(newModules)
+      return
+    }
+
+    // 刷新场景：对比变化
+    const changes = compareApifoxModules(oldApifoxModules, newModules)
+
+    // 如果没有变化
+    if (!hasChanges(changes)) {
+      message.info("接口无变化")
+      return
+    }
+
+    // 显示变化摘要，让用户确认
+    Modal.confirm({
+      title: "检测到 Apifox 接口变化",
+      content: <ChangeSummaryTable changes={changes} />,
+      width: 1400,
+      okText: "确认更新",
+      cancelText: "取消",
+      onOk() {
+        replaceApifoxModules(oldApifoxModules, newModules)
+      },
+    })
+  }
+
+  // 替换 Apifox 模块
+  const replaceApifoxModules = (
+    oldModules: ModuleConfig[],
+    newModules: ModuleConfig[]
+  ) => {
+    setConfig((prev) => {
+      // 过滤掉旧的 Apifox 模块
+      const otherModules = prev.modules.filter(
+        (m) => !oldModules.find((old) => old.id === m.id)
+      )
+
+      // 添加新模块
+      const newConfig = {
+        ...prev,
+        modules: [...otherModules, ...newModules],
+      }
+
+      saveConfig(newConfig)
+      return newConfig
+    })
+
+    // 设置激活模块
+    if (newModules.length > 0) {
+      setActiveModuleId(newModules[0].id)
+    }
+
+    message.success(`成功更新 ${newModules.length} 个模块`)
   }
 
   // 处理刷新 Apifox 接口
@@ -157,8 +186,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       // 转换为 ModuleConfig 格式
       const newModules = convertParsedApisToModules(parsedApis, apifoxConfig)
 
-      // 检查并同步
-      checkAndSync(newModules)
+      // 智能同步
+      syncApifoxModules(newModules)
     } catch (error) {
       console.error("刷新失败:", error)
       message.error(
@@ -195,7 +224,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   // 处理同步Apifox接口（从弹窗）
   const handleSyncApifox = (newModules: ModuleConfig[]) => {
     try {
-      checkAndSync(newModules)
+      syncApifoxModules(newModules)
       setSyncApifoxModalVisible(false)
     } catch (error) {
       console.error("同步失败:", error)

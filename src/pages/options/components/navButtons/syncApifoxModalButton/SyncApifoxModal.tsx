@@ -35,7 +35,6 @@ export default function SyncApifoxModal({
   config,
 }: SyncApifoxModalProps) {
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
   const [validating, setValidating] = useState(false)
   const [swaggerData, setSwaggerData] = useState<SwaggerData | null>(null)
   const [availableTags, setAvailableTags] = useState<string[]>([])
