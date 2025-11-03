@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 
-import { Dropdown, Button, message, Modal, Space } from "antd"
+import { Dropdown, Button, message, Modal, Space, Alert } from "antd"
+import { InfoCircleOutlined } from "@ant-design/icons"
 import type { MenuProps } from "antd"
 
 import SyncApifoxModal from "./SyncApifoxModal"
@@ -200,9 +201,70 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
   // 处理设置配置
   const handleOpenSettings = () => {
-    // 检查是否有模块有 mock 数据
-    if (checkMockDataAndConfirm()) {
-      setSyncApifoxModalVisible(true)
+    // 如果已有 Apifox 配置，提示用户选择刷新还是修改配置
+    if (config.apifoxConfig?.apifoxUrl) {
+      const modal = Modal.warning({
+        title: "选择操作",
+        icon: <InfoCircleOutlined />,
+        closable: true,
+        maskClosable: true,
+        onCancel: () => {
+          modal.destroy()
+        },
+        content: (
+          <div className="space-y-3">
+            <p>检测到已有 Apifox 配置：</p>
+            <ul className="list-disc list-inside space-y-1 text-gray-600">
+              <li>
+                如果只是<strong>接口内容变化</strong>（增删改接口），请点击
+                <strong className="text-blue-600">「刷新接口」</strong>
+              </li>
+              <li>
+                如果需要<strong>修改配置</strong>（修改 URL、Mock 前缀、选择的
+                tags），请点击
+                <strong className="text-orange-600">「修改设置」</strong>
+              </li>
+              <li>
+                <InfoCircleOutlined className="text-blue-600" /> 温馨提示:
+                如果修改设置，
+                <span className="font-bold">记得备份当前数据</span>
+                ：点击<span className="font-bold">导出</span>即可备份当前
+                mock-api-json 文件
+              </li>
+            </ul>
+          </div>
+        ),
+        footer: (
+          <div className="flex justify-end gap-2">
+            <Button
+              onClick={() => {
+                modal.destroy()
+                handleRefreshApifox()
+              }}
+            >
+              刷新接口
+            </Button>
+            <Button
+              type="primary"
+              danger
+              onClick={() => {
+                modal.destroy()
+                // 检查是否有模块有 mock 数据
+                if (checkMockDataAndConfirm()) {
+                  setSyncApifoxModalVisible(true)
+                }
+              }}
+            >
+              修改设置
+            </Button>
+          </div>
+        ),
+      })
+    } else {
+      // 首次设置，检查是否有模块有 mock 数据
+      if (checkMockDataAndConfirm()) {
+        setSyncApifoxModalVisible(true)
+      }
     }
   }
 
