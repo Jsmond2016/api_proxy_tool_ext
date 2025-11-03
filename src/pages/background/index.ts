@@ -1,285 +1,460 @@
-import { ApiConfig, GlobalConfig } from "../../types"
-import packageJson from "../../../package.json"
+import {
+  ApiConfig,
+  GlobalConfig,
+  BackgroundMessage,
+  BackgroundMessageResponse,
+} from "../../types"
+import {
+  getDefaultGlobalConfig,
+  LOG_MESSAGES,
+  ERROR_MESSAGES,
+} from "../../constant/constant"
+import { Logger } from "../../utils/logger"
+
+// ==================== 常量定义 ====================
+
+/** 规则优先级 */
+const RULE_PRIORITY = 1
+
+/** 规则ID起始值 */
+const RULE_ID_START = 1
+
+/** 图标路径配置 */
+const ICON_PATHS = {
+  enabled: "icon-32.png",
+  disabled: "dev-icon-32.png",
+} as const
+
+/** Storage 键名 */
+const STORAGE_KEY = "globalConfig"
+
+// ==================== 控制台输出 ====================
 
 // 美化的控制台输出 - 显示扩展信息
-console.log(
-  `%c🚀 API Proxy Tool %c| %cVersion: v${packageJson.version} %c| %cAuthor: Jsmond2016`,
-  "color: #1890ff; font-weight: bold; font-size: 14px;",
-  "color: #666;",
-  "color: #52c41a; font-weight: bold;",
-  "color: #666;",
-  "color: #722ed1; font-weight: bold;"
-)
-console.log(
-  `%c📦 GitHub: %chttps://github.com/Jsmond2016/api_proxy_tool_ext`,
-  "color: #666;",
-  "color: #1890ff; text-decoration: underline;"
-)
-// 安装地址：
-// chrome-https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak
-// edge-'https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN'
+Logger.logExtensionInfo()
 
-console.log(
-  `%c🔗 Chrome Web Store: %chttps://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak`,
-  "color: #666;",
-  "color: #1890ff; text-decoration: underline;"
-)
-console.log(
-  `%c🔗 Edge Add-ons: %chttps://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN`,
-  "color: #666;",
-  "color: #1890ff; text-decoration: underline;"
-)
-console.log(
-  `%c🎯 Background script loaded successfully!`,
-  "color: #52c41a; font-weight: bold;"
-)
+// ==================== 全局状态 ====================
 
-// 存储配置
-let globalConfig: GlobalConfig = {
-  isGlobalEnabled: false,
-  modules: [
-    {
-      id: "default-module",
-      apiDocKey: "default.module",
-      label: "demo.default",
-      apiDocUrl: "",
-      dataWrapper: "",
-      pageDomain: "",
-      requestHeaders: "",
-      apiArr: [
-        {
-          id: "example-api-1",
-          apiKey: "/api/example",
-          apiName: "示例接口",
-          apiUrl: "http://localhost:3000/api/example",
-          redirectURL: "http://127.0.0.1:4523/mock/api/example",
-          method: "GET",
-          filterType: "contains",
-          delay: 0,
-          isOpen: false,
-          mockWay: "redirect",
-          statusCode: 200,
-          arrDepth: 4,
-          arrLength: 3,
-          mockResponseData: "",
-          requestBody: "",
-          requestHeaders: "",
-        },
-      ],
-    },
-  ],
-}
+/** 存储配置 */
+let globalConfig: GlobalConfig = getDefaultGlobalConfig()
 
-// 从storage加载配置
-async function loadConfig() {
+// ==================== 配置管理 ====================
+
+/**
+ * 从 storage 加载配置
+ */
+async function loadConfig(): Promise<void> {
   try {
-    const result = await chrome.storage.local.get(["globalConfig"])
-    if (result.globalConfig) {
-      globalConfig = result.globalConfig
+    const result = await chrome.storage.local.get([STORAGE_KEY])
+    if (result[STORAGE_KEY]) {
+      globalConfig = result[STORAGE_KEY] as GlobalConfig
     }
   } catch (error) {
-    console.error("Failed to load config:", error)
+    Logger.error(ERROR_MESSAGES.LOAD_CONFIG, error)
+    // 使用默认配置作为降级方案
+    globalConfig = getDefaultGlobalConfig()
   }
 }
 
-// 保存配置到storage
-async function saveConfig() {
+/**
+ * 保存配置到 storage
+ */
+async function saveConfig(): Promise<void> {
   try {
-    await chrome.storage.local.set({ globalConfig })
+    await chrome.storage.local.set({ [STORAGE_KEY]: globalConfig })
   } catch (error) {
-    console.error("Failed to save config:", error)
+    Logger.error(ERROR_MESSAGES.SAVE_CONFIG, error)
+    throw error
   }
 }
 
-// 检查URL是否匹配规则
-function matchesRule(url: string, apiConfig: ApiConfig): boolean {
-  if (!apiConfig.isOpen) return false
+// ==================== 规则管理 ====================
 
-  const targetUrl = apiConfig.apiUrl.toLowerCase()
-  const requestUrl = url.toLowerCase()
+/** 缓存上一次的规则签名，用于变更检测 */
+let lastRulesSignature: string | null = null
 
+/**
+ * 生成规则签名，用于检测变更
+ * @param rules 规则列表
+ * @returns 规则签名字符串
+ */
+function generateRulesSignature(
+  rules: chrome.declarativeNetRequest.Rule[]
+): string {
+  return JSON.stringify(
+    rules.map((rule) => ({
+      condition: rule.condition,
+      action: rule.action,
+    }))
+  )
+}
+
+/**
+ * 构建规则条件
+ * @param apiConfig API配置
+ * @returns 规则条件对象
+ */
+function buildRuleCondition(
+  apiConfig: ApiConfig
+): chrome.declarativeNetRequest.RuleCondition {
+  const condition: chrome.declarativeNetRequest.RuleCondition = {
+    resourceTypes: [chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST],
+  }
+
+  // 根据过滤类型设置匹配条件
   switch (apiConfig.filterType) {
     case "exact":
-      return requestUrl === targetUrl
+      condition.urlFilter = apiConfig.apiUrl
+      break
     case "contains":
-      return requestUrl.includes(targetUrl)
+      condition.urlFilter = `*${apiConfig.apiUrl}*`
+      break
     case "regex":
-      try {
-        const regex = new RegExp(targetUrl)
-        return regex.test(requestUrl)
-      } catch {
-        return false
-      }
+      condition.regexFilter = apiConfig.apiUrl
+      break
     default:
-      return false
+      throw new Error(`Unknown filter type: ${apiConfig.filterType}`)
   }
+
+  // 添加方法过滤
+  if (apiConfig.method) {
+    condition.requestMethods = [
+      apiConfig.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod,
+    ]
+  }
+
+  return condition
 }
 
-// 查找匹配的API配置
-function findMatchingApiConfig(url: string): ApiConfig | null {
-  for (const module of globalConfig.modules) {
-    for (const apiConfig of module.apiArr) {
-      if (matchesRule(url, apiConfig)) {
-        return apiConfig
-      }
-    }
-  }
-  return null
-}
-
-// 动态更新 declarativeNetRequest 规则
-async function updateDeclarativeRules() {
-  if (!globalConfig.isGlobalEnabled) {
-    // 清除所有规则
-    await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: await chrome.declarativeNetRequest
-        .getDynamicRules()
-        .then((rules) => rules.map((rule) => rule.id)),
-    })
-    return
-  }
-
-  const rules: chrome.declarativeNetRequest.Rule[] = []
-  let ruleId = 1
-
-  for (const module of globalConfig.modules) {
-    for (const apiConfig of module.apiArr) {
-      if (!apiConfig.isOpen) continue
-
-      // 构建匹配条件
-      let condition: any = {}
-
-      switch (apiConfig.filterType) {
-        case "exact":
-          condition.urlFilter = apiConfig.apiUrl
-          break
-        case "contains":
-          condition.urlFilter = `*${apiConfig.apiUrl}*`
-          break
-        case "regex":
-          condition.regexFilter = apiConfig.apiUrl
-          break
-        default:
-          continue
-      }
-
-      // 添加方法过滤
-      if (apiConfig.method) {
-        condition.requestMethods = [
-          apiConfig.method.toLowerCase() as chrome.declarativeNetRequest.RequestMethod,
-        ]
-      }
-
-      rules.push({
-        id: ruleId++,
-        priority: 1,
-        action: {
-          type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-          redirect: {
-            url: apiConfig.redirectURL,
-          },
-        },
-        condition: {
-          ...condition,
-          resourceTypes: [
-            chrome.declarativeNetRequest.ResourceType.XMLHTTPREQUEST,
-          ],
-        },
-      })
-    }
-  }
-
-  // 更新规则
-  await chrome.declarativeNetRequest.updateDynamicRules({
-    removeRuleIds: await chrome.declarativeNetRequest
-      .getDynamicRules()
-      .then((rules) => rules.map((rule) => rule.id)),
-    addRules: rules,
-  })
-
-  console.log(`Updated ${rules.length} declarative rules`)
-}
-
-// 更新扩展图标
-async function updateIcon(enabled: boolean) {
+/**
+ * 动态更新 declarativeNetRequest 规则
+ */
+async function updateDeclarativeRules(): Promise<void> {
   try {
-    // 使用正确的32x32像素图标文件
-    const iconPath = enabled ? "icon-128.png" : "dev-icon-128.png"
+    if (!globalConfig.isGlobalEnabled) {
+      // 清除所有规则
+      const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+      const ruleIds = existingRules.map((rule) => rule.id)
+
+      if (ruleIds.length > 0) {
+        await chrome.declarativeNetRequest.updateDynamicRules({
+          removeRuleIds: ruleIds,
+        })
+        // 清除规则签名缓存
+        lastRulesSignature = null
+        Logger.info(LOG_MESSAGES.RULES_REMOVED(ruleIds.length))
+      }
+      return
+    }
+
+    const rules: chrome.declarativeNetRequest.Rule[] = []
+    let ruleId = RULE_ID_START
+
+    // 遍历所有模块和API配置，构建规则
+    for (const module of globalConfig.modules) {
+      for (const apiConfig of module.apiArr) {
+        if (!apiConfig.isOpen) continue
+
+        try {
+          const condition = buildRuleCondition(apiConfig)
+
+          rules.push({
+            id: ruleId++,
+            priority: RULE_PRIORITY,
+            action: {
+              type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+              redirect: {
+                url: apiConfig.redirectURL,
+              },
+            },
+            condition,
+          })
+        } catch (error) {
+          Logger.error(
+            ERROR_MESSAGES.BUILD_RULE(apiConfig.apiName, apiConfig.id),
+            error
+          )
+          // 继续处理其他规则，不因单个规则失败而中断
+        }
+      }
+    }
+
+    // 生成规则签名用于变更检测
+    const newRulesSignature = generateRulesSignature(rules)
+
+    // 如果规则没有变化，跳过更新
+    if (lastRulesSignature === newRulesSignature) {
+      Logger.info(LOG_MESSAGES.RULES_UNCHANGED)
+      return
+    }
+
+    // 获取现有规则ID
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules()
+    const existingRuleIds = existingRules.map((rule) => rule.id)
+
+    // 更新规则
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: existingRuleIds,
+      addRules: rules,
+    })
+
+    // 更新规则签名缓存
+    lastRulesSignature = newRulesSignature
+    Logger.info(LOG_MESSAGES.RULES_UPDATED(rules.length))
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.UPDATE_RULES, error)
+    throw error
+  }
+}
+
+// ==================== 图标管理 ====================
+
+/**
+ * 更新扩展图标
+ * @param enabled 是否启用
+ */
+async function updateIcon(enabled: boolean): Promise<void> {
+  try {
+    const iconPath = enabled ? ICON_PATHS.enabled : ICON_PATHS.disabled
     await chrome.action.setIcon({
       path: {
         "32": iconPath,
       },
     })
   } catch (error) {
-    console.error("Failed to update icon:", error)
-    console.error(
-      "Error details:",
-      error instanceof Error ? error.message : String(error)
-    )
+    Logger.error(ERROR_MESSAGES.UPDATE_ICON, error)
+    Logger.errorDetails(LOG_MESSAGES.ERROR_DETAILS, error)
+    // 图标更新失败不影响主要功能，只记录错误
   }
 }
 
-// 监听来自popup的消息
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  switch (request.action) {
-    case "getConfig":
-      sendResponse({ config: globalConfig })
-      break
+// ==================== 消息处理 ====================
 
-    case "updateConfig":
-      globalConfig = request.config
-      saveConfig()
-      updateDeclarativeRules()
-      sendResponse({ success: true })
-      break
+/**
+ * 处理获取配置消息
+ */
+function handleGetConfig(): BackgroundMessageResponse {
+  return { success: true, config: globalConfig }
+}
 
-    case "toggleGlobal":
-      globalConfig.isGlobalEnabled = request.enabled
-      saveConfig()
-      updateDeclarativeRules()
-      updateIcon(request.enabled)
-      sendResponse({ success: true })
-      break
+/**
+ * 处理更新配置消息
+ */
+async function handleUpdateConfig(
+  config: GlobalConfig
+): Promise<BackgroundMessageResponse> {
+  try {
+    globalConfig = config
+    await saveConfig()
+    await updateDeclarativeRules()
+    return { success: true }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.UPDATE_CONFIG, error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    }
+  }
+}
 
-    case "toggleModule":
-      const module = globalConfig.modules.find((m) => m.id === request.moduleId)
-      if (module) {
-        module.apiArr.forEach((api) => {
-          api.isOpen = request.enabled
-        })
-        saveConfig()
-        updateDeclarativeRules()
-        sendResponse({ success: true })
-      } else {
-        sendResponse({ success: false, error: "Module not found" })
+/**
+ * 处理切换全局开关消息
+ */
+async function handleToggleGlobal(
+  enabled: boolean
+): Promise<BackgroundMessageResponse> {
+  try {
+    globalConfig.isGlobalEnabled = enabled
+    await saveConfig()
+    await updateDeclarativeRules()
+    await updateIcon(enabled)
+    return { success: true }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.TOGGLE_GLOBAL, error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    }
+  }
+}
+
+/**
+ * 处理切换模块开关消息
+ */
+async function handleToggleModule(
+  moduleId: string,
+  enabled: boolean
+): Promise<BackgroundMessageResponse> {
+  try {
+    const module = globalConfig.modules.find((m) => m.id === moduleId)
+    if (!module) {
+      return { success: false, error: ERROR_MESSAGES.MODULE_NOT_FOUND }
+    }
+
+    module.apiArr.forEach((api) => {
+      api.isOpen = enabled
+    })
+    await saveConfig()
+    await updateDeclarativeRules()
+    return { success: true }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.TOGGLE_MODULE, error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    }
+  }
+}
+
+/**
+ * 处理切换API开关消息
+ */
+async function handleToggleApi(
+  apiId: string,
+  enabled: boolean
+): Promise<BackgroundMessageResponse> {
+  try {
+    for (const module of globalConfig.modules) {
+      const api = module.apiArr.find((a) => a.id === apiId)
+      if (api) {
+        api.isOpen = enabled
+        await saveConfig()
+        await updateDeclarativeRules()
+        return { success: true }
       }
-      break
+    }
+    return { success: false, error: ERROR_MESSAGES.API_NOT_FOUND }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.TOGGLE_API, error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    }
+  }
+}
 
-    case "toggleApi":
-      for (const module of globalConfig.modules) {
-        const api = module.apiArr.find((a) => a.id === request.apiId)
-        if (api) {
-          api.isOpen = request.enabled
-          saveConfig()
-          updateDeclarativeRules()
-          sendResponse({ success: true })
-          return
+/**
+ * 处理更新图标消息
+ */
+async function handleUpdateIcon(
+  enabled: boolean
+): Promise<BackgroundMessageResponse> {
+  try {
+    await updateIcon(enabled)
+    return { success: true }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.UPDATE_ICON, error)
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    }
+  }
+}
+
+/**
+ * 消息处理器
+ */
+async function handleMessage(
+  request: BackgroundMessage,
+  sender: chrome.runtime.MessageSender,
+  sendResponse: (response: BackgroundMessageResponse) => void
+): Promise<boolean> {
+  try {
+    let response: BackgroundMessageResponse
+
+    switch (request.action) {
+      case "getConfig":
+        response = handleGetConfig()
+        sendResponse(response)
+        break
+
+      case "updateConfig":
+        if (!request.config) {
+          response = { success: false, error: ERROR_MESSAGES.CONFIG_REQUIRED }
+          sendResponse(response)
+          break
         }
-      }
-      sendResponse({ success: false, error: "API not found" })
-      break
+        response = await handleUpdateConfig(request.config)
+        sendResponse(response)
+        break
 
-    case "updateIcon":
-      updateIcon(request.enabled)
-      sendResponse({ success: true })
-      break
+      case "toggleGlobal":
+        if (request.enabled === undefined) {
+          response = {
+            success: false,
+            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+          }
+          sendResponse(response)
+          break
+        }
+        response = await handleToggleGlobal(request.enabled)
+        sendResponse(response)
+        break
 
-    default:
-      sendResponse({ success: false, error: "Unknown action" })
+      case "toggleModule":
+        if (!request.moduleId || request.enabled === undefined) {
+          response = {
+            success: false,
+            error: ERROR_MESSAGES.MODULE_ID_AND_ENABLED_REQUIRED,
+          }
+          sendResponse(response)
+          break
+        }
+        response = await handleToggleModule(request.moduleId, request.enabled)
+        sendResponse(response)
+        break
+
+      case "toggleApi":
+        if (!request.apiId || request.enabled === undefined) {
+          response = {
+            success: false,
+            error: ERROR_MESSAGES.API_ID_AND_ENABLED_REQUIRED,
+          }
+          sendResponse(response)
+          break
+        }
+        response = await handleToggleApi(request.apiId, request.enabled)
+        sendResponse(response)
+        break
+
+      case "updateIcon":
+        if (request.enabled === undefined) {
+          response = {
+            success: false,
+            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+          }
+          sendResponse(response)
+          break
+        }
+        response = await handleUpdateIcon(request.enabled)
+        sendResponse(response)
+        break
+
+      default:
+        response = { success: false, error: ERROR_MESSAGES.UNKNOWN_ACTION }
+        sendResponse(response)
+    }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
+    sendResponse({
+      success: false,
+      error:
+        error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+    })
   }
 
   return true // 保持消息通道开放以支持异步响应
-})
+}
+
+// ==================== 事件监听 ====================
+
+// 监听来自popup的消息
+chrome.runtime.onMessage.addListener(handleMessage)
 
 // 处理扩展图标点击事件
 chrome.action.onClicked.addListener((tab) => {
@@ -289,11 +464,26 @@ chrome.action.onClicked.addListener((tab) => {
   })
 })
 
-// 初始化
-async function initialize() {
-  await loadConfig()
-  await updateDeclarativeRules()
-  await updateIcon(globalConfig.isGlobalEnabled)
+// ==================== 初始化 ====================
+
+/**
+ * 初始化扩展
+ */
+async function initialize(): Promise<void> {
+  try {
+    await loadConfig()
+    await updateDeclarativeRules()
+    await updateIcon(globalConfig.isGlobalEnabled)
+    Logger.info(LOG_MESSAGES.INIT_EXTENSION_SUCCESS)
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.INIT_EXTENSION, error)
+    // 即使初始化失败，也尝试设置默认图标
+    try {
+      await updateIcon(false)
+    } catch (iconError) {
+      Logger.error(ERROR_MESSAGES.SET_DEFAULT_ICON, iconError)
+    }
+  }
 }
 
 initialize()
