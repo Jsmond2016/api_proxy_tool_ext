@@ -1,4 +1,5 @@
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { hasOnlyDefaultModule } from "@src/utils/configUtil"
 
 /**
  * 判断是否只有默认模块
@@ -6,13 +7,7 @@ import { useActiveModuleIdStore, useConfigStore } from "@src/store"
  */
 export const useOnlyHaveDefaultMockConfig = () => {
   const { config } = useConfigStore()
-
-  const isOnlyHaveDefaultMock =
-    config.modules.length === 1 &&
-    config.modules[0].label === "demo.default" &&
-    config.modules[0].apiArr.length === 1
-
-  return isOnlyHaveDefaultMock
+  return hasOnlyDefaultModule(config.modules)
 }
 
 export const useActiveModule = () => {
