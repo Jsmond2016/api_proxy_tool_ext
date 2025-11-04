@@ -32,6 +32,7 @@ export interface ImportApiData {
   mockResponseData?: string
   requestBody?: string
   requestHeaders?: string
+  authPointKey?: string
 }
 
 /**
@@ -62,6 +63,7 @@ export interface ExportApiData {
   redirectURL: string
   requestBody: string
   statusCode: number
+  authPointKey: string
 }
 
 /**
@@ -97,6 +99,7 @@ export const transformImportDataToModuleConfig = (
       mockResponseData: apiData.mockResponseData || "",
       requestBody: apiData.requestBody || "",
       requestHeaders: apiData.requestHeaders || "",
+      authPointKey: apiData.authPointKey || "",
     })),
   }))
 }
@@ -131,6 +134,7 @@ export const transformModuleConfigToExportData = (
       redirectURL: api.redirectURL,
       requestBody: api.requestBody || "",
       statusCode: api.statusCode,
+      authPointKey: api.authPointKey || "",
     })),
   }))
 }

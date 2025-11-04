@@ -49,6 +49,7 @@ export default function ApiFormDrawer({
         filterType: data.filterType,
         delay: data.delay,
         statusCode: data.statusCode,
+        authPointKey: data.authPointKey,
       })
     } else if (visible) {
       // 添加时重置表单
@@ -107,6 +108,7 @@ export default function ApiFormDrawer({
         mockResponseData: data?.mockResponseData || "",
         requestBody: data?.requestBody || "",
         requestHeaders: data?.requestHeaders || "",
+        authPointKey: values.authPointKey || "",
       }
 
       onOk(apiData)
@@ -186,6 +188,14 @@ export default function ApiFormDrawer({
             rows={1}
             autoSize={{ minRows: 1, maxRows: 5 }}
           />
+        </Form.Item>
+
+        <Form.Item
+          label="权限点"
+          name="authPointKey"
+          extra="示例：demo-user-list，用于权限控制"
+        >
+          <Input placeholder="请输入权限点Key（选填）" />
         </Form.Item>
 
         {/* 请求方式字段已隐藏，默认使用 GET */}
