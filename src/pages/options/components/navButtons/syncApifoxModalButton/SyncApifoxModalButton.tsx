@@ -6,7 +6,7 @@ import type { MenuProps } from "antd"
 
 import SyncApifoxModal from "./SyncApifoxModal"
 import { ModuleConfig, ApifoxConfig } from "@src/types"
-import { saveConfig } from "@src/utils/configUtil"
+import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { useOnlyHaveDefaultMockConfig } from "@src/hooks"
 import {
@@ -67,12 +67,17 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   }
 
   // 执行同步操作
-  const performSync = (newModules: ModuleConfig[], showMessage = true) => {
+  const performSync = (newModules: ModuleConfig[], showMessage = true, replaceAll = false) => {
     // 使用函数式更新，自动获取最新 state，避免闭包问题
     setConfig((prev) => {
+      // 智能判断：如果只有默认模块，直接替换
+      const shouldReplace = replaceAll || hasOnlyDefaultModule(prev.modules)
+
       const newConfig = {
         ...prev,
-        modules: [...prev.modules, ...newModules],
+        modules: shouldReplace
+          ? newModules  // 替换模式
+          : [...prev.modules, ...newModules],  // 追加模式
       }
       saveConfig(newConfig)
       return newConfig

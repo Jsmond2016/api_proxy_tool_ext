@@ -7,7 +7,7 @@ import { ImportOutlined } from "@ant-design/icons"
 import ImportModal from "./ImportModal"
 import { ModuleConfig } from '@src/types'
 import { useActiveModuleIdStore, useConfigStore } from '@src/store'
-import { saveConfig } from '@src/utils/configUtil'
+import { saveConfig, hasOnlyDefaultModule } from '@src/utils/configUtil'
 import { ImportModuleData, transformImportDataToModuleConfig } from '@src/utils/dataProcessor'
 import { isApiUrlDuplicate, isModuleLabelDuplicate } from '@src/utils/chromeApi'
 
@@ -19,12 +19,17 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
   const { setActiveModuleId } = useActiveModuleIdStore()
 
   // 执行导入操作
-  const performImport = (newModules: ModuleConfig[]) => {
+  const performImport = (newModules: ModuleConfig[], replaceAll: boolean = false) => {
     console.log("转换后的模块:", newModules)
+
+    // 智能判断：如果只有默认模块，直接替换
+    const shouldReplace = replaceAll || hasOnlyDefaultModule(config.modules)
 
     const newConfig = {
       ...config,
-      modules: [...config.modules, ...newModules],
+      modules: shouldReplace
+        ? newModules  // 替换模式
+        : [...config.modules, ...newModules],  // 追加模式
     }
 
     setConfig(newConfig)
@@ -34,7 +39,8 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
       setActiveModuleId(newModules[0].id)
     }
 
-    message.success(`成功导入 ${newModules.length} 个模块`)
+    const importAction = shouldReplace ? "替换" : "追加"
+    message.success(`成功${importAction}导入 ${newModules.length} 个模块`)
   }
 
   // 导入配置
@@ -89,7 +95,24 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
         return
       }
 
-      // 没有重复项，直接导入
+      // 如果有非默认模块，询问用户
+      if (!hasOnlyDefaultModule(config.modules)) {
+        Modal.confirm({
+          title: "选择导入方式",
+          content: "检测到已有配置数据，请选择导入方式：\n- 替换：清空现有配置，使用导入的配置\n- 追加：保留现有配置，追加导入的配置",
+          okText: "替换所有",
+          cancelText: "追加",
+          onOk() {
+            performImport(newModules, true)  // 替换
+          },
+          onCancel() {
+            performImport(newModules, false)  // 追加
+          },
+        })
+        return
+      }
+
+      // 没有重复项，直接导入（只有默认模块的情况）
       performImport(newModules)
     } catch (error) {
       console.error("导入失败:", error)
