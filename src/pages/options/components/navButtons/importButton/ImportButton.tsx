@@ -5,11 +5,15 @@ import { Button, message, Modal } from "antd"
 import { useMount } from "ahooks"
 import { ImportOutlined } from "@ant-design/icons"
 import ImportModal from "./ImportModal"
-import { ModuleConfig } from '@src/types'
-import { useActiveModuleIdStore, useConfigStore } from '@src/store'
-import { saveConfig, hasOnlyDefaultModule } from '@src/utils/configUtil'
-import { ImportModuleData, transformImportDataToModuleConfig } from '@src/utils/dataProcessor'
-import { isApiUrlDuplicate, isModuleLabelDuplicate } from '@src/utils/chromeApi'
+import { ModuleConfig } from "@src/types"
+import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
+import {
+  ImportModuleData,
+  transformImportDataToModuleConfig,
+} from "@src/utils/dataProcessor"
+import { isApiUrlDuplicate, isModuleLabelDuplicate } from "@src/utils/chromeApi"
+import ColorButton from "../../../../../components/ColorButton"
 
 type ImportButtonProps = {}
 
@@ -19,7 +23,10 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
   const { setActiveModuleId } = useActiveModuleIdStore()
 
   // 执行导入操作
-  const performImport = (newModules: ModuleConfig[], replaceAll: boolean = false) => {
+  const performImport = (
+    newModules: ModuleConfig[],
+    replaceAll: boolean = false
+  ) => {
     console.log("转换后的模块:", newModules)
 
     // 智能判断：如果只有默认模块，直接替换
@@ -28,8 +35,8 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
     const newConfig = {
       ...config,
       modules: shouldReplace
-        ? newModules  // 替换模式
-        : [...config.modules, ...newModules],  // 追加模式
+        ? newModules // 替换模式
+        : [...config.modules, ...newModules], // 追加模式
     }
 
     setConfig(newConfig)
@@ -99,14 +106,15 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
       if (!hasOnlyDefaultModule(config.modules)) {
         Modal.confirm({
           title: "选择导入方式",
-          content: "检测到已有配置数据，请选择导入方式：\n- 替换：清空现有配置，使用导入的配置\n- 追加：保留现有配置，追加导入的配置",
+          content:
+            "检测到已有配置数据，请选择导入方式：\n- 替换：清空现有配置，使用导入的配置\n- 追加：保留现有配置，追加导入的配置",
           okText: "替换所有",
           cancelText: "追加",
           onOk() {
-            performImport(newModules, true)  // 替换
+            performImport(newModules, true) // 替换
           },
           onCancel() {
-            performImport(newModules, false)  // 追加
+            performImport(newModules, false) // 追加
           },
         })
         return
@@ -123,13 +131,14 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
   }
   return (
     <>
-      <Button
+      <ColorButton
+        color="#52C7B0"
         icon={<ImportOutlined />}
         type="primary"
         onClick={() => setImportModalVisible(true)}
       >
         导入
-      </Button>
+      </ColorButton>
       {/* 导入模态框 */}
       <ImportModal
         visible={importModalVisible}

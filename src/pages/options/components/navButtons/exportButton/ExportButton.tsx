@@ -1,7 +1,7 @@
 import { ExportOutlined } from "@ant-design/icons"
 import { useConfigStore } from "@src/store"
 import { transformModuleConfigToExportData } from "@src/utils/dataProcessor"
-import { Button } from "antd"
+import ColorButton from "@src/components/ColorButton"
 import React from "react"
 
 const ExportButton = () => {
@@ -23,9 +23,13 @@ const ExportButton = () => {
     URL.revokeObjectURL(url)
   }
   return (
-    <Button icon={<ExportOutlined />} onClick={handleExport}>
+    <ColorButton
+      color="#ff8c00"
+      icon={<ExportOutlined />}
+      onClick={handleExport}
+    >
       导出
-    </Button>
+    </ColorButton>
   )
 }
 
