@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { 
-  extractApiUrl, 
-  generateAuthPointKey, 
+import {
+  extractApiUrl,
   generatePermissionPoint,
-  parseSwaggerToPermissionGroups 
+  parseSwaggerToPermissionGroups
 } from '../permissionUtils';
 
 describe('permissionUtils', () => {
@@ -39,35 +38,19 @@ describe('permissionUtils', () => {
     });
   });
 
-  describe('generateAuthPointKey', () => {
-    it('should generate correct auth point key', () => {
-      const groupName = 'demo.user.management';
-      const apiUrl = '/demo/user/queryList';
-      const result = generateAuthPointKey(groupName, apiUrl);
-      expect(result).toBe('demoUserManagement-queryList');
-    });
-
-    it('should handle empty last part', () => {
-      const groupName = 'demo.user';
-      const apiUrl = '/demo/user/';
-      const result = generateAuthPointKey(groupName, apiUrl);
-      expect(result).toBe('demoUser-');
-    });
-  });
-
   describe('generatePermissionPoint', () => {
     it('should generate correct permission point', () => {
-      const groupName = 'demo.user.management';
+      const authPointKey = 'demo-user-management-queryList';
       const apiUrl = '/api/saas/v1/demo/user/queryList';
       const apiName = '获取用户列表';
       const parentAuthPointKey = 'GEN_PAGE_TODO_请填写父节点-authPointKey';
-      
-      const result = generatePermissionPoint(groupName, apiUrl, apiName, parentAuthPointKey);
-      
+
+      const result = generatePermissionPoint(authPointKey, apiUrl, apiName, parentAuthPointKey);
+
       expect(result).toEqual({
         parentAuthPointKey: 'GEN_PAGE_TODO_请填写父节点-authPointKey',
         authPointApiUrl: '/demo/user/queryList',
-        authPointKey: 'demoUserManagement-queryList',
+        authPointKey: 'demo-user-management-queryList',
         authPointName: '获取用户列表',
         type: '权限点',
         priority: null,
@@ -106,7 +89,7 @@ describe('permissionUtils', () => {
       };
 
       const result = parseSwaggerToPermissionGroups(swaggerData);
-      
+
       expect(result).toHaveLength(2);
       expect(result[0].groupName).toBe('demo.user.management');
       expect(result[0].apis).toHaveLength(2);
@@ -126,7 +109,7 @@ describe('permissionUtils', () => {
       };
 
       const result = parseSwaggerToPermissionGroups(swaggerData);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].groupName).toBe('demo.default');
     });

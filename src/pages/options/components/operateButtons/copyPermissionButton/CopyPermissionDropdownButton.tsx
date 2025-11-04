@@ -1,8 +1,13 @@
 import React, { useState } from "react"
 import { Dropdown, message } from "antd"
 import { generatePermissionPointsFromApiConfigs } from "@src/utils/permissionUtils"
+import { isValidGroupName } from "../../navButtons/syncApifoxModalButton/apifoxUtils"
 import CopyPermissionModal from "../../CopyPermissionModal"
-import { useConfigStore, useActiveModuleIdStore, useSelectedApiStore } from "@src/store"
+import {
+  useConfigStore,
+  useActiveModuleIdStore,
+  useSelectedApiStore,
+} from "@src/store"
 
 interface CopyPermissionDropdownButtonProps {}
 
@@ -24,6 +29,13 @@ const CopyPermissionDropdownButton: React.FC<
 
   const handleCopyAllPermissions = () => {
     const groupName = activeModule?.label || "default"
+
+    // 验证 groupName 格式
+    if (!isValidGroupName(groupName)) {
+      message.error("分组名格式不正确，请修改为英文格式，例如：a.b.c")
+      return
+    }
+
     const allPermissionPoints = generatePermissionPointsFromApiConfigs(
       apis,
       "",
@@ -41,6 +53,13 @@ const CopyPermissionDropdownButton: React.FC<
     }
 
     const groupName = activeModule?.label || "default"
+
+    // 验证 groupName 格式
+    if (!isValidGroupName(groupName)) {
+      message.error("分组名格式不正确，请修改为英文格式，例如：a.b.c")
+      return
+    }
+
     const selectedApis = apis.filter((api) => selectedApiIds.includes(api.id))
     const selectedPermissionPoints = generatePermissionPointsFromApiConfigs(
       selectedApis,

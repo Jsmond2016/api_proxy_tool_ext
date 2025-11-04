@@ -222,11 +222,11 @@ export default function ApiFormDrawer({
         </Form.Item>
 
         <Form.Item label="延迟时间(毫秒)" name="delay">
-          <InputNumber min={0} max={10000} style={{ width: "100%" }} />
+          <InputNumber min={0} max={10000} className="w-full" />
         </Form.Item>
 
         <Form.Item label="状态码" name="statusCode">
-          <InputNumber min={100} max={599} style={{ width: "100%" }} />
+          <InputNumber min={100} max={599} className="w-full" />
         </Form.Item>
       </Form>
     </Drawer>
