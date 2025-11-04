@@ -1,5 +1,10 @@
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
+import {
+  ModelApiActionType,
+  ModelNamesMap,
+} from "../../../../../constant/model"
+import { camelCase } from "change-case"
 
 /**
  * 解析后的 API 类型
@@ -11,6 +16,8 @@ export interface ParsedApi {
   summary: string
   tags: string[]
   groupName: string
+  authPointKey: string
+  modelApiType: ModelApiActionType
 }
 
 /**
@@ -78,6 +85,7 @@ export const convertParsedApisToModules = (
         mockResponseData: "",
         requestBody: "",
         requestHeaders: "",
+        authPointKey: api.authPointKey,
       }
     }),
   }))
@@ -114,6 +122,8 @@ export const parseSwaggerData = (
             apiInfo["x-apifox-fe-general-model-base-action-type"] ||
             (tags.length > 0 ? tags[0] : "默认分组")
 
+          const modelApiType = apiInfo["x-apifox-fe-general-model-api-type"]
+
           apis.push({
             path,
             method: method.toUpperCase(),
@@ -121,6 +131,12 @@ export const parseSwaggerData = (
             tags,
             groupName,
             apiId,
+            modelApiType,
+            authPointKey: generateAuthPointKey({
+              path,
+              groupName,
+              modelApiType,
+            }),
           })
         }
       }
@@ -128,6 +144,33 @@ export const parseSwaggerData = (
   })
 
   return apis
+}
+
+type GenerateAuthKeyParams = {
+  path: string
+  groupName: string
+  modelApiType: ModelApiActionType
+}
+
+export function generateAuthPointKey({
+  path,
+  groupName,
+  modelApiType,
+}: GenerateAuthKeyParams) {
+  // 校验 groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符
+  if (!/^[a-zA-Z.]+$/.test(groupName)) {
+    console.error(
+      "groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符，如：demo.user.management",
+      groupName
+    )
+    return ""
+  }
+  const authPrefix = groupName.split(".").join("-")
+  let apiName = ModelNamesMap[modelApiType] as string
+  if (apiName === "custom") {
+    apiName = camelCase(path.split("/").pop() ?? "")
+  }
+  return `${authPrefix}-${apiName}`
 }
 
 /**

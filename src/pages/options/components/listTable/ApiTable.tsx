@@ -17,7 +17,6 @@ import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
 import CloneButton from "./cloneButon/CloneButton"
 import MigrateButton from "./migrateButton/MigrateButton"
 import DeleteButton from "./deleteButton/DeleteButton"
-import CopyPermissionButton from "./copyButton/CopyPermissionButton"
 import {
   useActiveModuleIdStore,
   useConfigStore,
@@ -25,6 +24,8 @@ import {
   useSelectedApiStore,
 } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
+import { TableColumnsX } from "../../../../types/util.type"
+import { ColumnsType } from "antd/es/table"
 
 const { Paragraph } = Typography
 
@@ -117,12 +118,14 @@ export default function ApiTable() {
     }
   }
 
-  const columns = [
+  const isNotEmpty = (v: string | undefined) => v != "" && v != null
+
+  const columns: TableColumnsX<ApiConfig> = [
     {
       title: "序号",
-      key: "index",
+      dataIndex: "id",
       width: 20,
-      render: (_: any, record: ApiConfig, index: number) =>
+      render: (_: any, __: ApiConfig, index: number) =>
         index + 1 + (current - 1) * pageSize,
     },
     {
@@ -135,7 +138,7 @@ export default function ApiTable() {
           unCheckedChildren="关闭"
         />
       ),
-      key: "toggleAll",
+      dataIndex: "isOpen",
       width: 80,
       align: "center" as const,
       render: (_: any, record: ApiConfig) => (
@@ -149,7 +152,7 @@ export default function ApiTable() {
     },
     {
       title: "请求方式",
-      key: "method",
+      dataIndex: "method",
       width: 80,
       render: (_: any, record: ApiConfig) => (
         <Tag color={getMethodColor(record.method)}>
@@ -159,7 +162,7 @@ export default function ApiTable() {
     },
     {
       title: "接口名称",
-      key: "apiName",
+      dataIndex: "apiName",
       width: 120,
       render: (_: any, record: ApiConfig) => (
         <div className="font-medium">{record.apiName}</div>
@@ -167,7 +170,7 @@ export default function ApiTable() {
     },
     {
       title: "接口地址",
-      key: "apiUrl",
+      dataIndex: "apiUrl",
       width: 200,
       render: (_: any, record: ApiConfig) => (
         <Space direction="vertical">
@@ -182,31 +185,44 @@ export default function ApiTable() {
       ),
     },
     {
-      title: "匹配方式",
-      key: "filterType",
+      title: "权限点",
+      dataIndex: "authPointKey",
       width: 100,
-      render: (_: any, record: ApiConfig) => (
-        <Tag color="blue">{record.filterType}</Tag>
-      ),
+      // 当没有权限点的时候，显示 '-',若有，则可以复制
+      render: (v: string | undefined) =>
+        isNotEmpty(v) ? (
+          <Paragraph copyable={{ text: v }} type="secondary">
+            {v}
+          </Paragraph>
+        ) : (
+          "-"
+        ),
     },
     {
-      title: "延迟时间",
-      key: "delay",
+      title: "代理设置",
+      dataIndex: "filterType",
       width: 100,
       render: (_: any, record: ApiConfig) => (
-        <span className="text-sm">{formatDelay(record.delay)}</span>
+        <Space direction="vertical">
+          <div>
+            <span>匹配方式：</span>
+            <Tag color="blue">{record.filterType}</Tag>
+          </div>
+          <div>
+            <span>延迟时间：</span>
+            <span>{formatDelay(record.delay)}</span>
+          </div>
+        </Space>
       ),
     },
     {
       title: "操作",
-      key: "actions",
       width: 200,
-      render: (_: any, record: ApiConfig) => (
+      render: (_: unknown, record: ApiConfig) => (
         <Space>
           <EditFormButton apiId={record.id} />
           <CloneButton apiId={record.id} />
           <MigrateButton apiId={record.id} />
-          <CopyPermissionButton apiId={record.id} apiConfig={record} />
           <DeleteButton apiId={record.id} />
         </Space>
       ),
@@ -242,7 +258,7 @@ export default function ApiTable() {
           "data-api-id": record.id,
         } as React.HTMLAttributes<HTMLTableRowElement>)
       }
-     />
+    />
   )
 }
 

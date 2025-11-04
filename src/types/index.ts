@@ -16,6 +16,7 @@ export interface ApiConfig {
   statusCode: number
   arrDepth?: number
   arrLength?: number
+  authPointKey?: string
 }
 
 // 模块配置类型
