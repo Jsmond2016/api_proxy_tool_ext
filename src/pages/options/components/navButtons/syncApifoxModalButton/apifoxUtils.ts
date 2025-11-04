@@ -152,13 +152,17 @@ type GenerateAuthKeyParams = {
   modelApiType: ModelApiActionType
 }
 
+export const isValidGroupName = (groupName: string) => {
+  return /^[a-zA-Z.]+$/.test(groupName)
+}
+
 export function generateAuthPointKey({
   path,
   groupName,
   modelApiType,
 }: GenerateAuthKeyParams) {
   // 校验 groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符
-  if (!/^[a-zA-Z.]+$/.test(groupName)) {
+  if (!isValidGroupName(groupName)) {
     console.error(
       "groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符，如：demo.user.management",
       groupName

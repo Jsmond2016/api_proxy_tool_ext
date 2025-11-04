@@ -1,157 +1,130 @@
-import { camelCase } from 'change-case';
-import { PermissionPoint, SwaggerData, PermissionGroup } from '@src/types/permission';
+import {
+  PermissionPoint,
+  SwaggerData,
+  PermissionGroup,
+} from "@src/types/permission"
 
 /**
  * 从接口URL中提取API路径
  * 例如：/api/saas/v1/demo/user/queryList -> /demo/user/queryList
  */
 export const extractApiUrl = (url: string): string => {
-  let extractedUrl = url;
-  
+  let extractedUrl = url
+
   // 查找 v1 后的内容
-  const v1Index = url.indexOf('/v1/');
+  const v1Index = url.indexOf("/v1/")
   if (v1Index !== -1) {
-    extractedUrl = url.substring(v1Index + 4); // 跳过 '/v1'
+    extractedUrl = url.substring(v1Index + 4) // 跳过 '/v1'
   } else {
     // 如果没有找到 v1，则查找 /api/ 后的内容
-    const apiIndex = url.indexOf('/api/');
+    const apiIndex = url.indexOf("/api/")
     if (apiIndex !== -1) {
-      extractedUrl = url.substring(apiIndex + 5); // 跳过 '/api'
+      extractedUrl = url.substring(apiIndex + 5) // 跳过 '/api'
     }
   }
-  
-  // 确保以 / 开头
-  if (!extractedUrl.startsWith('/')) {
-    extractedUrl = '/' + extractedUrl;
-  }
-  
-  return extractedUrl;
-};
 
-/**
- * 生成权限点key
- * 规则：分组名(camelCase) + '-' + 接口最后名字
- */
-export const generateAuthPointKey = (groupName: string, apiUrl: string): string => {
-  const camelGroupName = camelCase(groupName);
-  const lastPart = apiUrl.split('/').pop() || '';
-  return `${camelGroupName}-${lastPart}`;
-};
+  // 确保以 / 开头
+  if (!extractedUrl.startsWith("/")) {
+    extractedUrl = "/" + extractedUrl
+  }
+
+  return extractedUrl
+}
 
 /**
  * 从swagger数据中解析权限分组
  */
-export const parseSwaggerToPermissionGroups = (swaggerData: SwaggerData): PermissionGroup[] => {
-  const groups: { [key: string]: PermissionGroup } = {};
-  
+export const parseSwaggerToPermissionGroups = (
+  swaggerData: SwaggerData
+): PermissionGroup[] => {
+  const groups: { [key: string]: PermissionGroup } = {}
+
   Object.entries(swaggerData.paths).forEach(([url, pathMethods]) => {
     Object.entries(pathMethods).forEach(([method, methodInfo]) => {
-      if (typeof methodInfo === 'object' && methodInfo.summary) {
-        const groupName = methodInfo['x-apifox-fe-general-model-base-action-type'] || 'demo.default';
-        
+      if (typeof methodInfo === "object" && methodInfo.summary) {
+        const groupName =
+          methodInfo["x-apifox-fe-general-model-base-action-type"] ||
+          "demo.default"
+
         if (!groups[groupName]) {
           groups[groupName] = {
             groupName,
-            apis: []
-          };
+            apis: [],
+          }
         }
-        
+
         groups[groupName].apis.push({
           url,
           method: method.toUpperCase(),
           name: methodInfo.summary,
-          summary: methodInfo.summary
-        });
+          summary: methodInfo.summary,
+        })
       }
-    });
-  });
-  
-  return Object.values(groups);
-};
+    })
+  })
+
+  return Object.values(groups)
+}
 
 /**
  * 生成单个权限点
  */
 export const generatePermissionPoint = (
-  groupName: string,
+  authPointKey: string,
   apiUrl: string,
   apiName: string,
   parentAuthPointKey: string
 ): PermissionPoint => {
-  const authPointApiUrl = extractApiUrl(apiUrl);
-  const authPointKey = generateAuthPointKey(groupName, authPointApiUrl);
-  
+  const authPointApiUrl = extractApiUrl(apiUrl)
+
   return {
     parentAuthPointKey,
     authPointApiUrl,
     authPointKey,
     authPointName: apiName,
-    type: '权限点',
+    type: "权限点",
     priority: null,
     children: null,
-    desc: '',
-    menuPath: '',
-    prefixPath: '',
-    systemDomain: ''
-  };
-};
-
-/**
- * 生成权限点数组
- */
-export const generatePermissionPoints = (
-  groups: PermissionGroup[],
-  parentAuthPointKey: string
-): PermissionPoint[] => {
-  const permissionPoints: PermissionPoint[] = [];
-  
-  groups.forEach(group => {
-    group.apis.forEach(api => {
-      const permissionPoint = generatePermissionPoint(
-        group.groupName,
-        api.url,
-        api.name,
-        parentAuthPointKey
-      );
-      permissionPoints.push(permissionPoint);
-    });
-  });
-  
-  return permissionPoints;
-};
+    desc: "",
+    menuPath: "",
+    prefixPath: "",
+    systemDomain: "",
+  }
+}
 
 /**
  * 从API配置生成权限点
+ * 直接从数据源中读取已生成的 authPointKey
  */
 export const generatePermissionPointsFromApiConfigs = (
   apiConfigs: any[],
   parentAuthPointKey: string,
   groupName?: string
 ): PermissionPoint[] => {
-  return apiConfigs.map(api => ({
+  return apiConfigs.map((api) => ({
     parentAuthPointKey,
     authPointApiUrl: extractApiUrl(api.apiUrl),
-    authPointKey: generateAuthPointKey(groupName || 'default', extractApiUrl(api.apiUrl)),
+    authPointKey: api.authPointKey || "", // 直接从数据源读取权限点key
     authPointName: api.apiName,
-    type: '权限点',
+    type: "权限点",
     priority: null,
     children: null,
-    desc: '',
-    menuPath: '',
-    prefixPath: '',
-    systemDomain: ''
-  }));
-};
+    desc: "",
+    menuPath: "",
+    prefixPath: "",
+    systemDomain: "",
+  }))
+}
 
 /**
  * 复制文本到剪贴板
  */
 export const copyToClipboard = async (text: string): Promise<boolean> => {
   try {
-    await navigator.clipboard.writeText(text);
-    return true;
+    await navigator.clipboard.writeText(text)
+    return true
   } catch (error) {
-    console.error('复制失败:', error);
-    return false;
+    console.error("复制失败:", error)
+    return false
   }
-};
+}
