@@ -253,7 +253,7 @@ export default function ApiTable() {
   return (
     <Table
       dataSource={filteredApis}
-      columns={columns}
+      columns={columns as ColumnsType<ApiConfig>}
       rowKey="id"
       pagination={pagination}
       rowSelection={rowSelection}
