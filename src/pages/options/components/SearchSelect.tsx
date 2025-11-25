@@ -1,4 +1,9 @@
-import { useActiveModuleIdStore, useConfigStore, useSearchKeywordStore } from "@src/store"
+import {
+  useActiveModuleIdStore,
+  useConfigStore,
+  useHighlightApiStore,
+  useSearchKeywordStore,
+} from "@src/store"
 import { ApiConfig } from "@src/types"
 import { AutoComplete } from "antd"
 import React, { useState } from "react"
@@ -7,6 +12,8 @@ const SearchSelect = () => {
   const { config } = useConfigStore()
   const { setActiveModuleId } = useActiveModuleIdStore()
   const { setSearchKeyword } = useSearchKeywordStore()
+  const { setHighlightApiId } = useHighlightApiStore()
+
   // 获取所有API数据用于搜索
   const getAllApis = () => {
     const allApis: (ApiConfig & { moduleId: string; moduleName: string })[] = []
@@ -28,13 +35,8 @@ const SearchSelect = () => {
   ) => {
     setActiveModuleId(api.moduleId)
     setSearchKeyword("")
-    // 滚动到对应API
-    setTimeout(() => {
-      const element = document.querySelector(`[data-api-id="${api.id}"]`)
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth", block: "center" })
-      }
-    }, 100)
+    // 设置高亮 ID，触发 ApiTable 的滚动逻辑
+    setHighlightApiId(api.id)
   }
 
   // 自定义筛选函数
