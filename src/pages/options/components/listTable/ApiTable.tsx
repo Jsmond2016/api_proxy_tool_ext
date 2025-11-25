@@ -10,7 +10,7 @@ import {
 } from "antd"
 
 import { ApiConfig } from "@src/types"
-import { ChromeApiService, formatDelay } from "@src/utils/chromeApi"
+import { formatDelay } from "@src/utils/chromeApi"
 import "antd/dist/reset.css"
 import "@src/assets/styles/tailwind.css"
 import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
@@ -69,16 +69,23 @@ export default function ApiTable() {
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
     try {
-      await ChromeApiService.toggleApi(apiId, enabled)
-      setConfig({
-        ...config,
-        modules: config.modules.map((module) => ({
+      // 使用 getState() 获取最新配置，防止闭包问题导致的旧状态覆盖
+      const currentConfig = useConfigStore.getState().config
+      // 创建新的配置对象
+      const newConfig = {
+        ...currentConfig,
+        modules: currentConfig.modules.map((module) => ({
           ...module,
           apiArr: module.apiArr.map((api) =>
             api.id === apiId ? { ...api, isOpen: enabled } : api
           ),
         })),
-      })
+      }
+
+      // 更新本地状态
+      setConfig(newConfig)
+      // 持久化配置到 background
+      await saveConfig(newConfig)
     } catch (error) {
       message.error("操作失败")
       console.error("Toggle API error:", error)
@@ -90,9 +97,11 @@ export default function ApiTable() {
     if (!activeModule) return
 
     try {
+      // 使用 getState() 获取最新配置
+      const currentConfig = useConfigStore.getState().config
       const newConfig = {
-        ...config,
-        modules: config.modules.map((module) =>
+        ...currentConfig,
+        modules: currentConfig.modules.map((module) =>
           module.id === activeModule.id
             ? {
                 ...module,
@@ -105,13 +114,10 @@ export default function ApiTable() {
         ),
       }
 
+      // 更新本地状态
       setConfig(newConfig)
-      saveConfig(newConfig)
-
-      // 批量更新background script
-      for (const api of activeModule.apiArr) {
-        await ChromeApiService.toggleApi(api.id, enabled)
-      }
+      // 持久化配置到 background
+      await saveConfig(newConfig)
     } catch (error) {
       message.error("操作失败")
       console.error("Toggle all APIs error:", error)
