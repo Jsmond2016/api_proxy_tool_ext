@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
   Table,
   Switch,
@@ -22,6 +22,7 @@ import {
   useConfigStore,
   useSearchKeywordStore,
   useSelectedApiStore,
+  useHighlightApiStore,
 } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 import { TableColumnsX } from "../../../../types/util.type"
@@ -34,6 +35,10 @@ export default function ApiTable() {
   const { config, setConfig } = useConfigStore()
   const { activeModuleId } = useActiveModuleIdStore()
   const { selectedApiIds, setSelectedApiIds } = useSelectedApiStore()
+  const { highlightApiId, setHighlightApiId } = useHighlightApiStore()
+
+  const [current, setCurrent] = useState(1)
+  const [pageSize, setPageSize] = useState(20)
 
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId
@@ -75,6 +80,41 @@ export default function ApiTable() {
       name: record.apiName,
     }),
   }
+
+  // 监听 highlightApiId 变化，处理滚动和分页跳转
+  useEffect(() => {
+    if (!highlightApiId) return
+
+    // 1. 检查目标 API 是否在当前列表（filteredApis）中
+    const index = filteredApis.findIndex((api) => api.id === highlightApiId)
+    if (index === -1) {
+      return
+    }
+
+    // 2. 计算所在页码
+    const targetPage = Math.floor(index / pageSize) + 1
+
+    // 3. 切换页码
+    if (current !== targetPage) {
+      setCurrent(targetPage)
+    }
+
+    // 4. 延迟滚动
+    const timer = setTimeout(() => {
+      const element = document.querySelector(
+        `[data-api-id="${highlightApiId}"]`
+      )
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" })
+      }
+      // 5. 3秒后清除高亮 ID（样式也会随之消失）
+      setTimeout(() => {
+        setHighlightApiId("")
+      }, 3000)
+    }, 300)
+
+    return () => clearTimeout(timer)
+  }, [highlightApiId, filteredApis, pageSize, current, setHighlightApiId])
 
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
@@ -265,8 +305,6 @@ export default function ApiTable() {
     },
   ]
 
-  const [current, setCurrent] = useState(1)
-  const [pageSize, setPageSize] = useState(20)
   const pagination: PaginationProps = {
     total: filteredApis.length,
     showTotal: (total: number) => `共计 ${total} 个`,
@@ -289,6 +327,11 @@ export default function ApiTable() {
       rowSelection={rowSelection}
       scroll={{ y: "calc(100vh - 400px)" }}
       size="small"
+      rowClassName={(record) =>
+        record.id === highlightApiId
+          ? "highlight-row bg-yellow-100 transition-colors duration-500"
+          : ""
+      }
       onRow={(record) =>
         ({
           "data-api-id": record.id,

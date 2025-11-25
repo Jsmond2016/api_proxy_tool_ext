@@ -112,3 +112,12 @@ export const useSelectedApiStore = create<{
     }
   )
 )
+
+// 需要高亮的 API Store - 不需要持久化
+export const useHighlightApiStore = create<{
+  highlightApiId: string
+  setHighlightApiId: (id: string) => void
+}>()((set) => ({
+  highlightApiId: "",
+  setHighlightApiId: (id: string) => set({ highlightApiId: id }),
+}))
