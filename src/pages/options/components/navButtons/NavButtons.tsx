@@ -17,9 +17,19 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
   // 切换全局开关
   const handleToggleGlobal = async (enabled: boolean) => {
     try {
-      await ChromeApiService.toggleGlobal(enabled)
+      // 1. 获取最新配置，防止闭包陷阱
+      const currentConfig = useConfigStore.getState().config
+      const newConfig = { ...currentConfig, isGlobalEnabled: enabled }
+
+      // 2. 更新本地状态
+      setConfig(newConfig)
+
+      // 3. 持久化配置到 background (这也会更新规则)
+      await saveConfig(newConfig)
+
+      // 4. 更新图标
       await ChromeApiService.updateIcon(enabled)
-      setConfig({ ...config, isGlobalEnabled: enabled })
+
       message.success(enabled ? "已开启全局代理" : "已关闭全局代理")
     } catch (error) {
       message.error("操作失败")
