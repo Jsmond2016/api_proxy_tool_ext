@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useMemo } from "react"
 import {
   Table,
   Switch,
@@ -54,6 +54,16 @@ export default function ApiTable() {
   const allApisEnabled =
     filteredApis.length > 0 && filteredApis.every((api) => api.isOpen)
   const someApisEnabled = filteredApis.some((api) => api.isOpen)
+
+  const projectId = useMemo(() => {
+    const url = config.apifoxConfig?.apifoxUrl
+    if (!url) return null
+    const match = url.match(/[?&]projectId=([^&]+)/)
+    if (match) return match[1]
+    const matchPath = url.match(/\/project\/(\d+)/)
+    if (matchPath) return matchPath[1]
+    return null
+  }, [config.apifoxConfig?.apifoxUrl])
 
   // 行选择配置
   const rowSelection = {
@@ -170,9 +180,29 @@ export default function ApiTable() {
       title: "接口名称",
       dataIndex: "apiName",
       width: 120,
-      render: (_: any, record: ApiConfig) => (
-        <div className="font-medium">{record.apiName}</div>
-      ),
+      render: (_: any, record: ApiConfig) => {
+        const isApifoxId = /^\d+$/.test(record.id)
+        const canLink = projectId && isApifoxId
+
+        return (
+          <div className="font-medium">
+            {canLink ? (
+              <a
+                href={`https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                title="点击跳转到 Apifox Web 版"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {record.apiName}
+              </a>
+            ) : (
+              record.apiName
+            )}
+          </div>
+        )
+      },
     },
     {
       title: "接口地址",
