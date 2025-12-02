@@ -7,7 +7,10 @@ import {
   Typography,
   message,
   PaginationProps,
+  Dropdown,
+  MenuProps,
 } from "antd"
+import { DownOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "@src/types"
 import { formatDelay } from "@src/utils/chromeApi"
@@ -294,14 +297,40 @@ export default function ApiTable() {
     {
       title: "操作",
       width: 200,
-      render: (_: unknown, record: ApiConfig) => (
-        <Space>
-          <EditFormButton apiId={record.id} />
-          <CloneButton apiId={record.id} />
-          <MigrateButton apiId={record.id} />
-          <DeleteButton apiId={record.id} />
-        </Space>
-      ),
+      render: (_: unknown, record: ApiConfig) => {
+        const items: MenuProps["items"] = [
+          {
+            key: "clone",
+            label: <CloneButton apiId={record.id} isMenuItem />,
+          },
+          {
+            key: "migrate",
+            label: <MigrateButton apiId={record.id} isMenuItem />,
+          },
+          {
+            key: "delete",
+            danger: true,
+            label: <DeleteButton apiId={record.id} isMenuItem />,
+          },
+        ]
+
+        return (
+          <Space>
+            <EditFormButton apiId={record.id} />
+            <Dropdown menu={{ items }} trigger={["hover"]}>
+              <a
+                onClick={(e) => e.preventDefault()}
+                className="ant-dropdown-link flex items-center cursor-pointer text-blue-500 hover:text-blue-700"
+              >
+                <Space size={4}>
+                  其他操作
+                  <DownOutlined />
+                </Space>
+              </a>
+            </Dropdown>
+          </Space>
+        )
+      },
     },
   ]
 
@@ -319,25 +348,27 @@ export default function ApiTable() {
   }
 
   return (
-    <Table
-      dataSource={filteredApis}
-      columns={columns as ColumnsType<ApiConfig>}
-      rowKey="id"
-      pagination={pagination}
-      rowSelection={rowSelection}
-      scroll={{ y: "calc(100vh - 400px)" }}
-      size="small"
-      rowClassName={(record) =>
-        record.id === highlightApiId
-          ? "highlight-row bg-yellow-100 transition-colors duration-500"
-          : ""
-      }
-      onRow={(record) =>
-        ({
-          "data-api-id": record.id,
-        } as React.HTMLAttributes<HTMLTableRowElement>)
-      }
-    />
+    <>
+      <Table
+        dataSource={filteredApis}
+        columns={columns as ColumnsType<ApiConfig>}
+        rowKey="id"
+        pagination={pagination}
+        rowSelection={rowSelection}
+        scroll={{ y: "calc(100vh - 400px)" }}
+        size="small"
+        rowClassName={(record) =>
+          record.id === highlightApiId
+            ? "highlight-row bg-yellow-100 transition-colors duration-500"
+            : ""
+        }
+        onRow={(record) =>
+          ({
+            "data-api-id": record.id,
+          } as React.HTMLAttributes<HTMLTableRowElement>)
+        }
+      />
+    </>
   )
 }
 

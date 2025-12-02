@@ -7,9 +7,14 @@ import { useBoolean } from "ahooks"
 import { ApiConfig } from "@src/types"
 import { saveConfig } from "@src/utils/configUtil"
 
-const MigrateButton = ({ apiId }: { apiId: string }) => {
+const MigrateButton = ({
+  apiId,
+  isMenuItem = false,
+}: {
+  apiId: string
+  isMenuItem?: boolean
+}) => {
   const [migrateModalVisible, migrateVisibleOperate] = useBoolean(false)
-
   const [migratingApi, setMigratingApi] = useState<ApiConfig | null>(null)
   const { config, setConfig } = useConfigStore()
   const activeModuleId = useActiveModuleIdStore((conf) => conf.activeModuleId)
@@ -54,6 +59,31 @@ const MigrateButton = ({ apiId }: { apiId: string }) => {
     migrateVisibleOperate.setFalse()
     setMigratingApi(null)
     message.success("接口迁移成功")
+  }
+
+  if (isMenuItem) {
+    return (
+      <>
+        <div
+          onClick={handleOpenMigrateModal}
+          className="flex items-center gap-2 w-full h-full"
+        >
+          <SwapOutlined />
+          <span>迁移</span>
+        </div>
+        <MigrateApiModal
+          visible={migrateModalVisible}
+          onCancel={() => {
+            migrateVisibleOperate.setFalse()
+            setMigratingApi(null)
+          }}
+          onOk={handleConfirmMigrateApi}
+          api={migratingApi}
+          modules={config.modules}
+          currentModuleId={activeModuleId}
+        />
+      </>
+    )
   }
 
   return (
