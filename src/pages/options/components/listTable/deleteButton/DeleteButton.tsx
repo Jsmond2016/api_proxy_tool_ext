@@ -4,7 +4,13 @@ import { saveConfig } from "@src/utils/configUtil"
 import { Button, Modal } from "antd"
 import React from "react"
 
-const DeleteButton = ({ apiId }: { apiId: string }) => {
+const DeleteButton = ({
+  apiId,
+  isMenuItem = false,
+}: {
+  apiId: string
+  isMenuItem?: boolean
+}) => {
   const { config, setConfig } = useConfigStore()
 
   // 删除API
@@ -25,6 +31,18 @@ const DeleteButton = ({ apiId }: { apiId: string }) => {
         saveConfig(newConfig)
       },
     })
+  }
+
+  if (isMenuItem) {
+    return (
+      <div
+        onClick={handleDeleteApi}
+        className="flex items-center gap-2 w-full h-full text-red-500"
+      >
+        <DeleteOutlined />
+        <span>删除</span>
+      </div>
+    )
   }
 
   return (

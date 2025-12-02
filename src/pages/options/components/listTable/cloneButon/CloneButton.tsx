@@ -5,12 +5,18 @@ import { generateId } from "@src/utils/chromeApi"
 import { saveConfig } from "@src/utils/configUtil"
 import { Button } from "antd"
 
-const CloneButton = ({ apiId }: { apiId: string }) => {
+const CloneButton = ({
+  apiId,
+  isMenuItem = false,
+}: {
+  apiId: string
+  isMenuItem?: boolean
+}) => {
   const { config, setConfig } = useConfigStore()
   const activeModuleId = useActiveModuleIdStore((conf) => conf.activeModuleId)
 
   // 克隆API
-  const handleCloneApi = ()=> {
+  const handleCloneApi = () => {
     const api = config.modules
       .flatMap((module) => module.apiArr)
       .find((api) => api.id === apiId)
@@ -34,6 +40,18 @@ const CloneButton = ({ apiId }: { apiId: string }) => {
       setConfig(newConfig)
       saveConfig(newConfig)
     }
+  }
+
+  if (isMenuItem) {
+    return (
+      <div
+        onClick={handleCloneApi}
+        className="flex items-center gap-2 w-full h-full"
+      >
+        <CopyOutlined />
+        <span>克隆</span>
+      </div>
+    )
   }
 
   return (
