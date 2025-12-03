@@ -8,15 +8,22 @@ import {
   Button,
   message,
   Space,
+  Switch,
+  Row,
+  Col,
 } from "antd"
+
 const { TextArea } = Input
 import { ApiConfig, GlobalConfig } from "../../../../../types"
+// import { QuickMockConfig } from "../../../../../types"
 import {
   isValidUrl,
   isValidPath,
   isApiUrlDuplicate,
   isApiKeyDuplicate,
 } from "../../../../../utils/chromeApi"
+// import QuickMockSection from "./QuickMockSection"
+// import CustomMockFormModal from "./CustomMockFormModal"
 
 interface ApiFormDrawerProps {
   visible: boolean
@@ -37,10 +44,27 @@ export default function ApiFormDrawer({
 }: ApiFormDrawerProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  // const [customMockModalVisible, setCustomMockModalVisible] = useState(false)
+  // const [editingCustomMock, setEditingCustomMock] =
+  //   useState<QuickMockConfig | null>(null)
+  // const [customMockForm] = Form.useForm()
+
+  // // 使用 Form.useWatch 监听字段变化，确保表格能正确更新
+  // const activeCustomMockKey = Form.useWatch("activeCustomMockKey", form) as
+  //   | string
+  //   | undefined
+  // const customMockResponses = (Form.useWatch("customMockResponses", form) ||
+  //   []) as QuickMockConfig[]
 
   // 当编辑时，设置表单初始值
   useEffect(() => {
     if (visible && data) {
+      // // 根据 quickMockType 判断是否使用自定义响应
+      // const useCustomMock = data.quickMockType === "custom"
+      // const activeCustomMockKey = data.activeCustomMockKey
+      // // 如果有激活的自定义响应，自动启用快速联调
+      // const quickMockEnabled = useCustomMock && !!activeCustomMockKey
+
       form.setFieldsValue({
         apiName: data.apiName,
         apiUrl: data.apiUrl,
@@ -50,10 +74,18 @@ export default function ApiFormDrawer({
         delay: data.delay,
         statusCode: data.statusCode,
         authPointKey: data.authPointKey,
+        // useCustomMock: useCustomMock,
+        // quickMockEnabled: quickMockEnabled,
+        // customMockResponses: data.customMockResponses || [],
+        // activeCustomMockKey: activeCustomMockKey || undefined,
       })
     } else if (visible) {
       // 添加时重置表单
       form.resetFields()
+      // form.setFieldsValue({
+      //   useCustomMock: false,
+      //   customMockResponses: [],
+      // })
     }
   }, [visible, data, form])
 
@@ -92,6 +124,15 @@ export default function ApiFormDrawer({
         return
       }
 
+      // // 获取自定义响应列表
+      // const customMockResponses =
+      //   form.getFieldValue("customMockResponses") || []
+      // const useCustomMock = values.useCustomMock || false
+      // const activeCustomMockKey = values.activeCustomMockKey
+
+      // // 如果有激活的自定义响应，自动启用快速联调
+      // const quickMockEnabled = useCustomMock && !!activeCustomMockKey
+
       const apiData: Omit<ApiConfig, "id"> = {
         apiKey: values.apiKey || "",
         apiName: values.apiName || "",
@@ -109,6 +150,12 @@ export default function ApiFormDrawer({
         requestBody: data?.requestBody || "",
         requestHeaders: data?.requestHeaders || "",
         authPointKey: values.authPointKey || "",
+        // quickMockType: useCustomMock ? "custom" : "none",
+        // quickMockEnabled: quickMockEnabled,
+        // customMockResponses: useCustomMock ? customMockResponses : undefined,
+        // activeCustomMockKey: useCustomMock
+        //   ? activeCustomMockKey || undefined
+        //   : undefined,
       }
 
       onOk(apiData)
@@ -154,6 +201,8 @@ export default function ApiFormDrawer({
           isOpen: false,
           mockWay: "redirect",
           statusCode: 200,
+          // useCustomMock: false,
+          // customMockResponses: [],
         }}
       >
         <Form.Item
@@ -228,6 +277,45 @@ export default function ApiFormDrawer({
         <Form.Item label="状态码" name="statusCode">
           <InputNumber min={100} max={599} className="w-full" />
         </Form.Item>
+
+        {/* <QuickMockSection
+          form={form}
+          config={config}
+          activeCustomMockKey={activeCustomMockKey}
+          customMockResponses={customMockResponses}
+          onAddCustomMock={() => {
+            setEditingCustomMock(null)
+            customMockForm.resetFields()
+            setCustomMockModalVisible(true)
+          }}
+          onEditCustomMock={(record) => {
+            setEditingCustomMock(record)
+            customMockForm.setFieldsValue({
+              name: record.name,
+              key: record.key,
+              responseJson: record.responseJson,
+            })
+            setCustomMockModalVisible(true)
+          }}
+        />
+
+        <CustomMockFormModal
+          visible={customMockModalVisible}
+          editingCustomMock={editingCustomMock}
+          config={config}
+          form={form}
+          customMockForm={customMockForm}
+          onCancel={() => {
+            setCustomMockModalVisible(false)
+            setEditingCustomMock(null)
+            customMockForm.resetFields()
+          }}
+          onSuccess={() => {
+            setCustomMockModalVisible(false)
+            setEditingCustomMock(null)
+            customMockForm.resetFields()
+          }}
+        /> */}
       </Form>
     </Drawer>
   )

@@ -17,6 +17,19 @@ export interface ApiConfig {
   arrDepth?: number
   arrLength?: number
   authPointKey?: string
+  quickMockType?: "none" | "preset" | "custom" // 快速联调类型：无、预设响应、自定义响应
+  quickMockKey?: string // 快速联调配置的 key（预设响应时使用）
+  quickMockEnabled?: boolean // 快速联调是否启用
+  customMockResponses?: QuickMockConfig[] // 自定义响应列表（自定义响应时使用）
+  activeCustomMockKey?: string // 当前激活的自定义响应 key
+}
+
+// 快速联调配置类型
+export interface QuickMockConfig {
+  id: string
+  name: string
+  key: string // 唯一标识
+  responseJson: string // JSON 格式的响应数据
 }
 
 // 模块配置类型
@@ -43,6 +56,7 @@ export interface GlobalConfig {
   isGlobalEnabled: boolean
   modules: ModuleConfig[]
   apifoxConfig?: ApifoxConfig
+  quickMockConfigs?: QuickMockConfig[] // 快速联调配置列表
 }
 
 // 搜索和筛选类型
