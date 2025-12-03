@@ -39,6 +39,7 @@ export function getDefaultGlobalConfig(): GlobalConfig {
   return {
     isGlobalEnabled: false,
     modules: DefaultMockApiModule,
+    quickMockConfigs: [],
   }
 }
 
