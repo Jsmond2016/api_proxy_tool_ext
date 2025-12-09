@@ -25,6 +25,24 @@ const TestButton: React.FC<TestButtonProps> = ({
   } | null>(null)
 
   const handleTest = async () => {
+    // 检查 mock 开关状态
+    if (!config.isGlobalEnabled) {
+      message.warning("全局 Mock 开关未打开，请先打开全局 Mock 开关后再测试")
+      return
+    }
+
+    if (!apiConfig.isOpen) {
+      message.warning(
+        "单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试"
+      )
+      return
+    }
+
+    if (!apiConfig.redirectURL) {
+      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
+      return
+    }
+
     setTestModalVisible(true)
     setTestLoading(true)
     setTestResult(null)
@@ -33,13 +51,8 @@ const TestButton: React.FC<TestButtonProps> = ({
       // 模拟请求延迟 1 秒
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // 根据全局 mock 开关状态决定测试 URL
-      // 如果全局 mock 开关关闭，直接测试原始 API URL（不经过代理）
-      // 如果全局 mock 开关开启，测试 redirectURL（会被代理拦截的 URL）
-      const testUrl =
-        config.isGlobalEnabled && apiConfig.isOpen && apiConfig.redirectURL
-          ? apiConfig.redirectURL
-          : apiConfig.apiUrl
+      // 使用 redirectURL 进行测试（会被代理拦截的 URL）
+      const testUrl = apiConfig.redirectURL
 
       const response = await fetch(testUrl, {
         method: apiConfig.method,
@@ -130,11 +143,7 @@ const TestButton: React.FC<TestButtonProps> = ({
               正在发送请求...
             </div>
             <div className="mt-2 text-gray-400 text-sm">
-              {config.isGlobalEnabled &&
-              apiConfig.isOpen &&
-              apiConfig.redirectURL
-                ? apiConfig.redirectURL
-                : apiConfig.apiUrl}
+              {apiConfig.redirectURL || apiConfig.apiUrl}
             </div>
           </div>
         ) : testResult ? (
