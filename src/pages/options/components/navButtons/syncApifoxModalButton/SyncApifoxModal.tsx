@@ -1,35 +1,21 @@
 import React, { useState, useEffect } from "react"
-import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  Button,
-  message,
-  Spin,
-  Alert,
-  Tag,
-  Space,
-} from "antd"
-import { CloseOutlined } from "@ant-design/icons"
-import { GlobalConfig, ModuleConfig, ApiConfig } from "../../../../../types"
+import { Modal, Form, Input, Select, message } from "antd"
+import { GlobalConfig, ModuleConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
-  parseSwaggerData as parseSwaggerDataUtil,
-  type ParsedApi,
-  type SwaggerData,
   type ApifoxStatus,
+  type ParsedApi,
   APIFOX_STATUS_OPTIONS,
   DEFAULT_APIFOX_STATUS,
 } from "./apifoxUtils"
-import {
-  getCachedApifoxUrl,
-  saveCachedApifoxUrl,
-  getTagHistory,
-  addTagHistory,
-  removeTagHistory,
-  type TagHistoryItem,
-} from "./apifoxCache"
+import { getCachedApifoxUrl, saveCachedApifoxUrl } from "./apifoxCache"
+import { useApifoxValidation } from "./hooks/useApifoxValidation"
+import { useTagHistory } from "./hooks/useTagHistory"
+import { useConflictDetection } from "./hooks/useConflictDetection"
+import TagHistorySelector from "./components/TagHistorySelector"
+import ConflictAlerts from "./components/ConflictAlerts"
+import ApiSummaryAlert from "./components/ApiSummaryAlert"
+import UrlValidationStatus from "./components/UrlValidationStatus"
 
 const { TextArea } = Input
 
@@ -59,154 +45,66 @@ export default function SyncApifoxModal({
   config,
 }: SyncApifoxModalProps) {
   const [form] = Form.useForm()
-  const [validating, setValidating] = useState(false)
-  const [swaggerData, setSwaggerData] = useState<SwaggerData | null>(null)
-  const [availableTags, setAvailableTags] = useState<string[]>([])
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedStatus, setSelectedStatus] = useState<ApifoxStatus>(
     DEFAULT_APIFOX_STATUS
   )
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
-  const [conflicts, setConflicts] = useState<{
-    urlConflicts: string[]
-    groupConflicts: string[]
-  }>({ urlConflicts: [], groupConflicts: [] })
-  const [tagHistory, setTagHistory] = useState<TagHistoryItem[]>([])
+
+  // 使用自定义 hooks
+  const {
+    validating,
+    swaggerData,
+    availableTags,
+    validateApifoxUrl,
+    parseSwaggerData,
+    resetValidation,
+  } = useApifoxValidation()
+
+  const { tagHistory, saveTagHistory, deleteTagHistory } = useTagHistory()
+
+  const { urlConflicts, groupConflicts } = useConflictDetection(
+    parsedApis,
+    config
+  )
+
+  // 更新解析的 APIs
+  const updateParsedApis = (tags: string[], status: ApifoxStatus) => {
+    const apis = parseSwaggerData(tags, status)
+    if (apis) {
+      setParsedApis(apis)
+    }
+  }
 
   // 重置表单
   const resetForm = () => {
     form.resetFields()
-    setSwaggerData(null)
-    setAvailableTags([])
+    resetValidation()
     setSelectedTags([])
     setSelectedStatus(DEFAULT_APIFOX_STATUS)
     setParsedApis([])
-    setConflicts({ urlConflicts: [], groupConflicts: [] })
-  }
-
-  // 验证Apifox地址
-  const validateApifoxUrl = async (url: string) => {
-    if (!url) return false
-
-    try {
-      setValidating(true)
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
-      }
-      const data = await response.json()
-
-      // 验证是否为有效的Swagger/OpenAPI数据
-      if (!data.openapi && !data.swagger) {
-        throw new Error("不是有效的OpenAPI/Swagger数据")
-      }
-
-      const swaggerDataResult = data as SwaggerData
-      setSwaggerData(swaggerDataResult)
-
-      // 提取tags
-      const tags = data.tags?.map((tag: { name: string }) => tag.name) || []
-      setAvailableTags(tags)
-
-      // 验证成功后，解析数据以显示接口列表
-      const currentSelectedTags = selectedTags.length > 0 ? selectedTags : []
-      const currentSelectedStatus = selectedStatus || DEFAULT_APIFOX_STATUS
-      const apis = parseSwaggerDataUtil(
-        swaggerDataResult,
-        currentSelectedTags,
-        currentSelectedStatus
-      )
-      setParsedApis(apis)
-      const conflicts = detectConflicts(apis)
-      setConflicts(conflicts)
-
-      // 验证成功后，保存地址到缓存
-      saveCachedApifoxUrl(url).catch((error) => {
-        console.error("Failed to save cached URL:", error)
-      })
-
-      message.success("Apifox地址验证成功")
-      return true
-    } catch (error) {
-      message.error(
-        `验证失败: ${error instanceof Error ? error.message : "未知错误"}`
-      )
-      return false
-    } finally {
-      setValidating(false)
-    }
-  }
-
-  // 解析Swagger数据
-  const parseSwaggerData = (
-    swaggerData: SwaggerData,
-    selectedTags: string[],
-    selectedStatus: ApifoxStatus
-  ): ParsedApi[] => {
-    return parseSwaggerDataUtil(swaggerData, selectedTags, selectedStatus)
-  }
-
-  // 检测冲突（需要在组件内部定义，因为需要访问 config）
-  const detectConflicts = (parsedApis: ParsedApi[]) => {
-    const urlConflicts: string[] = []
-    const groupConflicts: string[] = []
-
-    // 检查URL冲突
-    parsedApis.forEach((api) => {
-      const existingApi = config.modules
-        .flatMap((module) => module.apiArr)
-        .find((existingApi) => existingApi.apiUrl.includes(api.path))
-
-      if (existingApi) {
-        urlConflicts.push(`${api.method} ${api.path} -> ${existingApi.apiName}`)
-      }
-    })
-
-    // 检查分组名冲突
-    const newGroupNames = [...new Set(parsedApis.map((api) => api.groupName))]
-    newGroupNames.forEach((groupName) => {
-      const existingModule = config.modules.find(
-        (module) => module.label === groupName
-      )
-      if (existingModule) {
-        groupConflicts.push(groupName)
-      }
-    })
-
-    return { urlConflicts, groupConflicts }
   }
 
   // 处理标签变化
   const handleTagsChange = (tags: string[]) => {
     setSelectedTags(tags)
-
-    if (swaggerData) {
-      const apis = parseSwaggerData(swaggerData, tags, selectedStatus)
-      setParsedApis(apis)
-
-      const conflicts = detectConflicts(apis)
-      setConflicts(conflicts)
-    }
+    updateParsedApis(tags, selectedStatus)
   }
 
   // 处理状态变化
   const handleStatusChange = (status: ApifoxStatus) => {
     setSelectedStatus(status)
-
-    if (swaggerData) {
-      const apis = parseSwaggerData(swaggerData, selectedTags, status)
-      setParsedApis(apis)
-
-      const conflicts = detectConflicts(apis)
-      setConflicts(conflicts)
-    }
+    updateParsedApis(selectedTags, status)
   }
 
   // 处理Apifox地址变化
   const handleApifoxUrlChange = async () => {
     const url = form.getFieldValue("apifoxUrl")
     if (url) {
-      await validateApifoxUrl(url)
+      const result = await validateApifoxUrl(url, selectedTags, selectedStatus)
+      if (result.success && result.parsedApis) {
+        setParsedApis(result.parsedApis)
+      }
     }
   }
 
@@ -217,10 +115,7 @@ export default function SyncApifoxModal({
       return
     }
 
-    if (
-      conflicts.urlConflicts.length > 0 ||
-      conflicts.groupConflicts.length > 0
-    ) {
+    if (urlConflicts.length > 0 || groupConflicts.length > 0) {
       message.warning("存在冲突，请先解决冲突后再同步")
       return
     }
@@ -248,14 +143,7 @@ export default function SyncApifoxModal({
 
     // 保存标签选择到历史记录
     if (selectedTags.length > 0) {
-      addTagHistory(selectedTags)
-        .then(() => {
-          // 保存成功后重新加载历史记录
-          loadTagHistory()
-        })
-        .catch((error) => {
-          console.error("Failed to save tag history:", error)
-        })
+      saveTagHistory(selectedTags)
     }
 
     // 转换为 ModuleConfig 格式
@@ -274,69 +162,43 @@ export default function SyncApifoxModal({
     onCancel()
   }
 
-  // 加载标签历史
-  const loadTagHistory = async () => {
-    try {
-      const history = await getTagHistory()
-      setTagHistory(history)
-    } catch (error) {
-      console.error("Failed to load tag history:", error)
-      setTagHistory([])
-    }
-  }
-
   // 处理快速选择标签历史
-  const handleQuickSelectTags = (historyItem: TagHistoryItem) => {
-    setSelectedTags([...historyItem.tags])
-    if (swaggerData) {
-      const apis = parseSwaggerData(
-        swaggerData,
-        historyItem.tags,
-        selectedStatus
-      )
-      setParsedApis(apis)
-      const conflicts = detectConflicts(apis)
-      setConflicts(conflicts)
-    }
-  }
-
-  // 处理删除标签历史
-  const handleRemoveTagHistory = async (timestamp: number) => {
-    try {
-      await removeTagHistory(timestamp)
-      await loadTagHistory()
-    } catch (error) {
-      console.error("Failed to remove tag history:", error)
-    }
+  const handleQuickSelectTags = (historyItem: { tags: string[] }) => {
+    const tags = [...historyItem.tags]
+    setSelectedTags(tags)
+    updateParsedApis(tags, selectedStatus)
   }
 
   // 监听弹框显示状态，加载已保存的配置
   useEffect(() => {
     if (visible) {
-      // 加载标签历史
-      loadTagHistory()
-
       // 加载缓存的地址
       getCachedApifoxUrl().then((cachedUrl) => {
         // 如果有已保存的配置，优先使用配置中的地址
         const urlToUse = config.apifoxConfig?.apifoxUrl || cachedUrl
 
         if (urlToUse) {
+          const savedTags = config.apifoxConfig?.selectedTags || []
+          const savedStatus =
+            config.apifoxConfig?.selectedStatus || DEFAULT_APIFOX_STATUS
+
           form.setFieldsValue({
             apifoxUrl: urlToUse,
             mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX,
           })
-          setSelectedTags(config.apifoxConfig?.selectedTags || [])
-          setSelectedStatus(
-            config.apifoxConfig?.selectedStatus || DEFAULT_APIFOX_STATUS
-          )
+          setSelectedTags(savedTags)
+          setSelectedStatus(savedStatus)
 
           // 自动验证并加载数据
-          if (urlToUse) {
-            validateApifoxUrl(urlToUse).catch((error) => {
+          validateApifoxUrl(urlToUse, savedTags, savedStatus)
+            .then((result) => {
+              if (result.success && result.parsedApis) {
+                setParsedApis(result.parsedApis)
+              }
+            })
+            .catch((error) => {
               console.error("Failed to validate Apifox URL:", error)
             })
-          }
         } else {
           // 使用默认值
           form.setFieldsValue({
@@ -381,12 +243,7 @@ export default function SyncApifoxModal({
           <TextArea rows={2} onBlur={handleApifoxUrlChange} />
         </Form.Item>
 
-        {validating && (
-          <div className="text-center py-4">
-            <Spin size="small" />
-            <span className="ml-2">正在验证地址...</span>
-          </div>
-        )}
+        <UrlValidationStatus validating={validating} />
 
         {swaggerData && (
           <>
@@ -424,42 +281,11 @@ export default function SyncApifoxModal({
                   value: tag,
                 }))}
               />
-              {tagHistory.length > 0 && (
-                <div className="mt-2">
-                  <div className="text-xs text-gray-500 mb-1">
-                    最近选择的标签（点击快速应用）：
-                  </div>
-                  <Space wrap size={[8, 8]}>
-                    {tagHistory
-                      .filter(
-                        (item) => item && item.tags && Array.isArray(item.tags)
-                      )
-                      .map((item) => {
-                        const tagsText =
-                          item.tags.length > 3
-                            ? `${item.tags.slice(0, 3).join(", ")}...`
-                            : item.tags.join(", ")
-                        return (
-                          <Tag
-                            key={item.timestamp}
-                            closable
-                            onClose={(e) => {
-                              e.preventDefault()
-                              e.stopPropagation() // 阻止事件冒泡，避免触发 onClick
-                              handleRemoveTagHistory(item.timestamp)
-                            }}
-                            className="cursor-pointer"
-                            onClick={() => handleQuickSelectTags(item)}
-                            color="blue"
-                            title={item.tags.join(", ")}
-                          >
-                            {tagsText}
-                          </Tag>
-                        )
-                      })}
-                  </Space>
-                </div>
-              )}
+              <TagHistorySelector
+                tagHistory={tagHistory}
+                onQuickSelect={handleQuickSelectTags}
+                onRemove={deleteTagHistory}
+              />
             </Form.Item>
 
             <Form.Item
@@ -471,64 +297,12 @@ export default function SyncApifoxModal({
               <Input />
             </Form.Item>
 
-            {parsedApis.length > 0 && (
-              <div className="mb-4">
-                <Alert
-                  message={`找到 ${parsedApis.length} 个接口，将创建 ${
-                    Object.keys(
-                      parsedApis.reduce((groups, api) => {
-                        groups[api.groupName] = true
-                        return groups
-                      }, {} as Record<string, boolean>)
-                    ).length
-                  } 个分组`}
-                  type="info"
-                  showIcon
-                />
-              </div>
-            )}
+            <ApiSummaryAlert parsedApis={parsedApis} />
 
-            {conflicts.urlConflicts.length > 0 && (
-              <Alert
-                message="URL冲突"
-                description={
-                  <div>
-                    <p>以下接口URL已存在：</p>
-                    <ul className="list-disc list-inside">
-                      {conflicts.urlConflicts.map((conflict, index) => (
-                        <li key={index} className="text-red-600">
-                          {conflict}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                }
-                type="warning"
-                showIcon
-                className="mb-4"
-              />
-            )}
-
-            {conflicts.groupConflicts.length > 0 && (
-              <Alert
-                message="分组名冲突"
-                description={
-                  <div>
-                    <p>以下分组名已存在：</p>
-                    <ul className="list-disc list-inside">
-                      {conflicts.groupConflicts.map((conflict, index) => (
-                        <li key={index} className="text-red-600">
-                          {conflict}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                }
-                type="warning"
-                showIcon
-                className="mb-4"
-              />
-            )}
+            <ConflictAlerts
+              urlConflicts={urlConflicts}
+              groupConflicts={groupConflicts}
+            />
           </>
         )}
       </Form>
