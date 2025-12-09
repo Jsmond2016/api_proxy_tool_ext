@@ -254,7 +254,10 @@ export default function ApiFormDrawer({
           name="pageRoute"
           extra="示例：/user/list 或 /dashboard，用于标识该接口属于哪个页面"
         >
-          <Input placeholder="请输入页面路由（选填）" />
+          <Input.TextArea
+            placeholder="请输入页面路由（选填）"
+            autoSize={{ minRows: 1, maxRows: 6 }}
+          />
         </Form.Item>
 
         {/* 请求方式字段已隐藏，默认使用 GET */}

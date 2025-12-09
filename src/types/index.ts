@@ -90,6 +90,8 @@ export interface ImportExportFormat {
     redirectURL: string
     requestBody: string
     statusCode: number
+    authPointKey?: string
+    pageRoute?: string
   }[]
 }
 
