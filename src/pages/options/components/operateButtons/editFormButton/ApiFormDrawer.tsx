@@ -74,6 +74,7 @@ export default function ApiFormDrawer({
         delay: data.delay,
         statusCode: data.statusCode,
         authPointKey: data.authPointKey,
+        pageRoute: data.pageRoute,
         // useCustomMock: useCustomMock,
         // quickMockEnabled: quickMockEnabled,
         // customMockResponses: data.customMockResponses || [],
@@ -150,6 +151,7 @@ export default function ApiFormDrawer({
         requestBody: data?.requestBody || "",
         requestHeaders: data?.requestHeaders || "",
         authPointKey: values.authPointKey || "",
+        pageRoute: values.pageRoute || "",
         // quickMockType: useCustomMock ? "custom" : "none",
         // quickMockEnabled: quickMockEnabled,
         // customMockResponses: useCustomMock ? customMockResponses : undefined,
@@ -245,6 +247,14 @@ export default function ApiFormDrawer({
           extra="示例：demo-user-list，用于权限控制"
         >
           <Input placeholder="请输入权限点Key（选填）" />
+        </Form.Item>
+
+        <Form.Item
+          label="页面路由"
+          name="pageRoute"
+          extra="示例：/user/list 或 /dashboard，用于标识该接口属于哪个页面"
+        >
+          <Input placeholder="请输入页面路由（选填）" />
         </Form.Item>
 
         {/* 请求方式字段已隐藏，默认使用 GET */}

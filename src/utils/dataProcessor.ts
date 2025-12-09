@@ -33,6 +33,7 @@ export interface ImportApiData {
   requestBody?: string
   requestHeaders?: string
   authPointKey?: string
+  pageRoute?: string
 }
 
 /**
@@ -64,6 +65,7 @@ export interface ExportApiData {
   requestBody: string
   statusCode: number
   authPointKey: string
+  pageRoute?: string
 }
 
 /**
@@ -100,6 +102,7 @@ export const transformImportDataToModuleConfig = (
       requestBody: apiData.requestBody || "",
       requestHeaders: apiData.requestHeaders || "",
       authPointKey: apiData.authPointKey || "",
+      pageRoute: apiData.pageRoute || "",
     })),
   }))
 }
@@ -135,6 +138,7 @@ export const transformModuleConfigToExportData = (
       requestBody: api.requestBody || "",
       statusCode: api.statusCode,
       authPointKey: api.authPointKey || "",
+      pageRoute: api.pageRoute || "",
     })),
   }))
 }
