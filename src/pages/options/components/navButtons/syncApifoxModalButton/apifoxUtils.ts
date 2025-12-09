@@ -7,6 +7,35 @@ import {
 import { camelCase } from "change-case"
 
 /**
+ * Apifox 接口状态类型
+ */
+export type ApifoxStatus =
+  | "developing" // 开发中
+  | "obsolete" // 已废弃
+  | "deprecated" // 将废弃
+  | "testing" // 测试中
+  | "released" // 已发布
+
+/**
+ * Apifox 状态选项配置
+ */
+export const APIFOX_STATUS_OPTIONS: Array<{
+  label: string
+  value: ApifoxStatus
+}> = [
+  { label: "开发中", value: "developing" },
+  { label: "测试中", value: "testing" },
+  { label: "已发布", value: "released" },
+  { label: "将废弃", value: "deprecated" },
+  { label: "已废弃", value: "obsolete" },
+]
+
+/**
+ * 默认状态：开发中
+ */
+export const DEFAULT_APIFOX_STATUS: ApifoxStatus = "developing"
+
+/**
  * 解析后的 API 类型
  */
 export interface ParsedApi {
@@ -96,7 +125,8 @@ export const convertParsedApisToModules = (
  */
 export const parseSwaggerData = (
   swaggerData: SwaggerData,
-  selectedTags: string[]
+  selectedTags: string[],
+  selectedStatus: ApifoxStatus = DEFAULT_APIFOX_STATUS
 ): ParsedApi[] => {
   const apis: ParsedApi[] = []
   console.log("swaggerData", swaggerData)
@@ -110,6 +140,14 @@ export const parseSwaggerData = (
         // eg: x-run-in-apifox: "https://apifox.com/web/project/3155205/apis/api-102913012-run"
         // 提取中间的数字部分作为 apiId（如 102913012）
         const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
+
+        // 检查接口状态，根据用户选择的状态进行过滤
+        const apifoxStatus = apiInfo["x-apifox-status"]
+
+        // 只保留状态匹配的接口，如果接口没有状态字段且用户选择的状态不是默认值，则跳过
+        if (apifoxStatus !== selectedStatus) {
+          return
+        }
 
         // 检查是否匹配选中的tags
         const hasMatchingTag =

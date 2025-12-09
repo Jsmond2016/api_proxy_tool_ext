@@ -50,6 +50,12 @@ export interface ApifoxConfig {
   apifoxUrl: string
   mockPrefix: string
   selectedTags?: string[]
+  selectedStatus?:
+    | "developing"
+    | "obsolete"
+    | "deprecated"
+    | "testing"
+    | "released"
 }
 
 // 全局配置类型
