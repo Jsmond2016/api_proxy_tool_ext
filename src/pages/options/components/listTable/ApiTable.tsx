@@ -226,48 +226,56 @@ export default function ApiTable() {
       ),
     },
     {
-      title: "接口名称",
+      title: "接口信息",
       dataIndex: "apiName",
-      width: 120,
+      width: 280,
       render: (_: any, record: ApiConfig) => {
         const isApifoxId = /^\d+$/.test(record.id)
         const canLink = projectId && isApifoxId
 
         return (
-          <div className="font-medium">
-            {canLink ? (
-              <a
-                href={`https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
-                title="点击跳转到 Apifox Web 版"
-                onClick={(e) => e.stopPropagation()}
+          <Space direction="vertical" size="small" className="w-full">
+            {/* 接口名称 */}
+            <div className="font-medium">
+              - 接口名称：
+              {canLink ? (
+                <a
+                  href={`https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                  title="点击跳转到 Apifox Web 版"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {record.apiName}
+                </a>
+              ) : (
+                record.apiName
+              )}
+            </div>
+            {/* 接口 URL */}
+            <div>
+              <Paragraph
+                copyable={{ text: record.apiUrl }}
+                type="secondary"
+                className="mb-0"
               >
-                {record.apiName}
-              </a>
-            ) : (
-              record.apiName
-            )}
-          </div>
+                - 接口地址：{record.apiUrl}
+              </Paragraph>
+            </div>
+            {/* Mock 接口 URL */}
+            <div>
+              <Paragraph
+                copyable={{ text: record.redirectURL }}
+                type="danger"
+                className="mb-0"
+              >
+                - Mock URL：{record.redirectURL}
+              </Paragraph>
+            </div>
+          </Space>
         )
       },
-    },
-    {
-      title: "接口地址",
-      dataIndex: "apiUrl",
-      width: 200,
-      render: (_: any, record: ApiConfig) => (
-        <Space direction="vertical">
-          <Paragraph copyable={{ text: record.apiUrl }} type="secondary">
-            {record.apiUrl}
-          </Paragraph>
-
-          <Paragraph copyable={{ text: record.redirectURL }} type="danger">
-            {record.redirectURL}
-          </Paragraph>
-        </Space>
-      ),
     },
     {
       title: "权限点",
