@@ -20,6 +20,7 @@ import {
   validateApifoxUrl,
   type ParsedApi,
   type SwaggerData,
+  DEFAULT_APIFOX_STATUS,
 } from "./apifoxUtils"
 import { compareApifoxModules, hasChanges } from "./compareUtils"
 import { ChangeSummaryTable } from "./ChangeSummaryTable"
@@ -67,7 +68,11 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   }
 
   // 执行同步操作
-  const performSync = (newModules: ModuleConfig[], showMessage = true, replaceAll = false) => {
+  const performSync = (
+    newModules: ModuleConfig[],
+    showMessage = true,
+    replaceAll = false
+  ) => {
     // 使用函数式更新，自动获取最新 state，避免闭包问题
     setConfig((prev) => {
       // 智能判断：如果只有默认模块，直接替换
@@ -76,8 +81,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       const newConfig = {
         ...prev,
         modules: shouldReplace
-          ? newModules  // 替换模式
-          : [...prev.modules, ...newModules],  // 追加模式
+          ? newModules // 替换模式
+          : [...prev.modules, ...newModules], // 追加模式
       }
       saveConfig(newConfig)
       return newConfig
@@ -187,7 +192,13 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
       // 解析数据
       const selectedTags = apifoxConfig.selectedTags || []
-      const parsedApis = parseSwaggerData(swaggerData, selectedTags)
+      const selectedStatus =
+        apifoxConfig.selectedStatus || DEFAULT_APIFOX_STATUS
+      const parsedApis = parseSwaggerData(
+        swaggerData,
+        selectedTags,
+        selectedStatus
+      )
 
       if (parsedApis.length === 0) {
         message.warning("没有找到符合条件的接口")
