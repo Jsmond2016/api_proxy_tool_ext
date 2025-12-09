@@ -1,6 +1,6 @@
 {
   "name": "Api Proxy Tool",
-  "version": "1.4.18",
+  "version": "1.5.0",
   "description": "A simple chrome & firefox extension template with Vite, React, TypeScript and Tailwind CSS.",
   "license": "MIT",
   "repository": {
