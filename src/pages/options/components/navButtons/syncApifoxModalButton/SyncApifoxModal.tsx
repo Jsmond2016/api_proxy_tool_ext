@@ -1,5 +1,17 @@
 import React, { useState, useEffect } from "react"
-import { Modal, Form, Input, Select, Button, message, Spin, Alert } from "antd"
+import {
+  Modal,
+  Form,
+  Input,
+  Select,
+  Button,
+  message,
+  Spin,
+  Alert,
+  Tag,
+  Space,
+} from "antd"
+import { CloseOutlined } from "@ant-design/icons"
 import { GlobalConfig, ModuleConfig, ApiConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
@@ -10,6 +22,14 @@ import {
   APIFOX_STATUS_OPTIONS,
   DEFAULT_APIFOX_STATUS,
 } from "./apifoxUtils"
+import {
+  getCachedApifoxUrl,
+  saveCachedApifoxUrl,
+  getTagHistory,
+  addTagHistory,
+  removeTagHistory,
+  type TagHistoryItem,
+} from "./apifoxCache"
 
 const { TextArea } = Input
 
@@ -51,6 +71,7 @@ export default function SyncApifoxModal({
     urlConflicts: string[]
     groupConflicts: string[]
   }>({ urlConflicts: [], groupConflicts: [] })
+  const [tagHistory, setTagHistory] = useState<TagHistoryItem[]>([])
 
   // 重置表单
   const resetForm = () => {
@@ -98,6 +119,11 @@ export default function SyncApifoxModal({
       setParsedApis(apis)
       const conflicts = detectConflicts(apis)
       setConflicts(conflicts)
+
+      // 验证成功后，保存地址到缓存
+      saveCachedApifoxUrl(url).catch((error) => {
+        console.error("Failed to save cached URL:", error)
+      })
 
       message.success("Apifox地址验证成功")
       return true
@@ -213,6 +239,25 @@ export default function SyncApifoxModal({
       })
     }
 
+    // 保存地址到缓存
+    if (apifoxUrl) {
+      saveCachedApifoxUrl(apifoxUrl).catch((error) => {
+        console.error("Failed to save cached URL:", error)
+      })
+    }
+
+    // 保存标签选择到历史记录
+    if (selectedTags.length > 0) {
+      addTagHistory(selectedTags)
+        .then(() => {
+          // 保存成功后重新加载历史记录
+          loadTagHistory()
+        })
+        .catch((error) => {
+          console.error("Failed to save tag history:", error)
+        })
+    }
+
     // 转换为 ModuleConfig 格式
     const newModules = convertParsedApisToModules(parsedApis, {
       apifoxUrl,
@@ -229,32 +274,77 @@ export default function SyncApifoxModal({
     onCancel()
   }
 
+  // 加载标签历史
+  const loadTagHistory = async () => {
+    try {
+      const history = await getTagHistory()
+      setTagHistory(history)
+    } catch (error) {
+      console.error("Failed to load tag history:", error)
+      setTagHistory([])
+    }
+  }
+
+  // 处理快速选择标签历史
+  const handleQuickSelectTags = (historyItem: TagHistoryItem) => {
+    setSelectedTags([...historyItem.tags])
+    if (swaggerData) {
+      const apis = parseSwaggerData(
+        swaggerData,
+        historyItem.tags,
+        selectedStatus
+      )
+      setParsedApis(apis)
+      const conflicts = detectConflicts(apis)
+      setConflicts(conflicts)
+    }
+  }
+
+  // 处理删除标签历史
+  const handleRemoveTagHistory = async (timestamp: number) => {
+    try {
+      await removeTagHistory(timestamp)
+      await loadTagHistory()
+    } catch (error) {
+      console.error("Failed to remove tag history:", error)
+    }
+  }
+
   // 监听弹框显示状态，加载已保存的配置
   useEffect(() => {
     if (visible) {
-      // 如果有已保存的配置，加载到表单
-      if (config.apifoxConfig) {
-        form.setFieldsValue({
-          apifoxUrl: config.apifoxConfig.apifoxUrl,
-          mockPrefix: config.apifoxConfig.mockPrefix,
-        })
-        setSelectedTags(config.apifoxConfig.selectedTags || [])
-        setSelectedStatus(
-          config.apifoxConfig.selectedStatus || DEFAULT_APIFOX_STATUS
-        )
-        // 自动验证并加载数据
-        if (config.apifoxConfig.apifoxUrl) {
-          validateApifoxUrl(config.apifoxConfig.apifoxUrl).catch((error) => {
-            console.error("Failed to validate Apifox URL:", error)
+      // 加载标签历史
+      loadTagHistory()
+
+      // 加载缓存的地址
+      getCachedApifoxUrl().then((cachedUrl) => {
+        // 如果有已保存的配置，优先使用配置中的地址
+        const urlToUse = config.apifoxConfig?.apifoxUrl || cachedUrl
+
+        if (urlToUse) {
+          form.setFieldsValue({
+            apifoxUrl: urlToUse,
+            mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX,
           })
+          setSelectedTags(config.apifoxConfig?.selectedTags || [])
+          setSelectedStatus(
+            config.apifoxConfig?.selectedStatus || DEFAULT_APIFOX_STATUS
+          )
+
+          // 自动验证并加载数据
+          if (urlToUse) {
+            validateApifoxUrl(urlToUse).catch((error) => {
+              console.error("Failed to validate Apifox URL:", error)
+            })
+          }
+        } else {
+          // 使用默认值
+          form.setFieldsValue({
+            mockPrefix: MOCK_PREFIX,
+          })
+          setSelectedStatus(DEFAULT_APIFOX_STATUS)
         }
-      } else {
-        // 使用默认值
-        form.setFieldsValue({
-          mockPrefix: MOCK_PREFIX,
-        })
-        setSelectedStatus(DEFAULT_APIFOX_STATUS)
-      }
+      })
     } else {
       resetForm()
     }
@@ -304,6 +394,8 @@ export default function SyncApifoxModal({
               label="接口状态"
               name="status"
               tooltip="选择要同步的接口状态"
+              initialValue={DEFAULT_APIFOX_STATUS}
+              rules={[{ required: true, message: "请选择接口状态" }]}
             >
               <Select
                 placeholder="请选择接口状态"
@@ -317,6 +409,7 @@ export default function SyncApifoxModal({
               label="选择标签"
               name="tags"
               tooltip="请选择单个或多个需要同步的标签"
+              rules={[{ required: true, message: "请选择标签" }]}
             >
               <Select
                 mode="multiple"
@@ -331,6 +424,42 @@ export default function SyncApifoxModal({
                   value: tag,
                 }))}
               />
+              {tagHistory.length > 0 && (
+                <div className="mt-2">
+                  <div className="text-xs text-gray-500 mb-1">
+                    最近选择的标签（点击快速应用）：
+                  </div>
+                  <Space wrap size={[8, 8]}>
+                    {tagHistory
+                      .filter(
+                        (item) => item && item.tags && Array.isArray(item.tags)
+                      )
+                      .map((item) => {
+                        const tagsText =
+                          item.tags.length > 3
+                            ? `${item.tags.slice(0, 3).join(", ")}...`
+                            : item.tags.join(", ")
+                        return (
+                          <Tag
+                            key={item.timestamp}
+                            closable
+                            onClose={(e) => {
+                              e.preventDefault()
+                              e.stopPropagation() // 阻止事件冒泡，避免触发 onClick
+                              handleRemoveTagHistory(item.timestamp)
+                            }}
+                            className="cursor-pointer"
+                            onClick={() => handleQuickSelectTags(item)}
+                            color="blue"
+                            title={item.tags.join(", ")}
+                          >
+                            {tagsText}
+                          </Tag>
+                        )
+                      })}
+                  </Space>
+                </div>
+              )}
             </Form.Item>
 
             <Form.Item
