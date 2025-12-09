@@ -160,6 +160,14 @@ export const parseSwaggerData = (
             apiInfo["x-apifox-fe-general-model-base-action-type"] ||
             (tags.length > 0 ? tags[0] : "默认分组")
 
+          // 如果 groupName 不符合格式，给出警告
+          if (!isValidGroupName(groupName)) {
+            console.warn(
+              `⚠️ groupName 不符合格式要求（应为英文 a.b.c 形式）：${groupName}`,
+              `接口：${method.toUpperCase()} ${path}`
+            )
+          }
+
           const modelApiType = apiInfo["x-apifox-fe-general-model-api-type"]
 
           apis.push({
@@ -184,14 +192,14 @@ export const parseSwaggerData = (
   return apis
 }
 
+export const isValidGroupName = (groupName: string) => {
+  return /^[a-zA-Z.]+$/.test(groupName)
+}
+
 type GenerateAuthKeyParams = {
   path: string
   groupName: string
   modelApiType: ModelApiActionType
-}
-
-export const isValidGroupName = (groupName: string) => {
-  return /^[a-zA-Z.]+$/.test(groupName)
 }
 
 export function generateAuthPointKey({
