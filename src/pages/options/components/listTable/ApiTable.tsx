@@ -56,7 +56,8 @@ export default function ApiTable() {
     return (
       api.apiName.toLowerCase().includes(keyword) ||
       api.apiUrl.toLowerCase().includes(keyword) ||
-      api.redirectURL.toLowerCase().includes(keyword)
+      api.redirectURL.toLowerCase().includes(keyword) ||
+      (api.pageRoute && api.pageRoute.toLowerCase().includes(keyword))
     )
   })
 
@@ -281,6 +282,40 @@ export default function ApiTable() {
         ) : (
           "-"
         ),
+    },
+    {
+      title: "页面路由",
+      dataIndex: "pageRoute",
+      width: 150,
+      render: (v: string | undefined, record: ApiConfig) => {
+        if (!isNotEmpty(v)) {
+          return "-"
+        }
+        // 判断是否为完整 URL，如果是则直接跳转，否则作为相对路径处理
+        const isFullUrl = /^https?:\/\//.test(v)
+        const href = isFullUrl ? v : v.startsWith("/") ? v : `/${v}`
+
+        return (
+          <a
+            href={href}
+            target={isFullUrl ? "_blank" : undefined}
+            rel={isFullUrl ? "noopener noreferrer" : undefined}
+            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+            title="点击跳转到页面"
+            onClick={(e) => {
+              // 如果是相对路径，阻止默认行为，使用浏览器导航
+              if (!isFullUrl) {
+                e.preventDefault()
+                // 获取当前页面的域名，构建完整 URL
+                const currentOrigin = window.location.origin
+                window.open(`${currentOrigin}${href}`, "_blank")
+              }
+            }}
+          >
+            {v}
+          </a>
+        )
+      },
     },
     {
       title: "代理设置",

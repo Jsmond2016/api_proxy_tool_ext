@@ -17,6 +17,7 @@ export interface ApiConfig {
   arrDepth?: number
   arrLength?: number
   authPointKey?: string
+  pageRoute?: string // 页面路由，用于标识该接口属于哪个页面
   quickMockType?: "none" | "preset" | "custom" // 快速联调类型：无、预设响应、自定义响应
   quickMockKey?: string // 快速联调配置的 key（预设响应时使用）
   quickMockEnabled?: boolean // 快速联调是否启用
