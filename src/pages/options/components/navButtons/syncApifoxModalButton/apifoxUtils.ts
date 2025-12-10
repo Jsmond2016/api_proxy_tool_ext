@@ -1,8 +1,9 @@
-import { ModuleConfig, ApifoxConfig } from "@src/types"
+import { ModuleConfig } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
 import {
   ModelApiActionType,
   ModelNamesMap,
+  ModelAction,
 } from "../../../../../constant/model"
 import { camelCase } from "change-case"
 
@@ -50,17 +51,31 @@ export interface ParsedApi {
 }
 
 /**
+ * Swagger API Info 类型
+ */
+interface SwaggerApiInfo {
+  tags?: string[]
+  summary?: string
+  "x-run-in-apifox"?: string
+  "x-apifox-status"?: ApifoxStatus
+  "x-apifox-fe-general-model-base-action-type"?: string
+  "x-apifox-fe-general-model-api-type"?: ModelApiActionType
+  [key: string]: unknown
+}
+
+/**
  * Swagger 数据类型
  */
 export interface SwaggerData {
-  openapi: string
+  openapi?: string
+  swagger?: string
   info: {
     title: string
     description: string
     version: string
   }
   tags: Array<{ name: string }>
-  paths: Record<string, Record<string, any>>
+  paths: Record<string, Record<string, SwaggerApiInfo>>
 }
 
 /**
@@ -71,13 +86,16 @@ export const convertParsedApisToModules = (
   apifoxConfig: { apifoxUrl: string; mockPrefix: string }
 ): ModuleConfig[] => {
   // 按分组名分组 APIs
-  const groupedApis = parsedApis.reduce((groups, api) => {
-    if (!groups[api.groupName]) {
-      groups[api.groupName] = []
-    }
-    groups[api.groupName].push(api)
-    return groups
-  }, {} as Record<string, ParsedApi[]>)
+  const groupedApis = parsedApis.reduce(
+    (groups, api) => {
+      if (!groups[api.groupName]) {
+        groups[api.groupName] = []
+      }
+      groups[api.groupName].push(api)
+      return groups
+    },
+    {} as Record<string, ParsedApi[]>
+  )
 
   // 转换为 ModuleConfig 格式
   return Object.entries(groupedApis).map(([groupName, apis]) => ({
@@ -97,13 +115,21 @@ export const convertParsedApisToModules = (
         }`
       )
 
+      // 确保 method 是正确的类型
+      const validMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const
+      const method = validMethods.includes(
+        api.method.toUpperCase() as (typeof validMethods)[number]
+      )
+        ? (api.method.toUpperCase() as (typeof validMethods)[number])
+        : "GET"
+
       return {
         id: finalId,
         apiKey: api.path,
         apiName: api.summary,
         apiUrl: api.path,
         redirectURL: `${apifoxConfig.mockPrefix}${api.path}`,
-        method: api.method as any,
+        method,
         filterType: "contains" as const,
         delay: 0,
         isOpen: true,
@@ -115,6 +141,7 @@ export const convertParsedApisToModules = (
         requestBody: "",
         requestHeaders: "",
         authPointKey: api.authPointKey,
+        tags: api.tags, // 保存接口的 tags
       }
     }),
   }))
@@ -134,15 +161,16 @@ export const parseSwaggerData = (
   Object.entries(swaggerData.paths).forEach(([path, methods]) => {
     Object.entries(methods).forEach(([method, apiInfo]) => {
       if (typeof apiInfo === "object" && apiInfo !== null) {
-        const tags = apiInfo.tags || []
-        const summary = apiInfo.summary || `${method.toUpperCase()} ${path}`
-        const xApifoxRunUrl = apiInfo["x-run-in-apifox"]
+        const swaggerInfo = apiInfo as SwaggerApiInfo
+        const tags = swaggerInfo.tags || []
+        const summary = swaggerInfo.summary || `${method.toUpperCase()} ${path}`
+        const xApifoxRunUrl = swaggerInfo["x-run-in-apifox"]
         // eg: x-run-in-apifox: "https://apifox.com/web/project/3155205/apis/api-102913012-run"
         // 提取中间的数字部分作为 apiId（如 102913012）
         const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
 
         // 检查接口状态，根据用户选择的状态进行过滤
-        const apifoxStatus = apiInfo["x-apifox-status"]
+        const apifoxStatus = swaggerInfo["x-apifox-status"]
 
         // 只保留状态匹配的接口，如果接口没有状态字段且用户选择的状态不是默认值，则跳过
         if (apifoxStatus !== selectedStatus) {
@@ -157,7 +185,7 @@ export const parseSwaggerData = (
         if (hasMatchingTag) {
           // 获取分组名，优先使用x-apifox-fe-general-model-base-action-type
           const groupName =
-            apiInfo["x-apifox-fe-general-model-base-action-type"] ||
+            swaggerInfo["x-apifox-fe-general-model-base-action-type"] ||
             (tags.length > 0 ? tags[0] : "默认分组")
 
           // 如果 groupName 不符合格式，给出警告
@@ -168,7 +196,9 @@ export const parseSwaggerData = (
             )
           }
 
-          const modelApiType = apiInfo["x-apifox-fe-general-model-api-type"]
+          const modelApiType =
+            swaggerInfo["x-apifox-fe-general-model-api-type"] ||
+            ModelAction.CUSTOM
 
           apis.push({
             path,
@@ -229,6 +259,7 @@ export function generateAuthPointKey({
 export const validateApifoxUrl = async (
   url: string
 ): Promise<SwaggerData | null> => {
+  // eslint-disable-next-line no-useless-catch
   try {
     const response = await fetch(url)
     if (!response.ok) {

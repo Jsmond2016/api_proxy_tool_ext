@@ -80,7 +80,8 @@ export default function Options() {
             <Text type="secondary" className="text-sm">
               <a
                 href="https://github.com/Jsmond2016/api_proxy_tool_ext"
-                target="_blank" rel="noreferrer"
+                target="_blank"
+                rel="noreferrer"
               >
                 Api Proxy Tool
               </a>{" "}

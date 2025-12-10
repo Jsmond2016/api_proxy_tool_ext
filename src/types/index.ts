@@ -23,6 +23,7 @@ export interface ApiConfig {
   quickMockEnabled?: boolean // 快速联调是否启用
   customMockResponses?: QuickMockConfig[] // 自定义响应列表（自定义响应时使用）
   activeCustomMockKey?: string // 当前激活的自定义响应 key
+  tags?: string[] // 接口的 tags（从 Apifox 同步时保存）
 }
 
 // 快速联调配置类型
@@ -57,7 +58,6 @@ export interface ApifoxConfig {
     | "deprecated"
     | "testing"
     | "released"
-  iterationTag?: string // 迭代 tag 名字
 }
 
 // 全局配置类型
