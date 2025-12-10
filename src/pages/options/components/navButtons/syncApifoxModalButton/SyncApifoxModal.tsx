@@ -32,7 +32,6 @@ interface SyncApifoxModalProps {
     mockPrefix: string
     selectedTags?: string[]
     selectedStatus?: ApifoxStatus
-    iterationTag?: string
   }) => void
   config: GlobalConfig
 }
@@ -54,7 +53,6 @@ export default function SyncApifoxModal({
   const [selectedStatus, setSelectedStatus] = useState<ApifoxStatus>(
     DEFAULT_APIFOX_STATUS
   )
-  const [iterationTag, setIterationTag] = useState<string>("")
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
 
@@ -137,7 +135,6 @@ export default function SyncApifoxModal({
         selectedTags: selectedTags.length > 0 ? selectedTags : undefined,
         selectedStatus:
           selectedStatus !== DEFAULT_APIFOX_STATUS ? selectedStatus : undefined,
-        iterationTag: iterationTag.trim() || undefined,
       })
     }
 
@@ -200,7 +197,6 @@ export default function SyncApifoxModal({
           })
           setSelectedTags(savedTags)
           setSelectedStatus(savedStatus)
-          setIterationTag(config.apifoxConfig?.iterationTag || "")
 
           // 自动验证并加载数据
           validateApifoxUrl(urlToUse, savedTags, savedStatus)
@@ -312,20 +308,6 @@ export default function SyncApifoxModal({
               extra={MOCK_PREFIX}
             >
               <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="迭代 tag"
-              name="iterationTag"
-              tooltip="填写迭代 tag 名字，用于标识当前项目所属的迭代"
-            >
-              <Input
-                placeholder="请输入迭代 tag 名字"
-                value={iterationTag}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setIterationTag(e.target.value)
-                }
-              />
             </Form.Item>
 
             <ApiSummaryAlert parsedApis={parsedApis} />

@@ -48,54 +48,53 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   }, [activeModule?.requirementDocs])
 
   // 获取当前模块的接口 tags
-  // 如果模块是通过 Apifox 同步创建的，从 ApifoxConfig 中获取
+  // 从当前模块（tab）内所有接口的 tags 字段中汇总去重
+  // 仅展示此次配置有关的 tag（从 config.apifoxConfig?.selectedTags 中过滤）
   const interfaceTags = useMemo(() => {
-    if (!activeModule?.apiDocUrl || !config?.apifoxConfig?.apifoxUrl) {
+    if (!activeModule?.apiArr || activeModule.apiArr.length === 0) {
       return []
     }
-    // 如果模块的 apiDocUrl 与 ApifoxConfig 的 apifoxUrl 匹配，说明是通过 Apifox 同步的
-    if (activeModule.apiDocUrl === config.apifoxConfig.apifoxUrl) {
-      return config.apifoxConfig.selectedTags || []
-    }
-    return []
-  }, [activeModule?.apiDocUrl, config?.apifoxConfig])
 
-  // 迭代 tag（从 ApifoxConfig 中获取）
-  const iterationTag = useMemo(() => {
-    if (!activeModule?.apiDocUrl || !config?.apifoxConfig?.apifoxUrl) {
-      return undefined
+    // 收集所有接口的 tags，去重
+    const allTags = new Set<string>()
+    activeModule.apiArr.forEach((api) => {
+      if (api.tags && Array.isArray(api.tags)) {
+        api.tags.forEach((tag) => {
+          if (tag && tag.trim()) {
+            allTags.add(tag.trim())
+          }
+        })
+      }
+    })
+
+    // 如果配置中有 selectedTags，则只显示配置相关的 tags
+    const selectedTags = config?.apifoxConfig?.selectedTags
+    if (selectedTags && selectedTags.length > 0) {
+      return Array.from(allTags)
+        .filter((tag) => selectedTags.includes(tag))
+        .sort()
     }
-    // 如果模块的 apiDocUrl 与 ApifoxConfig 的 apifoxUrl 匹配，说明是通过 Apifox 同步的
-    if (activeModule.apiDocUrl === config.apifoxConfig.apifoxUrl) {
-      return config.apifoxConfig.iterationTag
-    }
-    return undefined
-  }, [activeModule?.apiDocUrl, config?.apifoxConfig])
+
+    // 如果没有 selectedTags 配置，显示所有 tags
+    return Array.from(allTags).sort()
+  }, [activeModule?.apiArr, config?.apifoxConfig?.selectedTags])
 
   // 构建描述内容
   const descriptionParts = useMemo(() => {
     const parts: React.ReactNode[] = []
 
-    // 接口 tags
+    // 接口 tags（仅展示此次配置有关的 tag）
     if (interfaceTags.length > 0) {
       parts.push(
         <span key="tags" className="mr-4">
           <span className="font-medium">接口 tag：</span>
-          {interfaceTags.map((text, index) => (
-            <Tag key={text} color={tagPresets[index % tagPresets.length]}>
-              {text}
-            </Tag>
-          ))}
-        </span>
-      )
-    }
-
-    // 迭代 tag
-    if (iterationTag) {
-      parts.push(
-        <span key="iteration" className="mr-4">
-          <span className="font-medium">迭代 tag：</span>
-          {iterationTag}；
+          <Space size="small" wrap>
+            {interfaceTags.map((text, index) => (
+              <Tag key={text} color={tagPresets[index % tagPresets.length]}>
+                {text}
+              </Tag>
+            ))}
+          </Space>
         </span>
       )
     }
@@ -124,11 +123,10 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     }
 
     return parts
-  }, [interfaceTags, iterationTag, requirementDocs])
+  }, [interfaceTags, requirementDocs])
 
   // 判断是否需要显示信息栏
-  const hasInfo =
-    interfaceTags.length > 0 || iterationTag || requirementDocs.length > 0
+  const hasInfo = interfaceTags.length > 0 || requirementDocs.length > 0
 
   if (!hasInfo || descriptionParts.length === 0) {
     return null
