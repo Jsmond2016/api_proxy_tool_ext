@@ -9,12 +9,10 @@ import {
   PaginationProps,
   Dropdown,
   MenuProps,
-  Select,
 } from "antd"
 import { DownOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "@src/types"
-import { formatDelay } from "@src/utils/chromeApi"
 import "antd/dist/reset.css"
 import "@src/assets/styles/tailwind.css"
 import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
@@ -187,7 +185,7 @@ export default function ApiTable() {
       title: "序号",
       dataIndex: "id",
       width: 20,
-      render: (_: any, __: ApiConfig, index: number) =>
+      render: (_, __: ApiConfig, index: number) =>
         index + 1 + (current - 1) * pageSize,
     },
     {
@@ -203,7 +201,7 @@ export default function ApiTable() {
       dataIndex: "isOpen",
       width: 80,
       align: "center" as const,
-      render: (_: any, record: ApiConfig) => (
+      render: (_, record: ApiConfig) => (
         <Switch
           checked={record.isOpen}
           onChange={(checked) => handleToggleApi(record.id, checked)}
@@ -216,7 +214,7 @@ export default function ApiTable() {
       title: "请求方式",
       dataIndex: "method",
       width: 120,
-      render: (_: any, record: ApiConfig) => (
+      render: (_, record: ApiConfig) => (
         <Space>
           <Tag color={getMethodColor(record.method)}>
             {record.method.toUpperCase()}
@@ -229,7 +227,7 @@ export default function ApiTable() {
       title: "接口信息",
       dataIndex: "apiName",
       width: 280,
-      render: (_: any, record: ApiConfig) => {
+      render: (_, record: ApiConfig) => {
         const isApifoxId = /^\d+$/.test(record.id)
         const canLink = projectId && isApifoxId
 
@@ -296,7 +294,7 @@ export default function ApiTable() {
       title: "页面路由",
       dataIndex: "pageRoute",
       width: 150,
-      render: (v: string | undefined, record: ApiConfig) => {
+      render: (v: string | undefined) => {
         if (!isNotEmpty(v)) {
           return "-"
         }
@@ -306,8 +304,8 @@ export default function ApiTable() {
         const href = isFullUrl
           ? urlValue
           : urlValue.startsWith("/")
-          ? urlValue
-          : `/${urlValue}`
+            ? urlValue
+            : `/${urlValue}`
 
         return (
           <a
@@ -335,16 +333,16 @@ export default function ApiTable() {
       title: "代理设置",
       dataIndex: "filterType",
       width: 100,
-      render: (_: any, record: ApiConfig) => (
-        <Space direction="vertical">
+      render: (_, record: ApiConfig) => (
+        <Space orientation="vertical">
           <div>
             <span>匹配方式：</span>
             <Tag color="blue">{record.filterType}</Tag>
           </div>
-          <div>
+          {/* <div>
             <span>延迟时间：</span>
             <span>{formatDelay(record.delay)}</span>
-          </div>
+          </div> */}
         </Space>
       ),
     },
@@ -496,7 +494,7 @@ export default function ApiTable() {
         onRow={(record) =>
           ({
             "data-api-id": record.id,
-          } as React.HTMLAttributes<HTMLTableRowElement>)
+          }) as React.HTMLAttributes<HTMLTableRowElement>
         }
       />
     </>
