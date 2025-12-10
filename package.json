@@ -37,7 +37,7 @@
     "@ant-design/icons": "^6.0.0",
     "@types/change-case": "^2.3.5",
     "ahooks": "^3.9.0",
-    "antd": "^5.26.5",
+    "antd": "^6.0.0",
     "change-case": "^5.4.4",
     "ramda": "^0.31.3",
     "react": "^18.3.1",
@@ -50,6 +50,9 @@
     "@commitlint/cli": "^20.0.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@crxjs/vite-plugin": "^2.0.0-beta.32",
+    "@eslint/compat": "^2.0.0",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.1",
     "@tailwindcss/vite": "^4.1.11",
     "@types/chrome": "^0.1.0",
     "@types/node": "^24.0.10",
@@ -70,9 +73,11 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "fs-extra": "^11.3.0",
+    "globals": "^16.5.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.3",
     "nodemon": "^3.1.10",
+    "prettier": "^3.7.4",
     "tailwindcss": "^4.1.8",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
@@ -92,12 +97,10 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix",
-      "git add"
+      "eslint --fix"
     ],
     "*.{js,json,md}": [
-      "prettier --write",
-      "git add"
+      "prettier --write"
     ]
   }
 }

@@ -42,6 +42,7 @@ export interface ModuleConfig {
   dataWrapper?: string
   pageDomain?: string
   requestHeaders?: string
+  requirementDocs?: string // 关联需求文档，支持多个文档链接，用换行、空格或常用分隔符分隔
   apiArr: ApiConfig[]
 }
 
@@ -56,6 +57,7 @@ export interface ApifoxConfig {
     | "deprecated"
     | "testing"
     | "released"
+  iterationTag?: string // 迭代 tag 名字
 }
 
 // 全局配置类型
