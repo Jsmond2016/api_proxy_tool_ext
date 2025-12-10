@@ -40,7 +40,22 @@ const TagHistorySelector: React.FC<TagHistorySelectorProps> = ({
                   onRemove(item.timestamp)
                 }}
                 className="cursor-pointer"
-                onClick={() => onQuickSelect(item)}
+                onClick={(e) => {
+                  // 如果点击的是关闭按钮或其子元素，不执行快速选择
+                  const target = e.target as HTMLElement
+                  const isCloseButton =
+                    target.classList.contains("anticon-close") ||
+                    target.closest(".ant-tag-close-icon") !== null ||
+                    target.closest(".anticon") !== null ||
+                    target.getAttribute("aria-label") === "close"
+
+                  if (isCloseButton) {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    return
+                  }
+                  onQuickSelect(item)
+                }}
                 color="blue"
                 title={item.tags.join(", ")}
               >

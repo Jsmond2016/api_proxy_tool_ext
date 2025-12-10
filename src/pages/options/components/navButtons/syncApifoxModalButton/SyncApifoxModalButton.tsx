@@ -51,7 +51,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   const config = useConfigStore((state) => state.config)
   console.log("config XXX==>>", config)
   const setConfig = useConfigStore((state) => state.setConfig)
-  const { setActiveModuleId } = useActiveModuleIdStore()
+  const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
 
   const isOnlyHaveDefaultMock = useOnlyHaveDefaultMockConfig()
 
@@ -317,6 +317,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
     // 计算新增接口数量
     let addedCount = 0
+    let firstMergedModuleId: string | null = null
+    let finalModules: ModuleConfig[] = []
 
     setConfig((prev) => {
       // 过滤新模块，只保留不存在的接口
@@ -335,10 +337,15 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
             }
             return isNew
           })
-          return {
+          const mergedModule = {
             ...existingModule,
             apiArr: [...existingModule.apiArr, ...newApis],
           }
+          // 记录第一个合并后的模块 ID
+          if (firstMergedModuleId === null) {
+            firstMergedModuleId = mergedModule.id
+          }
+          return mergedModule
         } else {
           // 如果模块不存在，过滤掉已存在的接口
           const newApis = newModule.apiArr.filter((api) => {
@@ -349,10 +356,15 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
             }
             return isNew
           })
-          return {
+          const mergedModule = {
             ...newModule,
             apiArr: newApis,
           }
+          // 记录第一个合并后的模块 ID
+          if (firstMergedModuleId === null) {
+            firstMergedModuleId = mergedModule.id
+          }
+          return mergedModule
         }
       })
 
@@ -367,18 +379,30 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
         (m) => !oldModules.find((old) => old.id === m.id)
       )
 
+      finalModules = [...otherModules, ...otherOldModules, ...mergedModules]
+
       const newConfig = {
         ...prev,
-        modules: [...otherModules, ...otherOldModules, ...mergedModules],
+        modules: finalModules,
       }
 
       saveConfig(newConfig)
       return newConfig
     })
 
-    // 设置激活模块
-    if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id)
+    // 设置激活模块：如果当前激活的模块还存在，保持它；否则使用第一个合并后的模块
+    const activeModuleStillExists = finalModules.some(
+      (m) => m.id === activeModuleId
+    )
+    if (activeModuleStillExists) {
+      // 保持当前激活的模块
+      setActiveModuleId(activeModuleId)
+    } else if (firstMergedModuleId) {
+      // 使用第一个合并后的模块
+      setActiveModuleId(firstMergedModuleId)
+    } else if (finalModules.length > 0) {
+      // 如果合并后没有新模块，使用第一个模块
+      setActiveModuleId(finalModules[0].id)
     }
 
     const oldApiCount = oldModules.reduce((sum, m) => sum + m.apiArr.length, 0)
