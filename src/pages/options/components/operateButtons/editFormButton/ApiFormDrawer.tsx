@@ -1,17 +1,5 @@
-import React, { useState, useEffect } from "react"
-import {
-  Drawer,
-  Form,
-  Input,
-  Select,
-  InputNumber,
-  Button,
-  message,
-  Space,
-  Switch,
-  Row,
-  Col,
-} from "antd"
+import React, { useEffect } from "react"
+import { Drawer, Form, Input, Select, Button, message, Space } from "antd"
 
 const { TextArea } = Input
 import { ApiConfig, GlobalConfig } from "../../../../../types"
@@ -43,7 +31,7 @@ export default function ApiFormDrawer({
   title = "添加接口",
 }: ApiFormDrawerProps) {
   const [form] = Form.useForm()
-  const [loading, setLoading] = useState(false)
+  // const [loading, setLoading] = useState(false)
   // const [customMockModalVisible, setCustomMockModalVisible] = useState(false)
   // const [editingCustomMock, setEditingCustomMock] =
   //   useState<QuickMockConfig | null>(null)
@@ -92,7 +80,7 @@ export default function ApiFormDrawer({
 
   const handleSubmit = async () => {
     try {
-      setLoading(true)
+      // setLoading(true)
       const values = await form.validateFields()
 
       // 验证URL格式
@@ -167,7 +155,7 @@ export default function ApiFormDrawer({
     } catch (error) {
       console.error("Form validation failed:", error)
     } finally {
-      setLoading(false)
+      // setLoading(false)
     }
   }
 
@@ -283,13 +271,13 @@ export default function ApiFormDrawer({
           </Select>
         </Form.Item>
 
-        <Form.Item label="延迟时间(毫秒)" name="delay">
+        {/* <Form.Item label="延迟时间(毫秒)" name="delay">
           <InputNumber min={0} max={10000} className="w-full" />
         </Form.Item>
 
         <Form.Item label="状态码" name="statusCode">
           <InputNumber min={100} max={599} className="w-full" />
-        </Form.Item>
+        </Form.Item> */}
 
         {/* <QuickMockSection
           form={form}
