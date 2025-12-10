@@ -1,10 +1,11 @@
 import React, { useState } from "react"
 
-import { Dropdown, Button, message, Modal, Space, Alert } from "antd"
+import { Dropdown, Button, message, Modal, Space } from "antd"
 import { InfoCircleOutlined } from "@ant-design/icons"
 import type { MenuProps } from "antd"
 
 import SyncApifoxModal from "./SyncApifoxModal"
+import SetIterationInfoModal from "./SetIterationInfoModal"
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
@@ -13,21 +14,18 @@ import {
   SyncOutlined,
   ReloadOutlined,
   SettingOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons"
 import {
   convertParsedApisToModules,
   parseSwaggerData,
   validateApifoxUrl,
-  type ParsedApi,
-  type SwaggerData,
   DEFAULT_APIFOX_STATUS,
 } from "./apifoxUtils"
 import { compareApifoxModules, hasChanges } from "./compareUtils"
 import { ChangeSummaryTable } from "./ChangeSummaryTable"
 
-type SyncApifoxModalComProps = {}
-
-const MOCK_PREFIX = "http://127.0.0.1:4523/m1/3155205-1504204-default"
+type SyncApifoxModalComProps = Record<string, never>
 
 // 警告内容常量
 const MOCK_DATA_WARNING = {
@@ -46,6 +44,8 @@ const MOCK_DATA_WARNING = {
 
 const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   const [syncApifoxModalVisible, setSyncApifoxModalVisible] = useState(false)
+  const [setIterationInfoModalVisible, setSetIterationInfoModalVisible] =
+    useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
   const config = useConfigStore((state) => state.config)
@@ -412,10 +412,10 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   }
 
   // 处理同步Apifox接口（从弹窗）
+
   const handleSyncApifox = (
     newModules: ModuleConfig[],
-    mergeStrategy?: "replace" | "merge",
-    duplicateTags?: string[]
+    mergeStrategy?: "replace" | "merge"
   ) => {
     try {
       const apifoxUrl = config.apifoxConfig?.apifoxUrl
@@ -448,6 +448,16 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     }
   }
 
+  // 处理打开设置迭代信息弹窗
+  const handleOpenSetIterationInfo = () => {
+    const selectedTags = config.apifoxConfig?.selectedTags || []
+    if (selectedTags.length === 0) {
+      message.warning("请先配置接口 tag")
+      return
+    }
+    setSetIterationInfoModalVisible(true)
+  }
+
   // 下拉菜单项
   const menuItems: MenuProps["items"] = [
     {
@@ -462,6 +472,15 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       icon: <ReloadOutlined />,
       onClick: handleRefreshApifox,
       disabled: refreshing || !config.apifoxConfig?.apifoxUrl,
+    },
+    {
+      key: "iteration",
+      label: "设置迭代信息",
+      icon: <FileTextOutlined />,
+      onClick: handleOpenSetIterationInfo,
+      disabled:
+        !config.apifoxConfig?.selectedTags ||
+        config.apifoxConfig.selectedTags.length === 0,
     },
   ]
 
@@ -481,6 +500,11 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
         onCancel={() => setSyncApifoxModalVisible(false)}
         onOk={handleSyncApifox}
         onSaveConfig={handleSaveConfig}
+        config={config}
+      />
+      <SetIterationInfoModal
+        visible={setIterationInfoModalVisible}
+        onCancel={() => setSetIterationInfoModalVisible(false)}
         config={config}
       />
     </>

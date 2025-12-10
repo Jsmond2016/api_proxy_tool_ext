@@ -5,6 +5,7 @@
 const STORAGE_KEYS = {
   APIFOX_URL: "apifox-cached-url",
   TAG_HISTORY: "apifox-tag-history",
+  ITERATION_INFO: "apifox-iteration-info",
 } as const
 
 const MAX_TAG_HISTORY = 10 // 最多保存10条标签历史
@@ -15,6 +16,23 @@ const MAX_TAG_HISTORY = 10 // 最多保存10条标签历史
 export interface TagHistoryItem {
   tags: string[]
   timestamp: number
+}
+
+/**
+ * 迭代信息类型
+ */
+export interface IterationInfo {
+  tag: string
+  requirementDocs: string // 需求文档
+  technicalDocs: string // 技术文档
+  prototypeDocs: string // 原型文档
+}
+
+/**
+ * 迭代信息映射（tag -> IterationInfo）
+ */
+export interface IterationInfoMap {
+  [tag: string]: IterationInfo
 }
 
 /**
@@ -51,10 +69,12 @@ export const getTagHistory = async (): Promise<TagHistoryItem[]> => {
 
     // 验证数据格式
     const validHistory = history.filter(
-      (item: any) =>
-        item &&
-        item.tags &&
+      (item: unknown): item is TagHistoryItem =>
+        typeof item === "object" &&
+        item !== null &&
+        "tags" in item &&
         Array.isArray(item.tags) &&
+        "timestamp" in item &&
         typeof item.timestamp === "number"
     )
 
@@ -126,5 +146,48 @@ export const removeTagHistory = async (timestamp: number): Promise<void> => {
     })
   } catch (error) {
     console.error("Failed to remove tag history:", error)
+  }
+}
+
+/**
+ * 获取迭代信息
+ */
+export const getIterationInfo = async (): Promise<IterationInfoMap> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.ITERATION_INFO])
+    return result[STORAGE_KEYS.ITERATION_INFO] || {}
+  } catch (error) {
+    console.error("Failed to get iteration info:", error)
+    return {}
+  }
+}
+
+/**
+ * 保存迭代信息
+ */
+export const saveIterationInfo = async (
+  iterationInfo: IterationInfoMap
+): Promise<void> => {
+  try {
+    await chrome.storage.local.set({
+      [STORAGE_KEYS.ITERATION_INFO]: iterationInfo,
+    })
+  } catch (error) {
+    console.error("Failed to save iteration info:", error)
+  }
+}
+
+/**
+ * 获取指定 tag 的迭代信息
+ */
+export const getIterationInfoByTag = async (
+  tag: string
+): Promise<IterationInfo | null> => {
+  try {
+    const allInfo = await getIterationInfo()
+    return allInfo[tag] || null
+  } catch (error) {
+    console.error("Failed to get iteration info by tag:", error)
+    return null
   }
 }
