@@ -4,6 +4,7 @@ import { Layout, message, ConfigProvider, Typography } from "antd"
 import { ChromeApiService } from "../../utils/chromeApi"
 import ModuleTabs from "./components/ModuleTabs"
 import ApiTable from "./components/listTable/ApiTable"
+import ModuleInfoBar from "./components/ModuleInfoBar"
 import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
@@ -45,6 +46,11 @@ export default function Options() {
     loadConfig()
   })
 
+  // 获取当前激活的模块
+  const activeModule = config.modules.find(
+    (module) => module.id === activeModuleId
+  )
+
   return (
     <ConfigProvider locale={zhCN}>
       <div className="proxy-tool">
@@ -60,6 +66,8 @@ export default function Options() {
             modules={config.modules}
             onModuleChange={setActiveModuleId}
           />
+          {/* 模块信息栏 */}
+          <ModuleInfoBar activeModule={activeModule} config={config} />
           {/* 分组操作栏 */}
           <OperateButtons />
           {/* 主要内容区域 */}
@@ -72,7 +80,7 @@ export default function Options() {
             <Text type="secondary" className="text-sm">
               <a
                 href="https://github.com/Jsmond2016/api_proxy_tool_ext"
-                target="_blank"
+                target="_blank" rel="noreferrer"
               >
                 Api Proxy Tool
               </a>{" "}
