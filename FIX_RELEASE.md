@@ -62,6 +62,7 @@ git push origin main
    - 查看 "Auto Release on Commit" 工作流
 
 2. 检查 tag 是否创建：
+
    ```bash
    git fetch --tags
    git tag -l | grep v1.5
@@ -78,16 +79,19 @@ git push origin main
 为了避免将来出现类似问题：
 
 1. **使用推荐的发布命令**：
+
    ```bash
    pnpm run version:patch  # 或 version:minor, version:major
    ```
 
 2. **检查 tag 是否存在**：
+
    ```bash
    git tag -l | grep v$(node -p "require('./package.json').version")
    ```
 
 3. **确保 commit 消息格式正确**：
+
    ```
    chore(release): x.x.x
    ```
