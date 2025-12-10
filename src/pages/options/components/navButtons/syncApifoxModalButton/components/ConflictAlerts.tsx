@@ -1,59 +1,61 @@
 import React from "react"
-import { Alert } from "antd"
+import { Alert, Radio, Space } from "antd"
+
+export type MergeStrategy = "replace" | "merge"
 
 interface ConflictAlertsProps {
-  urlConflicts: string[]
-  groupConflicts: string[]
+  duplicateTags: string[]
+  mergeStrategy: MergeStrategy
+  onMergeStrategyChange: (strategy: MergeStrategy) => void
 }
 
 const ConflictAlerts: React.FC<ConflictAlertsProps> = ({
-  urlConflicts,
-  groupConflicts,
+  duplicateTags,
+  mergeStrategy,
+  onMergeStrategyChange,
 }) => {
-  return (
-    <>
-      {urlConflicts.length > 0 && (
-        <Alert
-          message="URL冲突"
-          description={
-            <div>
-              <p>以下接口URL已存在：</p>
-              <ul className="list-disc list-inside">
-                {urlConflicts.map((conflict, index) => (
-                  <li key={index} className="text-red-600">
-                    {conflict}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          }
-          type="warning"
-          showIcon
-          className="mb-4"
-        />
-      )}
+  if (duplicateTags.length === 0) {
+    return null
+  }
 
-      {groupConflicts.length > 0 && (
-        <Alert
-          message="分组名冲突"
-          description={
-            <div>
-              <p>以下分组名已存在：</p>
-              <ul className="list-disc list-inside">
-                {groupConflicts.map((conflict, index) => (
-                  <li key={index} className="text-red-600">
-                    {conflict}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          }
-          type="warning"
-          showIcon
-          className="mb-4"
-        />
-      )}
-    </>
+  return (
+    <Alert
+      message="发现已有 tag 相关接口"
+      description={
+        <div>
+          <p className="mb-2">
+            已存在以下 tag 相关接口：<strong>{duplicateTags.join(", ")}</strong>
+          </p>
+          <p className="mb-2">请选择合并策略：</p>
+          <Radio.Group
+            value={mergeStrategy}
+            onChange={(e) => onMergeStrategyChange(e.target.value)}
+          >
+            <Space direction="vertical">
+              <Radio value="replace">
+                <div>
+                  <strong>全量替换</strong>
+                  <div className="text-gray-500 text-sm ml-6">
+                    删除已存在的 tag 相关接口，用新接口完全替换
+                  </div>
+                </div>
+              </Radio>
+              <Radio value="merge">
+                <div>
+                  <strong>差异合并</strong>
+                  <div className="text-gray-500 text-sm ml-6">
+                    保留已存在的接口，只添加新接口（不重复添加）
+                  </div>
+                </div>
+              </Radio>
+            </Space>
+          </Radio.Group>
+        </div>
+      }
+      type="warning"
+      showIcon
+      className="mb-4"
+    />
   )
 }
 

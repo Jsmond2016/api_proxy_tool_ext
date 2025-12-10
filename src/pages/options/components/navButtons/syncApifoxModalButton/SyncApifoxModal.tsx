@@ -13,7 +13,7 @@ import { useApifoxValidation } from "./hooks/useApifoxValidation"
 import { useTagHistory } from "./hooks/useTagHistory"
 import { useConflictDetection } from "./hooks/useConflictDetection"
 import TagHistorySelector from "./components/TagHistorySelector"
-import ConflictAlerts from "./components/ConflictAlerts"
+import ConflictAlerts, { type MergeStrategy } from "./components/ConflictAlerts"
 import ApiSummaryAlert from "./components/ApiSummaryAlert"
 import UrlValidationStatus from "./components/UrlValidationStatus"
 
@@ -22,7 +22,11 @@ const { TextArea } = Input
 interface SyncApifoxModalProps {
   visible: boolean
   onCancel: () => void
-  onOk: (modules: ModuleConfig[]) => void
+  onOk: (
+    modules: ModuleConfig[],
+    mergeStrategy?: MergeStrategy,
+    duplicateTags?: string[]
+  ) => void
   onSaveConfig?: (apifoxConfig: {
     apifoxUrl: string
     mockPrefix: string
@@ -50,6 +54,7 @@ export default function SyncApifoxModal({
     DEFAULT_APIFOX_STATUS
   )
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
+  const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("replace")
 
   // 使用自定义 hooks
   const {
@@ -63,10 +68,7 @@ export default function SyncApifoxModal({
 
   const { tagHistory, saveTagHistory, deleteTagHistory } = useTagHistory()
 
-  const { urlConflicts, groupConflicts } = useConflictDetection(
-    parsedApis,
-    config
-  )
+  const { duplicateTags } = useConflictDetection(selectedTags, config)
 
   // 更新解析的 APIs
   const updateParsedApis = (tags: string[], status: ApifoxStatus) => {
@@ -83,6 +85,7 @@ export default function SyncApifoxModal({
     setSelectedTags([])
     setSelectedStatus(DEFAULT_APIFOX_STATUS)
     setParsedApis([])
+    setMergeStrategy("replace")
   }
 
   // 处理标签变化
@@ -115,8 +118,9 @@ export default function SyncApifoxModal({
       return
     }
 
-    if (urlConflicts.length > 0 || groupConflicts.length > 0) {
-      message.warning("存在冲突，请先解决冲突后再同步")
+    // 如果有冲突的 tags，必须选择合并策略
+    if (duplicateTags.length > 0 && !mergeStrategy) {
+      message.warning("请选择合并策略")
       return
     }
 
@@ -152,7 +156,12 @@ export default function SyncApifoxModal({
       mockPrefix,
     })
 
-    onOk(newModules)
+    // 传递合并策略信息给父组件
+    onOk(
+      newModules,
+      duplicateTags.length > 0 ? mergeStrategy : undefined,
+      duplicateTags.length > 0 ? duplicateTags : undefined
+    )
     resetForm()
   }
 
@@ -222,7 +231,11 @@ export default function SyncApifoxModal({
       width={800}
       okText="确定同步"
       cancelText="取消"
-      okButtonProps={{ disabled: parsedApis.length === 0 }}
+      okButtonProps={{
+        disabled:
+          parsedApis.length === 0 ||
+          (duplicateTags.length > 0 && !mergeStrategy),
+      }}
     >
       <Form
         form={form}
@@ -300,8 +313,9 @@ export default function SyncApifoxModal({
             <ApiSummaryAlert parsedApis={parsedApis} />
 
             <ConflictAlerts
-              urlConflicts={urlConflicts}
-              groupConflicts={groupConflicts}
+              duplicateTags={duplicateTags}
+              mergeStrategy={mergeStrategy}
+              onMergeStrategyChange={setMergeStrategy}
             />
           </>
         )}
