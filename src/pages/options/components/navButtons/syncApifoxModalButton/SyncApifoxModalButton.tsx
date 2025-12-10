@@ -302,8 +302,97 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     // 注意：不在这里显示成功提示，由 handleSyncApifox 统一显示
   }
 
+  // 差异合并：保留旧接口，只添加新接口
+  const mergeApifoxModules = (
+    oldModules: ModuleConfig[],
+    newModules: ModuleConfig[]
+  ) => {
+    // 创建旧接口的唯一标识集合（使用 apiUrl + method 作为唯一标识）
+    const existingApiKeys = new Set<string>()
+    oldModules.forEach((module) => {
+      module.apiArr.forEach((api) => {
+        existingApiKeys.add(`${api.apiUrl}:${api.method}`)
+      })
+    })
+
+    // 计算新增接口数量
+    let addedCount = 0
+
+    setConfig((prev) => {
+      // 过滤新模块，只保留不存在的接口
+      const mergedModules = newModules.map((newModule) => {
+        const existingModule = oldModules.find(
+          (m) => m.label === newModule.label
+        )
+
+        if (existingModule) {
+          // 如果模块已存在，合并接口
+          const newApis = newModule.apiArr.filter((api) => {
+            const key = `${api.apiUrl}:${api.method}`
+            const isNew = !existingApiKeys.has(key)
+            if (isNew) {
+              addedCount++
+            }
+            return isNew
+          })
+          return {
+            ...existingModule,
+            apiArr: [...existingModule.apiArr, ...newApis],
+          }
+        } else {
+          // 如果模块不存在，过滤掉已存在的接口
+          const newApis = newModule.apiArr.filter((api) => {
+            const key = `${api.apiUrl}:${api.method}`
+            const isNew = !existingApiKeys.has(key)
+            if (isNew) {
+              addedCount++
+            }
+            return isNew
+          })
+          return {
+            ...newModule,
+            apiArr: newApis,
+          }
+        }
+      })
+
+      // 找出需要保留的旧模块（不在新模块中的）
+      const newModuleLabels = new Set(newModules.map((m) => m.label))
+      const otherOldModules = oldModules.filter(
+        (m) => !newModuleLabels.has(m.label)
+      )
+
+      // 过滤掉旧的 Apifox 模块，添加合并后的模块
+      const otherModules = prev.modules.filter(
+        (m) => !oldModules.find((old) => old.id === m.id)
+      )
+
+      const newConfig = {
+        ...prev,
+        modules: [...otherModules, ...otherOldModules, ...mergedModules],
+      }
+
+      saveConfig(newConfig)
+      return newConfig
+    })
+
+    // 设置激活模块
+    if (newModules.length > 0) {
+      setActiveModuleId(newModules[0].id)
+    }
+
+    const oldApiCount = oldModules.reduce((sum, m) => sum + m.apiArr.length, 0)
+    message.success(
+      `成功合并配置，新增 ${addedCount} 个接口，保留 ${oldApiCount} 个旧接口`
+    )
+  }
+
   // 处理同步Apifox接口（从弹窗）
-  const handleSyncApifox = (newModules: ModuleConfig[]) => {
+  const handleSyncApifox = (
+    newModules: ModuleConfig[],
+    mergeStrategy?: "replace" | "merge",
+    duplicateTags?: string[]
+  ) => {
     try {
       const apifoxUrl = config.apifoxConfig?.apifoxUrl
       // 找出旧的 Apifox 模块
@@ -318,8 +407,11 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
         // 首次设置：直接添加模块
         performSync(newModules, false)
         message.success(`成功保存配置并同步 ${newModules.length} 个模块`)
+      } else if (mergeStrategy === "merge") {
+        // 差异合并：保留旧接口，只添加新接口
+        mergeApifoxModules(oldApifoxModules, newModules)
       } else {
-        // 修改配置：全量替换旧模块，不检测变化
+        // 全量替换：删除旧模块，添加新模块
         replaceApifoxModules(oldApifoxModules, newModules)
       }
 

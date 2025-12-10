@@ -3,40 +3,35 @@ import { GlobalConfig } from "../../../../../../types"
 import { ParsedApi } from "../apifoxUtils"
 
 interface ConflictResult {
-  urlConflicts: string[]
-  groupConflicts: string[]
+  duplicateTags: string[]
 }
 
+/**
+ * 检测 tag 重复冲突
+ * 通过比较当前选择的 tags 和已保存配置中的 tags 来判断是否有重复
+ */
 export const useConflictDetection = (
-  parsedApis: ParsedApi[],
+  selectedTags: string[],
   config: GlobalConfig
 ): ConflictResult => {
   return useMemo(() => {
-    const urlConflicts: string[] = []
-    const groupConflicts: string[] = []
+    const duplicateTags: string[] = []
 
-    // 检查URL冲突
-    parsedApis.forEach((api) => {
-      const existingApi = config.modules
-        .flatMap((module) => module.apiArr)
-        .find((existingApi) => existingApi.apiUrl.includes(api.path))
+    // 如果当前没有选择 tags，不检测冲突
+    if (selectedTags.length === 0) {
+      return { duplicateTags: [] }
+    }
 
-      if (existingApi) {
-        urlConflicts.push(`${api.method} ${api.path} -> ${existingApi.apiName}`)
+    // 获取已保存的 tags（从 apifoxConfig 中）
+    const savedTags = config.apifoxConfig?.selectedTags || []
+
+    // 检查当前选择的 tags 是否与已保存的 tags 有重复
+    selectedTags.forEach((tag) => {
+      if (savedTags.includes(tag)) {
+        duplicateTags.push(tag)
       }
     })
 
-    // 检查分组名冲突
-    const newGroupNames = [...new Set(parsedApis.map((api) => api.groupName))]
-    newGroupNames.forEach((groupName) => {
-      const existingModule = config.modules.find(
-        (module) => module.label === groupName
-      )
-      if (existingModule) {
-        groupConflicts.push(groupName)
-      }
-    })
-
-    return { urlConflicts, groupConflicts }
-  }, [parsedApis, config])
+    return { duplicateTags }
+  }, [selectedTags, config])
 }
