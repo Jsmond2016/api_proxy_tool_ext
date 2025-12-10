@@ -33,20 +33,20 @@ const ConflictAlerts: React.FC<ConflictAlertsProps> = ({
           >
             <Space direction="vertical">
               <Radio value="replace">
-                <div>
-                  <strong>全量替换</strong>
+                <Space size={2}>
+                  <strong className="text-sm">全量替换</strong>
                   <div className="text-gray-500 text-sm ml-6">
                     删除已存在的 tag 相关接口，用新接口完全替换
                   </div>
-                </div>
+                </Space>
               </Radio>
               <Radio value="merge">
-                <div>
-                  <strong>差异合并</strong>
+                <Space size={2}>
+                  <strong className="text-sm">差异合并</strong>
                   <div className="text-gray-500 text-sm ml-6">
                     保留已存在的接口，只添加新接口（不重复添加）
                   </div>
-                </div>
+                </Space>
               </Radio>
             </Space>
           </Radio.Group>

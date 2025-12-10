@@ -54,7 +54,7 @@ export default function SyncApifoxModal({
     DEFAULT_APIFOX_STATUS
   )
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
-  const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("replace")
+  const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
 
   // 使用自定义 hooks
   const {
@@ -85,7 +85,7 @@ export default function SyncApifoxModal({
     setSelectedTags([])
     setSelectedStatus(DEFAULT_APIFOX_STATUS)
     setParsedApis([])
-    setMergeStrategy("replace")
+    setMergeStrategy("merge")
   }
 
   // 处理标签变化
