@@ -236,8 +236,7 @@ export default function ApiTable() {
         return (
           <Space direction="vertical" size="small" className="w-full">
             {/* 接口名称 */}
-            <div className="font-medium">
-              - 接口名称：
+            <div className="text-base font-semibold text-gray-900">
               {canLink ? (
                 <a
                   href={`https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`}
@@ -250,27 +249,29 @@ export default function ApiTable() {
                   {record.apiName}
                 </a>
               ) : (
-                record.apiName
+                <span>{record.apiName}</span>
               )}
             </div>
             {/* 接口 URL */}
-            <div>
+            <div className="text-sm">
               <Paragraph
                 copyable={{ text: record.apiUrl }}
                 type="secondary"
-                className="mb-0"
+                className="mb-0 text-sm"
               >
-                - 接口地址：{record.apiUrl}
+                <span className="text-gray-500">接口地址：</span>
+                {record.apiUrl}
               </Paragraph>
             </div>
             {/* Mock 接口 URL */}
-            <div>
+            <div className="text-sm">
               <Paragraph
                 copyable={{ text: record.redirectURL }}
                 type="danger"
-                className="mb-0"
+                className="mb-0 text-sm"
               >
-                - Mock URL：{record.redirectURL}
+                <span className="text-gray-500">Mock URL：</span>
+                {record.redirectURL}
               </Paragraph>
             </div>
           </Space>
@@ -300,8 +301,13 @@ export default function ApiTable() {
           return "-"
         }
         // 判断是否为完整 URL，如果是则直接跳转，否则作为相对路径处理
-        const isFullUrl = /^https?:\/\//.test(v)
-        const href = isFullUrl ? v : v.startsWith("/") ? v : `/${v}`
+        const urlValue = v as string // 已经通过 isNotEmpty 检查，可以安全断言
+        const isFullUrl = /^https?:\/\//.test(urlValue)
+        const href = isFullUrl
+          ? urlValue
+          : urlValue.startsWith("/")
+          ? urlValue
+          : `/${urlValue}`
 
         return (
           <a
