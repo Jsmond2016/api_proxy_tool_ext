@@ -128,3 +128,28 @@ export interface BackgroundMessageResponse {
   config?: GlobalConfig
   error?: string
 }
+
+// 归档相关类型
+export interface ArchiveData {
+  version: string // 归档格式版本
+  tag: string // 归档的 tag
+  archivedAt: number // 归档时间戳
+  iterationInfo?: {
+    tag: string
+    requirementDocs: string
+    technicalDocs: string
+    prototypeDocs: string
+  } // 迭代信息
+  modules: ModuleConfig[] // 相关模块配置（只包含该 tag 的接口）
+  quickMockConfigs?: QuickMockConfig[] // 相关的快速联调配置
+  apifoxConfig?: ApifoxConfig // Apifox 配置快照
+}
+
+export interface ArchiveRecord {
+  id?: number // IndexedDB 自增主键
+  tag: string // 归档的 tag
+  archivedAt: number // 归档时间戳
+  archiveData: ArchiveData // 完整的归档数据
+  apiCount: number // 归档的接口数量（用于列表显示）
+  moduleCount: number // 归档的模块数量（用于列表显示）
+}

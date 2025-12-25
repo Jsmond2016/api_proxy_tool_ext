@@ -1,3 +1,4 @@
+import React from "react"
 import { message, Space, Switch, Tooltip } from "antd"
 
 import { ChromeApiService } from "@src/utils/chromeApi"
@@ -8,11 +9,9 @@ import ImportButton from "./importButton/ImportButton"
 import ResetButton from "./resetButton/ResetButton"
 import ExportButton from "./exportButton/ExportButton"
 import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
-import QuickMockSettingButton from "./quickMockSettingButton/QuickMockSettingButton"
+import ArchiveButton from "./archiveButton/ArchiveButton"
 
-type OperateButtonsProps = {}
-
-const NavButtons: React.FC<OperateButtonsProps> = () => {
+const NavButtons: React.FC = () => {
   const { config, setConfig } = useConfigStore()
 
   // 切换全局开关
@@ -38,18 +37,6 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
     }
   }
 
-  // 重置模块
-  const handleResetModule = (moduleId: string) => {
-    const newConfig = {
-      ...config,
-      modules: config.modules.map((module) =>
-        module.id === moduleId ? { ...module, apiArr: [] } : module
-      ),
-    }
-    setConfig(newConfig)
-    saveConfig(newConfig)
-  }
-
   return (
     <Space direction="horizontal">
       <Tooltip title="全局Mock开关, 开启后所有接口都会被代理">
@@ -62,9 +49,9 @@ const NavButtons: React.FC<OperateButtonsProps> = () => {
         />
       </Tooltip>
       <SyncApifoxModalButton />
+      <ArchiveButton />
       <ImportButton />
       <ExportButton />
-      {/* <QuickMockSettingButton /> */}
       <CopyAllPermissionButton />
       <ResetButton />
     </Space>
