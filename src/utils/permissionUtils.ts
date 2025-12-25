@@ -3,6 +3,8 @@ import {
   SwaggerData,
   PermissionGroup,
 } from "@src/types/permission"
+import { APIFOX_FIELD_GROUP_NAME } from "@src/constant/apifoxFields"
+import { ApiConfig } from "../types"
 
 /**
  * 从接口URL中提取API路径
@@ -42,9 +44,7 @@ export const parseSwaggerToPermissionGroups = (
   Object.entries(swaggerData.paths).forEach(([url, pathMethods]) => {
     Object.entries(pathMethods).forEach(([method, methodInfo]) => {
       if (typeof methodInfo === "object" && methodInfo.summary) {
-        const groupName =
-          methodInfo["x-apifox-fe-general-model-base-action-type"] ||
-          "demo.default"
+        const groupName = methodInfo[APIFOX_FIELD_GROUP_NAME] || "demo.default"
 
         if (!groups[groupName]) {
           groups[groupName] = {
@@ -97,9 +97,8 @@ export const generatePermissionPoint = (
  * 直接从数据源中读取已生成的 authPointKey
  */
 export const generatePermissionPointsFromApiConfigs = (
-  apiConfigs: any[],
-  parentAuthPointKey: string,
-  groupName?: string
+  apiConfigs: ApiConfig[],
+  parentAuthPointKey: string
 ): PermissionPoint[] => {
   return apiConfigs.map((api) => ({
     parentAuthPointKey,
