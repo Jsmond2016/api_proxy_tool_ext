@@ -339,90 +339,10 @@ export default function ApiTable() {
             <span>匹配方式：</span>
             <Tag color="blue">{record.filterType}</Tag>
           </div>
-          {/* <div>
-            <span>延迟时间：</span>
-            <span>{formatDelay(record.delay)}</span>
-          </div> */}
         </Space>
       ),
     },
-    // {
-    //   title: "快速联调",
-    //   width: 250,
-    //   render: (_: unknown, record: ApiConfig) => {
-    //     const quickMockType = record.quickMockType || "none"
 
-    //     const handleToggleQuickMock = async (enabled: boolean) => {
-    //       try {
-    //         const currentConfig = useConfigStore.getState().config
-    //         const newConfig = {
-    //           ...currentConfig,
-    //           modules: currentConfig.modules.map((module) => ({
-    //             ...module,
-    //             apiArr: module.apiArr.map((api) =>
-    //               api.id === record.id
-    //                 ? { ...api, quickMockEnabled: enabled }
-    //                 : api
-    //             ),
-    //           })),
-    //         }
-    //         setConfig(newConfig)
-    //         await saveConfig(newConfig)
-    //       } catch (error) {
-    //         message.error("操作失败")
-    //         console.error("Toggle quick mock error:", error)
-    //       }
-    //     }
-
-    //     const handleChangeActiveCustomMock = async (
-    //       key: string | undefined
-    //     ) => {
-    //       try {
-    //         const currentConfig = useConfigStore.getState().config
-    //         const newConfig = {
-    //           ...currentConfig,
-    //           modules: currentConfig.modules.map((module) => ({
-    //             ...module,
-    //             apiArr: module.apiArr.map((api) =>
-    //               api.id === record.id
-    //                 ? { ...api, activeCustomMockKey: key }
-    //                 : api
-    //             ),
-    //           })),
-    //         }
-    //         setConfig(newConfig)
-    //         await saveConfig(newConfig)
-    //       } catch (error) {
-    //         message.error("操作失败")
-    //         console.error("Change active custom mock error:", error)
-    //       }
-    //     }
-
-    //     if (quickMockType === "custom") {
-    //       const customMockResponses = record.customMockResponses || []
-    //       const activeCustomMock = customMockResponses.find(
-    //         (item) => item.key === record.activeCustomMockKey
-    //       )
-    //       const mockName = activeCustomMock?.name || "-"
-
-    //       return (
-    //         <Space direction="horizontal" size="small">
-    //           <span className="text-sm">{mockName}</span>
-    //           <Switch
-    //             checked={record.quickMockEnabled || false}
-    //             onChange={handleToggleQuickMock}
-    //             disabled={!record.activeCustomMockKey}
-    //             size="small"
-    //             checkedChildren="开启"
-    //             unCheckedChildren="关闭"
-    //           />
-    //         </Space>
-    //       )
-    //     }
-
-    //     return <span className="text-sm text-gray-400">-</span>
-    //   },
-    // },
     {
       title: "操作",
       width: 200,
@@ -438,7 +358,6 @@ export default function ApiTable() {
           },
           {
             key: "delete",
-            // danger: true,
             label: <DeleteButton apiId={record.id} isMenuItem />,
           },
         ]
@@ -447,10 +366,7 @@ export default function ApiTable() {
           <Space>
             <EditFormButton apiId={record.id} />
             <Dropdown menu={{ items }} trigger={["hover"]}>
-              <a
-                onClick={(e) => e.preventDefault()}
-                // className="ant-dropdown-link flex items-center cursor-pointer text-blue-500 hover:text-blue-700"
-              >
+              <a onClick={(e) => e.preventDefault()}>
                 <Space size={4}>
                   其他操作
                   <DownOutlined />

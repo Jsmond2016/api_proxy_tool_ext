@@ -13,16 +13,6 @@ interface ModuleInfoBarProps {
   config?: GlobalConfig
 }
 
-// /**
-//  * 缩略链接显示
-//  */
-// const truncateUrl = (url: string, maxLength: number = 50): string => {
-//   if (url.length <= maxLength) {
-//     return url
-//   }
-//   return url.substring(0, maxLength) + "..."
-// }
-
 const tagPresets = [
   "magenta",
   "red",
