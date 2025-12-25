@@ -438,7 +438,7 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
 
             {/* 迭代信息 */}
             {selectedArchive.archiveData.iterationInfo && (
-              <div>
+              <div className="mt-4">
                 <Text strong className="block mb-2">
                   迭代文档：
                 </Text>
