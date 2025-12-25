@@ -5,6 +5,12 @@ import {
   ModelNamesMap,
   ModelAction,
 } from "../../../../../constant/model"
+import {
+  APIFOX_FIELD_RUN_IN_APIFOX,
+  APIFOX_FIELD_STATUS,
+  APIFOX_FIELD_GROUP_NAME,
+  APIFOX_FIELD_API_TYPE,
+} from "../../../../../constant/apifoxFields"
 import { camelCase } from "change-case"
 
 /**
@@ -56,10 +62,10 @@ export interface ParsedApi {
 interface SwaggerApiInfo {
   tags?: string[]
   summary?: string
-  "x-run-in-apifox"?: string
-  "x-apifox-status"?: ApifoxStatus
-  "x-apifox-fe-general-model-base-action-type"?: string
-  "x-apifox-fe-general-model-api-type"?: ModelApiActionType
+  [APIFOX_FIELD_RUN_IN_APIFOX]?: string
+  [APIFOX_FIELD_STATUS]?: ApifoxStatus
+  [APIFOX_FIELD_GROUP_NAME]?: string
+  [APIFOX_FIELD_API_TYPE]?: ModelApiActionType
   [key: string]: unknown
 }
 
@@ -164,13 +170,13 @@ export const parseSwaggerData = (
         const swaggerInfo = apiInfo as SwaggerApiInfo
         const tags = swaggerInfo.tags || []
         const summary = swaggerInfo.summary || `${method.toUpperCase()} ${path}`
-        const xApifoxRunUrl = swaggerInfo["x-run-in-apifox"]
-        // eg: x-run-in-apifox: "https://apifox.com/web/project/3155205/apis/api-102913012-run"
+        const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX]
+        // eg: x-run-in-apifox: "https://apifox.com/web/project/123456789/apis/api-102913012-run"
         // 提取中间的数字部分作为 apiId（如 102913012）
         const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
 
         // 检查接口状态，根据用户选择的状态进行过滤
-        const apifoxStatus = swaggerInfo["x-apifox-status"]
+        const apifoxStatus = swaggerInfo[APIFOX_FIELD_STATUS]
 
         // 只保留状态匹配的接口，如果接口没有状态字段且用户选择的状态不是默认值，则跳过
         if (apifoxStatus !== selectedStatus) {
@@ -185,7 +191,7 @@ export const parseSwaggerData = (
         if (hasMatchingTag) {
           // 获取分组名，优先使用x-apifox-fe-general-model-base-action-type
           const groupName =
-            swaggerInfo["x-apifox-fe-general-model-base-action-type"] ||
+            swaggerInfo[APIFOX_FIELD_GROUP_NAME] ||
             (tags.length > 0 ? tags[0] : "默认分组")
 
           // 如果 groupName 不符合格式，给出警告
@@ -197,8 +203,7 @@ export const parseSwaggerData = (
           }
 
           const modelApiType =
-            swaggerInfo["x-apifox-fe-general-model-api-type"] ||
-            ModelAction.CUSTOM
+            swaggerInfo[APIFOX_FIELD_API_TYPE] || ModelAction.CUSTOM
 
           apis.push({
             path,
