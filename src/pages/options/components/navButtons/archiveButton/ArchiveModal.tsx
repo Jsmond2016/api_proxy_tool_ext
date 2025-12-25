@@ -15,6 +15,7 @@ import {
   saveArchive,
   initArchiveDB,
 } from "@src/utils/archiveUtil"
+import { parseDocLinks } from "@src/utils/docUtils"
 
 const { Text } = Typography
 
@@ -115,17 +116,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
     setSelectedTag("")
     setArchivePreview(undefined)
     onCancel()
-  }
-
-  // 解析文档链接
-  const parseDocLinks = (docs: string): string[] => {
-    if (!docs || !docs.trim()) {
-      return []
-    }
-    return docs
-      .split(/[\n\r,;]+/)
-      .map((doc) => doc.trim())
-      .filter((doc) => doc.length > 0)
   }
 
   return (
