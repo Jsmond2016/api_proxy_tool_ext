@@ -24,7 +24,7 @@ const GlobalResponseButton: React.FC = () => {
   const [editingConfig, setEditingConfig] = useState<GlobalResponse | null>(
     null
   )
-  const [responseList, setMockList] = useState<GlobalResponse[]>([])
+  const [responseList, setResponseList] = useState<GlobalResponse[]>([])
   const [loading, setLoading] = useState(false)
   const { setActiveGlobalResponseId } = useGlobalResponseStore()
 
@@ -33,7 +33,7 @@ const GlobalResponseButton: React.FC = () => {
     setLoading(true)
     try {
       const list = await getAllGlobalResponses()
-      setMockList(list)
+      setResponseList(list)
 
       // 同步当前启用的 ID
       const activeMock = await getActiveGlobalResponse()

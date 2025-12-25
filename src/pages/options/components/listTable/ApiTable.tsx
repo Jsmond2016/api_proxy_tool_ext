@@ -27,7 +27,7 @@ import {
   useSelectedApiStore,
   useHighlightApiStore,
 } from "@src/store"
-import { useGlobalMock } from "./hooks/useGlobalMock"
+import { useGlobalResponse } from "./hooks/useGlobalResponse"
 import { saveConfig } from "@src/utils/configUtil"
 import { TableColumnsX } from "../../../../types/util.type"
 import { ColumnsType } from "antd/es/table"
@@ -43,21 +43,21 @@ export default function ApiTable() {
   const [current, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
-  // 使用全局 Mock Hook
-  const { enabledGlobalMocks, handleToggleApiGlobalMock } = useGlobalMock()
+  // 使用全局响应 Hook
+  const { enabledGlobalResponses, handleToggleApiGlobalResponse } = useGlobalResponse()
 
-  // 渲染全局 Mock 配置
-  const renderGlobalMockConfig = (_: unknown, record: ApiConfig) => {
-    // 显示所有已启用的全局 mock 响应，每个接口可以独立选择使用哪个
-    if (enabledGlobalMocks.length === 0) {
+  // 渲染全局响应 配置
+  const renderGlobalResponseConfig = (_: unknown, record: ApiConfig) => {
+    // 显示所有已启用的全局响应 响应，每个接口可以独立选择使用哪个
+    if (enabledGlobalResponses.length === 0) {
       return <span className="text-gray-400">暂无已启用的全局响应</span>
     }
 
     return (
       <Space orientation="vertical" size="small" style={{ width: "100%" }}>
-        {enabledGlobalMocks.map((mock) => {
-          // 检查当前接口是否使用这个全局 mock
-          const isActive = record.activeGlobalMockId === mock.id
+        {enabledGlobalResponses.map((mock) => {
+          // 检查当前接口是否使用这个全局响应
+          const isActive = record.activeGlobalResponseId === mock.id
           return (
             <Space
               key={mock.id}
@@ -71,8 +71,8 @@ export default function ApiTable() {
               <Switch
                 checked={isActive}
                 onChange={(checked) => {
-                  // 直接切换：开启时会自动覆盖该接口的其他全局 mock，关闭时清除
-                  handleToggleApiGlobalMock(record.id, mock.id, checked)
+                  // 直接切换：开启时会自动覆盖该接口的其他全局响应，关闭时清除
+                  handleToggleApiGlobalResponse(record.id, mock.id, checked)
                 }}
                 checkedChildren="开启"
                 unCheckedChildren="关闭"
@@ -385,10 +385,10 @@ export default function ApiTable() {
       ),
     },
     {
-      title: "全局 Mock",
+      title: "全局响应",
       dataIndex: "id",
       width: 200,
-      render: renderGlobalMockConfig,
+      render: renderGlobalResponseConfig,
     },
     {
       title: "操作",

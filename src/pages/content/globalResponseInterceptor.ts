@@ -5,7 +5,7 @@
  * 1. 将拦截脚本注入到页面上下文
  * 2. 接收来自注入脚本的消息
  * 3. 与 background script 通信获取配置
- * 4. 从 IndexedDB 读取 mock 数据并返回给注入脚本
+ * 4. 从 IndexedDB 读取响应数据并返回给注入脚本
  */
 
 import { GlobalResponse } from "@src/types/index"
@@ -32,9 +32,9 @@ function injectScript() {
   }
 }
 
-// 从 IndexedDB 读取指定的全局 Mock 响应
+// 从 IndexedDB 读取指定的全局响应
 async function getGlobalResponseById(
-  mockId: string
+  responseId: string
 ): Promise<GlobalResponse | null> {
   try {
     const DB_NAME = "global-response-db"
@@ -50,7 +50,7 @@ async function getGlobalResponseById(
         const db = request.result
         const transaction = db.transaction([STORE_NAME], "readonly")
         const objectStore = transaction.objectStore(STORE_NAME)
-        const getRequest = objectStore.get(mockId)
+        const getRequest = objectStore.get(responseId)
 
         getRequest.onsuccess = () => {
           const result = getRequest.result
@@ -58,7 +58,7 @@ async function getGlobalResponseById(
         }
 
         getRequest.onerror = () =>
-          reject(new Error("Failed to get global mock"))
+          reject(new Error("Failed to get global response"))
       }
 
       request.onupgradeneeded = () => {
@@ -66,7 +66,7 @@ async function getGlobalResponseById(
       }
     })
   } catch (error) {
-    console.error("[Global Response] Error getting global mock:", error)
+    console.error("[Global Response] Error getting global response:", error)
     return null
   }
 }
@@ -101,7 +101,7 @@ window.addEventListener("message", async function (event) {
   if (event.source !== window) return
 
   // 处理拦截检查请求
-  if (event.data.type === "GLOBAL_MOCK_CHECK") {
+  if (event.data.type === "GLOBAL_RESPONSE_CHECK") {
     const { id, url } = event.data
     console.log(`[Global Response] Received check request for: ${url}`)
 
@@ -110,21 +110,21 @@ window.addEventListener("message", async function (event) {
       const matchResult = await checkApiMatch(url)
       console.log(`[Global Response] Match result:`, matchResult)
 
-      let mockData = null
+      let responseData = null
       if (matchResult.shouldIntercept && matchResult.globalResponseId) {
-        // 获取 mock 数据
-        mockData = await getGlobalResponseById(matchResult.globalResponseId)
-        console.log(`[Global Response] Mock data:`, mockData)
+        // 获取响应数据
+        responseData = await getGlobalResponseById(matchResult.globalResponseId)
+        console.log(`[Global Response] Response data:`, responseData)
       }
 
       // 发送响应回注入脚本
       window.postMessage(
         {
-          type: "GLOBAL_MOCK_RESPONSE",
+          type: "GLOBAL_RESPONSE_RESPONSE",
           id,
           shouldIntercept: matchResult.shouldIntercept,
           globalResponseId: matchResult.globalResponseId,
-          mockData,
+          responseData,
         },
         "*"
       )
@@ -133,7 +133,7 @@ window.addEventListener("message", async function (event) {
       // 发送失败响应
       window.postMessage(
         {
-          type: "GLOBAL_MOCK_RESPONSE",
+          type: "GLOBAL_RESPONSE_RESPONSE",
           id,
           shouldIntercept: false,
         },

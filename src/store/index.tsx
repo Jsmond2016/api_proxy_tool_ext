@@ -122,19 +122,19 @@ export const useHighlightApiStore = create<{
   setHighlightApiId: (id: string) => set({ highlightApiId: id }),
 }))
 
-// 当前启用的全局 Mock ID Store - 使用 localStorage 持久化
-export const useGlobalMockStore = create<{
-  activeGlobalMockId: string | null
-  setActiveGlobalMockId: (id: string | null) => void
+// 当前启用的全局响应 ID Store - 使用 localStorage 持久化
+export const useGlobalResponseStore = create<{
+  activeGlobalResponseId: string | null
+  setActiveGlobalResponseId: (id: string | null) => void
 }>()(
   persist(
     (set) => ({
-      activeGlobalMockId: null,
-      setActiveGlobalMockId: (id: string | null) =>
-        set({ activeGlobalMockId: id }),
+      activeGlobalResponseId: null,
+      setActiveGlobalResponseId: (id: string | null) =>
+        set({ activeGlobalResponseId: id }),
     }),
     {
-      name: "active-global-mock-id-storage",
+      name: "active-global-response-id-storage",
     }
   )
 )

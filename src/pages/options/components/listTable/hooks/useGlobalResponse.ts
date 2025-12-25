@@ -8,7 +8,7 @@ import { useConfigStore, useActiveModuleIdStore } from "@src/store"
 
 export const useGlobalResponse = () => {
   const { setConfig } = useConfigStore()
-  const [enabledGlobalResponses, setEnabledGlobalMocks] = useState<
+  const [enabledGlobalResponses, setEnabledGlobalResponses] = useState<
     GlobalResponse[]
   >([])
 
@@ -17,34 +17,34 @@ export const useGlobalResponse = () => {
     try {
       const list = await getAllGlobalResponses()
 
-      // 获取已启用的全局 mock 列表（在全局响应设置中启用的）
-      const enabled = list.filter((mock) => mock.enabled)
-      setEnabledGlobalMocks(enabled)
+      // 获取已启用的全局响应 列表（在全局响应设置中启用的）
+      const enabled = list.filter((response) => response.enabled)
+      setEnabledGlobalResponses(enabled)
     } catch (error) {
-      console.error("Load global mock error:", error)
+      console.error("Load global response error:", error)
     }
   })
 
   useEffect(() => {
     loadGlobalResponse()
 
-    // 监听全局 Mock 更新事件
-    const handleGlobalMockUpdate = () => {
+    // 监听全局响应更新事件
+    const handleGlobalResponseUpdate = () => {
       loadGlobalResponse()
     }
-    window.addEventListener("globalResponseUpdated", handleGlobalMockUpdate)
+    window.addEventListener("globalResponseUpdated", handleGlobalResponseUpdate)
 
     return () => {
       window.removeEventListener(
         "globalResponseUpdated",
-        handleGlobalMockUpdate
+        handleGlobalResponseUpdate
       )
     }
   }, [loadGlobalResponse])
 
-  // 切换单个接口的全局 Mock 开关（每个接口只能选择一个全局 mock）
+  // 切换单个接口的全局响应开关（每个接口只能选择一个全局响应）
   const handleToggleApiGlobalResponse = useMemoizedFn(
-    async (apiId: string, mockId: string, enabled: boolean) => {
+    async (apiId: string, responseId: string, enabled: boolean) => {
       try {
         // 获取最新配置，避免闭包问题
         const currentConfig = useConfigStore.getState().config
@@ -71,13 +71,13 @@ export const useGlobalResponse = () => {
         // 更新接口配置
         const updatedApis = [...activeModule.apiArr]
         if (enabled) {
-          // 启用选中的全局 mock，先清除该接口的其他全局 mock
+          // 启用选中的全局响应，先清除该接口的其他全局响应
           updatedApis[apiIndex] = {
             ...updatedApis[apiIndex],
-            activeGlobalResponseId: mockId,
+            activeGlobalResponseId: responseId,
           }
         } else {
-          // 关闭当前接口的全局 mock
+          // 关闭当前接口的全局响应
           updatedApis[apiIndex] = {
             ...updatedApis[apiIndex],
             activeGlobalResponseId: undefined,
@@ -98,7 +98,7 @@ export const useGlobalResponse = () => {
         message.success(enabled ? "已启用全局响应" : "已关闭全局响应")
       } catch (error) {
         message.error("操作失败")
-        console.error("Toggle api global mock error:", error)
+        console.error("Toggle api global response error:", error)
       }
     }
   )

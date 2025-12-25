@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react"
 import { Button, Modal, Spin, Tag, message } from "antd"
 import { ThunderboltOutlined } from "@ant-design/icons"
-import { ApiConfig, GlobalMockResponse } from "@src/types"
+import { ApiConfig, GlobalResponse } from "@src/types"
 import { useConfigStore } from "@src/store"
-import { getAllGlobalMocks } from "@src/utils/globalMockUtil"
+import { getAllGlobalResponses, getGlobalResponse } from "@src/utils/globalResponseUtil"
 
 interface TestButtonProps {
   apiConfig: ApiConfig
@@ -24,37 +24,37 @@ const TestButton: React.FC<TestButtonProps> = ({
     data: unknown
     error?: string
   } | null>(null)
-  const [globalMockList, setGlobalMockList] = useState<GlobalMockResponse[]>([])
+  const [globalResponseList, setGlobalResponseList] = useState<GlobalResponse[]>([])
 
-  // 加载全局 Mock 列表
+  // 加载全局响应 列表
   useEffect(() => {
-    const loadGlobalMocks = async () => {
+    const loadGlobalResponses = async () => {
       try {
-        const list = await getAllGlobalMocks()
-        setGlobalMockList(list)
+        const list = await getAllGlobalResponses()
+        setGlobalResponseList(list)
       } catch (error) {
         console.error("Load global mocks error:", error)
       }
     }
-    loadGlobalMocks()
+    loadGlobalResponses()
   }, [])
 
   // 获取实际请求显示信息（使用 useMemo 缓存，避免每次渲染都重新计算）
   const actualRequestInfo = React.useMemo(() => {
-    // 检查是否配置了全局 Mock
-    if (apiConfig.activeGlobalMockId) {
-      const globalMock = globalMockList.find(
-        (mock) => mock.id === apiConfig.activeGlobalMockId
+    // 检查是否配置了全局响应
+    if (apiConfig.activeGlobalResponseId) {
+      const globalResponse = globalResponseList.find(
+        (mock) => mock.id === apiConfig.activeGlobalResponseId
       )
-      if (globalMock?.name) {
+      if (globalResponse?.name) {
         return {
           label: "实际请求",
-          value: `全局 Mock - ${globalMock.name}`,
+          value: `全局响应 - ${globalResponse.name}`,
         }
       }
     }
 
-    // 如果没有全局 Mock，显示 redirectURL
+    // 如果没有全局响应，显示 redirectURL
     if (apiConfig.redirectURL) {
       return {
         label: "实际请求 URL",
@@ -63,12 +63,12 @@ const TestButton: React.FC<TestButtonProps> = ({
     }
 
     return null
-  }, [apiConfig.activeGlobalMockId, apiConfig.redirectURL, globalMockList])
+  }, [apiConfig.activeGlobalResponseId, apiConfig.redirectURL, globalResponseList])
 
   const handleTest = async () => {
     // 检查 mock 开关状态
     if (!config.isGlobalEnabled) {
-      message.warning("全局 Mock 开关未打开，请先打开全局 Mock 开关后再测试")
+      message.warning("全局响应 开关未打开，请先打开全局响应 开关后再测试")
       return
     }
 
@@ -76,11 +76,6 @@ const TestButton: React.FC<TestButtonProps> = ({
       message.warning(
         "单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试"
       )
-      return
-    }
-
-    if (!apiConfig.redirectURL) {
-      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
       return
     }
 
@@ -92,7 +87,50 @@ const TestButton: React.FC<TestButtonProps> = ({
       // 模拟请求延迟 1 秒
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      // 使用 redirectURL 进行测试（会被代理拦截的 URL）
+      // 如果开启了全局响应，直接返回全局响应 响应
+      if (apiConfig.activeGlobalResponseId) {
+        const globalResponse = await getGlobalResponse(apiConfig.activeGlobalResponseId)
+        if (!globalResponse) {
+          message.error("全局响应 配置不存在")
+          setTestLoading(false)
+          return
+        }
+
+        // 处理延迟
+        if (globalResponse.delay > 0) {
+          await new Promise((resolve) => setTimeout(resolve, globalResponse.delay))
+        }
+
+        // 解析响应 JSON
+        let responseData: unknown
+        try {
+          responseData = JSON.parse(globalResponse.responseJson)
+        } catch (error) {
+          console.error("Failed to parse global mock response JSON:", error)
+          responseData = { error: "Invalid JSON in global mock response" }
+        }
+
+        // 返回全局响应 响应
+        setTestResult({
+          status: globalResponse.statusCode || 200,
+          statusText: getStatusText(globalResponse.statusCode || 200),
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: responseData,
+        })
+        return
+      }
+
+      // 如果没有开启全局响应，直接请求 redirectURL
+      // 注意：options 页面不会被 declarativeNetRequest 拦截，所以需要直接请求 redirectURL
+      if (!apiConfig.redirectURL) {
+        message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
+        setTestLoading(false)
+        return
+      }
+
+      // 直接使用 redirectURL 进行测试（因为 options 页面不会被 declarativeNetRequest 拦截）
       const testUrl = apiConfig.redirectURL
 
       const response = await fetch(testUrl, {
@@ -138,6 +176,22 @@ const TestButton: React.FC<TestButtonProps> = ({
     } finally {
       setTestLoading(false)
     }
+  }
+
+  // 获取状态码对应的状态文本
+  const getStatusText = (status: number): string => {
+    const statusTexts: { [key: number]: string } = {
+      200: "OK",
+      201: "Created",
+      400: "Bad Request",
+      401: "Unauthorized",
+      403: "Forbidden",
+      404: "Not Found",
+      500: "Internal Server Error",
+      502: "Bad Gateway",
+      503: "Service Unavailable",
+    }
+    return statusTexts[status] || "OK"
   }
 
   return (

@@ -1,9 +1,10 @@
 import {
   ApiConfig,
   GlobalConfig,
-  BackgroundMessage,
   BackgroundMessageResponse,
   BackgroundMessageAction,
+  AllBackgroundMessage,
+  ContentScriptMessage,
 } from "../../types"
 import {
   getDefaultGlobalConfig,
@@ -155,6 +156,15 @@ async function updateDeclarativeRules(): Promise<void> {
     for (const module of globalConfig.modules) {
       for (const apiConfig of module.apiArr) {
         if (!apiConfig.isOpen) continue
+
+        // 如果接口开启了全局 Mock，不创建 declarativeNetRequest 规则
+        // 因为应该由 content script 拦截并返回 mock 响应
+        if (apiConfig.activeGlobalResponseId) {
+          Logger.info(
+            `[Global Response] Skipping declarativeNetRequest rule for API with global response: ${apiConfig.apiName}`
+          )
+          continue
+        }
 
         try {
           const condition = buildRuleCondition(apiConfig)
@@ -358,11 +368,131 @@ async function handleUpdateIcon(
 }
 
 /**
+ * 统一的错误响应处理
+ */
+const createErrorResponse = (error: unknown): BackgroundMessageResponse => ({
+  success: false,
+  error: error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
+})
+
+/**
+ * 类型守卫：检查是否为 Content Script 消息
+ */
+const isContentScriptMessage = (
+  request: AllBackgroundMessage
+): request is ContentScriptMessage => {
+  return request.action === "checkApiMatch"
+}
+
+/**
+ * 处理异步消息
+ */
+const handleAsyncMessage = async (
+  request: AllBackgroundMessage,
+  sendResponse: (response: BackgroundMessageResponse) => void
+): Promise<void> => {
+  try {
+    // 处理 content script 的消息
+    if (isContentScriptMessage(request)) {
+      if (!request.url) {
+        sendResponse({
+          success: false,
+          error: "URL is required for checkApiMatch action",
+        })
+        return
+      }
+      const matchResult = checkApiMatch(request.url)
+      sendResponse({
+        success: true,
+        shouldIntercept: matchResult.shouldIntercept,
+        apiId: matchResult.apiId,
+        globalResponseId: matchResult.globalResponseId,
+      })
+      return
+    }
+
+    // 处理标准的 BackgroundMessage
+    let response: BackgroundMessageResponse
+
+    switch (request.action) {
+      case BackgroundMessageAction.UPDATE_CONFIG:
+        if (!request.config) {
+          sendResponse({
+            success: false,
+            error: ERROR_MESSAGES.CONFIG_REQUIRED,
+          })
+          return
+        }
+        response = await handleUpdateConfig(request.config)
+        sendResponse(response)
+        break
+
+      case BackgroundMessageAction.TOGGLE_GLOBAL:
+        if (request.enabled === undefined) {
+          sendResponse({
+            success: false,
+            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+          })
+          return
+        }
+        response = await handleToggleGlobal(request.enabled)
+        sendResponse(response)
+        break
+
+      case BackgroundMessageAction.TOGGLE_MODULE:
+        if (!request.moduleId || request.enabled === undefined) {
+          sendResponse({
+            success: false,
+            error: ERROR_MESSAGES.MODULE_ID_AND_ENABLED_REQUIRED,
+          })
+          return
+        }
+        response = await handleToggleModule(request.moduleId, request.enabled)
+        sendResponse(response)
+        break
+
+      case BackgroundMessageAction.TOGGLE_API:
+        if (!request.apiId || request.enabled === undefined) {
+          sendResponse({
+            success: false,
+            error: ERROR_MESSAGES.API_ID_AND_ENABLED_REQUIRED,
+          })
+          return
+        }
+        response = await handleToggleApi(request.apiId, request.enabled)
+        sendResponse(response)
+        break
+
+      case BackgroundMessageAction.UPDATE_ICON:
+        if (request.enabled === undefined) {
+          sendResponse({
+            success: false,
+            error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
+          })
+          return
+        }
+        response = await handleUpdateIcon(request.enabled)
+        sendResponse(response)
+        break
+
+      default:
+        sendResponse({
+          success: false,
+          error: ERROR_MESSAGES.UNKNOWN_ACTION,
+        })
+    }
+  } catch (error) {
+    Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
+    sendResponse(createErrorResponse(error))
+  }
+}
+
+/**
  * 消息处理器
  * 注意：对于异步操作，必须立即返回 true 以保持消息通道开放
  */
 function handleMessage(
-  request: BackgroundMessage,
+  request: AllBackgroundMessage,
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: BackgroundMessageResponse) => void
 ): boolean {
@@ -374,122 +504,16 @@ function handleMessage(
       return false // 同步操作，不需要保持通道开放
     } catch (error) {
       Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
-      sendResponse({
-        success: false,
-        error:
-          error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
-      })
+      sendResponse(createErrorResponse(error))
       return false
     }
   }
 
   // 处理异步操作 - 立即返回 true 保持通道开放
-  ;(async () => {
-    try {
-      let response: BackgroundMessageResponse
-
-      switch (request.action) {
-        case BackgroundMessageAction.UPDATE_CONFIG:
-          if (!request.config) {
-            response = {
-              success: false,
-              error: ERROR_MESSAGES.CONFIG_REQUIRED,
-            }
-            sendResponse(response)
-            return
-          }
-          response = await handleUpdateConfig(request.config)
-          sendResponse(response)
-          break
-
-        case BackgroundMessageAction.TOGGLE_GLOBAL:
-          if (request.enabled === undefined) {
-            response = {
-              success: false,
-              error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
-            }
-            sendResponse(response)
-            return
-          }
-          response = await handleToggleGlobal(request.enabled)
-          sendResponse(response)
-          break
-
-        case BackgroundMessageAction.TOGGLE_MODULE:
-          if (!request.moduleId || request.enabled === undefined) {
-            response = {
-              success: false,
-              error: ERROR_MESSAGES.MODULE_ID_AND_ENABLED_REQUIRED,
-            }
-            sendResponse(response)
-            return
-          }
-          response = await handleToggleModule(request.moduleId, request.enabled)
-          sendResponse(response)
-          break
-
-        case BackgroundMessageAction.TOGGLE_API:
-          if (!request.apiId || request.enabled === undefined) {
-            response = {
-              success: false,
-              error: ERROR_MESSAGES.API_ID_AND_ENABLED_REQUIRED,
-            }
-            sendResponse(response)
-            return
-          }
-          response = await handleToggleApi(request.apiId, request.enabled)
-          sendResponse(response)
-          break
-
-        case BackgroundMessageAction.UPDATE_ICON:
-          if (request.enabled === undefined) {
-            response = {
-              success: false,
-              error: ERROR_MESSAGES.ENABLED_STATUS_REQUIRED,
-            }
-            sendResponse(response)
-            return
-          }
-          response = await handleUpdateIcon(request.enabled)
-          sendResponse(response)
-          break
-
-        default:
-          // 处理 content script 的消息
-          if (
-            (request as unknown as { action?: string; url?: string }).action ===
-            "checkApiMatch"
-          ) {
-            const url = (
-              request as unknown as { action?: string; url?: string }
-            ).url
-            if (url) {
-              const matchResult = checkApiMatch(url)
-              sendResponse({
-                success: true,
-                shouldIntercept: matchResult.shouldIntercept,
-                apiId: matchResult.apiId,
-                globalMockId: matchResult.globalMockId,
-              } as BackgroundMessageResponse & {
-                shouldIntercept?: boolean
-                apiId?: string
-                globalMockId?: string
-              })
-              return
-            }
-          }
-          response = { success: false, error: ERROR_MESSAGES.UNKNOWN_ACTION }
-          sendResponse(response)
-      }
-    } catch (error) {
-      Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
-      sendResponse({
-        success: false,
-        error:
-          error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
-      })
-    }
-  })()
+  handleAsyncMessage(request, sendResponse).catch((error) => {
+    Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
+    sendResponse(createErrorResponse(error))
+  })
 
   return true // 保持消息通道开放以支持异步响应
 }
@@ -498,14 +522,16 @@ function handleMessage(
 
 /**
  * 检查 URL 是否匹配某个启用的 API，并返回对应的全局 Mock ID
+ * 注意：需要同时检查 apiUrl 和 redirectURL，因为实际请求可能是 redirectURL
  */
 function checkApiMatch(url: string): {
   shouldIntercept: boolean
   apiId?: string
-  globalMockId?: string
+  globalResponseId?: string
 } {
   try {
     if (!globalConfig.isGlobalEnabled) {
+      Logger.info(`[Global Response] Global enabled is false, URL: ${url}`)
       return { shouldIntercept: false }
     }
 
@@ -514,37 +540,74 @@ function checkApiMatch(url: string): {
       for (const apiConfig of module.apiArr) {
         if (!apiConfig.isOpen) continue
 
+        // 如果接口没有配置全局 Mock，跳过
+        if (!apiConfig.activeGlobalResponseId) continue
+
         let matches = false
 
-        // 根据匹配类型检查
+        // 规范化 URL（移除协议、查询参数等，只比较路径部分）
+        const normalizeUrl = (urlStr: string): string => {
+          try {
+            const urlObj = new URL(urlStr)
+            return urlObj.pathname + urlObj.search
+          } catch {
+            // 如果不是完整 URL，直接返回
+            return urlStr
+          }
+        }
+
+        // 检查是否匹配 apiUrl（原始 URL）
         switch (apiConfig.filterType) {
-          case "exact":
-            matches = url === apiConfig.apiUrl
+          case "exact": {
+            // 精确匹配：比较完整 URL 或规范化后的 URL
+            matches =
+              url === apiConfig.apiUrl ||
+              normalizeUrl(url) === normalizeUrl(apiConfig.apiUrl)
             break
-          case "contains":
-            matches = url.includes(apiConfig.apiUrl.replace(/\*/g, ""))
+          }
+          case "contains": {
+            // 包含匹配：移除通配符后检查
+            const apiUrlPattern = apiConfig.apiUrl.replace(/\*/g, "")
+            matches =
+              url.includes(apiUrlPattern) ||
+              normalizeUrl(url).includes(apiUrlPattern)
             break
-          case "regex":
+          }
+          case "regex": {
             try {
               const regex = new RegExp(apiConfig.apiUrl)
-              matches = regex.test(url)
+              matches = regex.test(url) || regex.test(normalizeUrl(url))
             } catch (error) {
               Logger.error("Invalid regex pattern", error)
             }
             break
+          }
+        }
+
+        // 如果 apiUrl 不匹配，检查是否匹配 redirectURL（实际请求的 URL）
+        if (!matches && apiConfig.redirectURL) {
+          // 对于 redirectURL，使用简单的字符串匹配
+          matches =
+            url === apiConfig.redirectURL ||
+            url.includes(apiConfig.redirectURL) ||
+            normalizeUrl(url) === normalizeUrl(apiConfig.redirectURL)
         }
 
         if (matches) {
+          Logger.info(
+            `[Global Response] Matched API: ${apiConfig.apiName}, URL: ${url}, Mock ID: ${apiConfig.activeGlobalResponseId}`
+          )
           // 如果接口配置了全局 Mock，返回对应的 Mock ID
           return {
-            shouldIntercept: !!apiConfig.activeGlobalMockId,
+            shouldIntercept: true,
             apiId: apiConfig.id,
-            globalMockId: apiConfig.activeGlobalMockId,
+            globalResponseId: apiConfig.activeGlobalResponseId,
           }
         }
       }
     }
 
+    Logger.info(`[Global Response] No match found for URL: ${url}`)
     return { shouldIntercept: false }
   } catch (error) {
     Logger.error("Failed to check API match", error)
