@@ -184,7 +184,7 @@ export default function ApiTable() {
     {
       title: "序号",
       dataIndex: "id",
-      width: 20,
+      width: 60,
       render: (_, __: ApiConfig, index: number) =>
         index + 1 + (current - 1) * pageSize,
     },
