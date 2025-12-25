@@ -18,7 +18,7 @@ type ExtendedAutoCompleteOption = {
 const SearchSelect = () => {
   const { config } = useConfigStore()
   const { setActiveModuleId } = useActiveModuleIdStore()
-  const { setSearchKeyword } = useSearchKeywordStore()
+  const { searchKeyword, setSearchKeyword } = useSearchKeywordStore()
   const { setHighlightApiId } = useHighlightApiStore()
 
   // 获取所有API数据用于搜索
@@ -69,14 +69,21 @@ const SearchSelect = () => {
     <AutoComplete
       allowClear
       placeholder="全局搜索:接口名字、接口地址、模块名称"
+      value={searchKeyword}
+      onChange={(value) => {
+        setSearchKeyword(value)
+      }}
       onSelect={(value, option) => {
         const extendedOption = option as ExtendedAutoCompleteOption
         if (extendedOption?.api) {
           handleSearchResultClick(extendedOption.api)
+          // 立即清空输入框，避免显示长 URL
+          setSearchKeyword("")
         }
       }}
       size="large"
       className="w-[650px]"
+      style={{ width: 650 }}
       showSearch={{
         filterOption: filterOption,
       }}
