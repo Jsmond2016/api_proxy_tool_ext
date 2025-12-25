@@ -5,11 +5,10 @@ import { ChromeApiService } from "@src/utils/chromeApi"
 import { useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 import SyncApifoxModalButton from "./syncApifoxModalButton/SyncApifoxModalButton"
-import ImportButton from "./importButton/ImportButton"
 import ResetButton from "./resetButton/ResetButton"
-import ExportButton from "./exportButton/ExportButton"
 import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
 import ArchiveButton from "./archiveButton/ArchiveButton"
+import ImportExportDropdown from "./importExportButton/ImportExportDropdown"
 
 const NavButtons: React.FC = () => {
   const { config, setConfig } = useConfigStore()
@@ -38,7 +37,7 @@ const NavButtons: React.FC = () => {
   }
 
   return (
-    <Space direction="horizontal">
+    <Space orientation="horizontal">
       <Tooltip title="全局Mock开关, 开启后所有接口都会被代理">
         <Switch
           checked={config.isGlobalEnabled}
@@ -50,8 +49,7 @@ const NavButtons: React.FC = () => {
       </Tooltip>
       <SyncApifoxModalButton />
       <ArchiveButton />
-      <ImportButton />
-      <ExportButton />
+      <ImportExportDropdown />
       <CopyAllPermissionButton />
       <ResetButton />
     </Space>

@@ -115,7 +115,7 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
         <div className="py-8 text-center text-gray-500">请先配置接口 tag</div>
       ) : (
         <Form form={form} layout="vertical" loading={loading}>
-          <Space direction="vertical" size="large" className="w-full">
+          <Space orientation="vertical" size="large" className="w-full">
             {selectedTags.map((tag) => (
               <Card
                 key={tag}

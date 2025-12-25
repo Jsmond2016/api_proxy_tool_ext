@@ -31,9 +31,9 @@ type SyncApifoxModalComProps = Record<string, never>
 const MOCK_DATA_WARNING = {
   title: "发现有模块有 mock 数据",
   content: (
-    <Space direction="vertical">
+    <Space orientation="vertical">
       <div>发现有模块有 mock 数据, 无法直接同步 Apifox 接口，建议操作: </div>
-      <Space direction="vertical">
+      <Space orientation="vertical">
         <div>1. 先导出所有 mock 接口进行备份</div>
         <div>2. 一键重置所有 mock 接口</div>
         <div>3. 同步 Apifox 接口</div>
