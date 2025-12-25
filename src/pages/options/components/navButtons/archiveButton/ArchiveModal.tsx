@@ -38,22 +38,16 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
   const [archivePreview, setArchivePreview] =
     useState<Awaited<ReturnType<typeof archiveTagData>>>()
 
-  // 获取所有可归档的 tags
+  // 获取当前项目可归档的 tags
+  // 直接使用当前项目配置的 selectedTags
+  // 如果当前项目为空（没有 selectedTags），则显示空
   const availableTags = useMemo(() => {
-    const tagSet = new Set<string>()
-    config.modules.forEach((module) => {
-      module.apiArr.forEach((api) => {
-        if (api.tags && Array.isArray(api.tags)) {
-          api.tags.forEach((tag) => {
-            if (tag && tag.trim()) {
-              tagSet.add(tag.trim())
-            }
-          })
-        }
-      })
-    })
-    return Array.from(tagSet).sort()
-  }, [config.modules])
+    const selectedTags = config.apifoxConfig?.selectedTags
+    if (!selectedTags || selectedTags.length === 0) {
+      return []
+    }
+    return selectedTags
+  }, [config.apifoxConfig?.selectedTags])
 
   // 初始化数据库
   useEffect(() => {
@@ -134,14 +128,13 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
     >
       <div className="space-y-4">
         <Alert
-          message="归档说明"
+          title="归档说明"
           description="选择要归档的迭代 tag，系统将保存该 tag 相关的所有接口、文档、自定义配置等信息。归档后可以随时恢复。"
           type="info"
           showIcon
-          className="mb-4"
         />
 
-        <div>
+        <div className="mt-4">
           <label className="block mb-2 font-medium">选择迭代 tag：</label>
           <Select
             placeholder="请选择要归档的迭代 tag"
@@ -192,14 +185,13 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
 
             {/* 迭代信息 */}
             {archivePreview.iterationInfo && (
-              <div className="mb-4">
+              <div className="mb-4 mt-4">
                 <Text strong className="block mb-2">
                   迭代文档：
                 </Text>
                 <div className="pl-4 space-y-2">
-                  {parseDocLinks(
-                    archivePreview.iterationInfo.requirementDocs
-                  ).length > 0 && (
+                  {parseDocLinks(archivePreview.iterationInfo.requirementDocs)
+                    .length > 0 && (
                     <div>
                       <Text type="secondary">需求文档：</Text>
                       <Space wrap className="ml-2">
@@ -219,9 +211,8 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
                       </Space>
                     </div>
                   )}
-                  {parseDocLinks(
-                    archivePreview.iterationInfo!.technicalDocs
-                  ).length > 0 && (
+                  {parseDocLinks(archivePreview.iterationInfo!.technicalDocs)
+                    .length > 0 && (
                     <div>
                       <Text type="secondary">技术文档：</Text>
                       <Space wrap className="ml-2">
@@ -241,9 +232,8 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
                       </Space>
                     </div>
                   )}
-                  {parseDocLinks(
-                    archivePreview.iterationInfo!.prototypeDocs
-                  ).length > 0 && (
+                  {parseDocLinks(archivePreview.iterationInfo!.prototypeDocs)
+                    .length > 0 && (
                     <div>
                       <Text type="secondary">原型文档：</Text>
                       <Space wrap className="ml-2">
@@ -317,4 +307,3 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
 }
 
 export default ArchiveModal
-

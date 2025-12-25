@@ -1,9 +1,6 @@
-import React, { useState } from "react"
-import { Dropdown, MenuProps } from "antd"
-import {
-  SaveOutlined,
-  FolderOutlined,
-} from "@ant-design/icons"
+import React, { useState, useMemo } from "react"
+import { Dropdown, MenuProps, message } from "antd"
+import { SaveOutlined, FolderOutlined } from "@ant-design/icons"
 import { useConfigStore } from "@src/store"
 import ArchiveModal from "./ArchiveModal"
 import ArchiveListModal from "./ArchiveListModal"
@@ -13,12 +10,22 @@ const ArchiveButton: React.FC = () => {
   const [archiveModalVisible, setArchiveModalVisible] = useState(false)
   const [archiveListModalVisible, setArchiveListModalVisible] = useState(false)
 
+  // 检查是否有迭代配置
+  const hasIterationTags = useMemo(() => {
+    const selectedTags = config.apifoxConfig?.selectedTags
+    return selectedTags && selectedTags.length > 0
+  }, [config.apifoxConfig?.selectedTags])
+
   const menuItems: MenuProps["items"] = [
     {
       key: "archive",
       label: "存档",
       icon: <SaveOutlined />,
       onClick: () => {
+        if (!hasIterationTags) {
+          message.warning("请先配置 Apifox 项目并选择迭代 tag")
+          return
+        }
         setArchiveModalVisible(true)
       },
     },
@@ -46,9 +53,6 @@ const ArchiveButton: React.FC = () => {
       <ArchiveModal
         visible={archiveModalVisible}
         onCancel={() => setArchiveModalVisible(false)}
-        onOk={() => {
-          // 归档成功后可以刷新列表
-        }}
         config={config}
       />
       <ArchiveListModal
@@ -60,4 +64,3 @@ const ArchiveButton: React.FC = () => {
 }
 
 export default ArchiveButton
-

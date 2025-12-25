@@ -167,7 +167,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
         tagParts.push(
           <span key={`req-${tag}`} className="mr-3">
             <span className="font-medium">需求文档：</span>
-            <Space split="|" size="small" wrap className="ml-1">
+            <Space separator="|" size="small" wrap className="ml-1">
               {requirementLinks.map((doc, index) => (
                 <a
                   key={index}
