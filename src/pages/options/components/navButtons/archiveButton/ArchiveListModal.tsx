@@ -22,7 +22,7 @@ import {
   deleteArchive,
   initArchiveDB,
 } from "@src/utils/archiveUtil"
-import { useConfigStore } from "@src/store"
+import { useConfigStore, useActiveModuleIdStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 import {
   getIterationInfo,
@@ -42,6 +42,7 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
   onCancel,
 }) => {
   const { config, setConfig } = useConfigStore()
+  const { setActiveModuleId } = useActiveModuleIdStore()
   const [archives, setArchives] = useState<ArchiveRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [restoring, setRestoring] = useState<number | null>(null)
@@ -106,6 +107,11 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
           prototypeDocs: archiveData.iterationInfo.prototypeDocs,
         }
         await saveIterationInfo(iterationInfoMap)
+      }
+
+      // 激活第一个模块（如果存在）
+      if (restoredConfig.modules.length > 0) {
+        setActiveModuleId(restoredConfig.modules[0].id)
       }
 
       message.success("恢复成功")
