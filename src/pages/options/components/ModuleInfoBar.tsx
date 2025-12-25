@@ -272,7 +272,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   }
 
   return (
-    <div className="px-6 mb-3">
+    <div className="my-[12px] mx-[4px]">
       <Alert
         title={
           <div className="text-gray-700 flex flex-wrap items-center gap-2">
