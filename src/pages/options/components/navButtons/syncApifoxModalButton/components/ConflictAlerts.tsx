@@ -31,7 +31,7 @@ const ConflictAlerts: React.FC<ConflictAlertsProps> = ({
             value={mergeStrategy}
             onChange={(e) => onMergeStrategyChange(e.target.value)}
           >
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Radio value="replace">
                 <Space size={2}>
                   <strong className="text-sm">全量替换</strong>

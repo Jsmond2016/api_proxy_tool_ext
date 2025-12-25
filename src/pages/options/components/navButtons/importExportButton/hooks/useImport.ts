@@ -1,59 +1,59 @@
-import React, { useState } from "react"
+import { useState } from "react"
+import { message, Modal } from "antd"
+import { useMemoizedFn } from "ahooks"
 
-import { Button, message, Modal } from "antd"
-
-import { useMount } from "ahooks"
-import { ImportOutlined } from "@ant-design/icons"
-import ImportModal from "./ImportModal"
+import { useConfigStore, useActiveModuleIdStore } from "@src/store"
+import { hasOnlyDefaultModule, saveConfig } from "@src/utils/configUtil"
 import { ModuleConfig } from "@src/types"
-import { useActiveModuleIdStore, useConfigStore } from "@src/store"
-import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
 import {
   ImportModuleData,
   transformImportDataToModuleConfig,
 } from "@src/utils/dataProcessor"
 import { isApiUrlDuplicate, isModuleLabelDuplicate } from "@src/utils/chromeApi"
-import ColorButton from "../../../../../components/ColorButton"
 
-type ImportButtonProps = {}
-
-const ImportButton: React.FC<ImportButtonProps> = () => {
-  const [importModalVisible, setImportModalVisible] = useState(false)
-  const { config, setConfig } = useConfigStore()
+export const useImport = () => {
+  const { setConfig } = useConfigStore()
   const { setActiveModuleId } = useActiveModuleIdStore()
+  const [importModalVisible, setImportModalVisible] = useState(false)
 
   // 执行导入操作
-  const performImport = (
-    newModules: ModuleConfig[],
-    replaceAll: boolean = false
-  ) => {
-    console.log("转换后的模块:", newModules)
+  const performImport = useMemoizedFn(
+    (newModules: ModuleConfig[], replaceAll: boolean = false) => {
+      console.log("转换后的模块:", newModules)
 
-    // 智能判断：如果只有默认模块，直接替换
-    const shouldReplace = replaceAll || hasOnlyDefaultModule(config.modules)
+      // 获取最新配置，避免闭包问题
+      const currentConfig = useConfigStore.getState().config
 
-    const newConfig = {
-      ...config,
-      modules: shouldReplace
-        ? newModules // 替换模式
-        : [...config.modules, ...newModules], // 追加模式
+      // 智能判断：如果只有默认模块，直接替换
+      const shouldReplace =
+        replaceAll || hasOnlyDefaultModule(currentConfig.modules)
+
+      const newConfig = {
+        ...currentConfig,
+        modules: shouldReplace
+          ? newModules // 替换模式
+          : [...currentConfig.modules, ...newModules], // 追加模式
+      }
+
+      setConfig(newConfig)
+      saveConfig(newConfig)
+
+      if (newModules.length > 0) {
+        setActiveModuleId(newModules[0].id)
+      }
+
+      const importAction = shouldReplace ? "替换" : "追加"
+      message.success(`成功${importAction}导入 ${newModules.length} 个模块`)
     }
-
-    setConfig(newConfig)
-    saveConfig(newConfig)
-
-    if (newModules.length > 0) {
-      setActiveModuleId(newModules[0].id)
-    }
-
-    const importAction = shouldReplace ? "替换" : "追加"
-    message.success(`成功${importAction}导入 ${newModules.length} 个模块`)
-  }
+  )
 
   // 导入配置
-  const handleImport = (importData: ImportModuleData[]) => {
+  const handleImport = useMemoizedFn((importData: ImportModuleData[]) => {
     try {
       console.log("开始导入数据:", importData)
+
+      // 获取最新配置，避免闭包问题
+      const currentConfig = useConfigStore.getState().config
 
       const duplicateModules: string[] = []
       const duplicateApis: string[] = []
@@ -65,13 +65,13 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
       // 检查重复项
       newModules.forEach((module) => {
         // 检查模块标签是否重复
-        if (isModuleLabelDuplicate(config.modules, module.label)) {
+        if (isModuleLabelDuplicate(currentConfig.modules, module.label)) {
           duplicateModules.push(module.label)
         }
 
         // 检查API URL是否重复
         module.apiArr.forEach((api) => {
-          if (isApiUrlDuplicate(config.modules, api.apiUrl)) {
+          if (isApiUrlDuplicate(currentConfig.modules, api.apiUrl)) {
             duplicateApis.push(`${api.apiName} (${api.apiUrl})`)
           }
         })
@@ -103,7 +103,7 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
       }
 
       // 如果有非默认模块，询问用户
-      if (!hasOnlyDefaultModule(config.modules)) {
+      if (!hasOnlyDefaultModule(currentConfig.modules)) {
         Modal.confirm({
           title: "选择导入方式",
           content:
@@ -128,25 +128,11 @@ const ImportButton: React.FC<ImportButtonProps> = () => {
         `导入失败: ${error instanceof Error ? error.message : "未知错误"}`
       )
     }
-  }
-  return (
-    <>
-      <ColorButton
-        color="#52C7B0"
-        icon={<ImportOutlined />}
-        type="primary"
-        onClick={() => setImportModalVisible(true)}
-      >
-        导入
-      </ColorButton>
-      {/* 导入模态框 */}
-      <ImportModal
-        visible={importModalVisible}
-        onCancel={() => setImportModalVisible(false)}
-        onOk={(data) => handleImport(data as ImportModuleData[])}
-      />
-    </>
-  )
-}
+  })
 
-export default ImportButton
+  return {
+    importModalVisible,
+    setImportModalVisible,
+    handleImport,
+  }
+}

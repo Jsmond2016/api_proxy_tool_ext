@@ -232,7 +232,7 @@ export default function ApiTable() {
         const canLink = projectId && isApifoxId
 
         return (
-          <Space direction="vertical" size="small" className="w-full">
+          <Space orientation="vertical" size="small" className="w-full">
             {/* 接口名称 */}
             <div className="text-base font-semibold text-gray-900">
               {canLink ? (
