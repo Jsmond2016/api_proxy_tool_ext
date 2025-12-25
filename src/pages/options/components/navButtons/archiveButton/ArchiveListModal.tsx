@@ -24,6 +24,11 @@ import {
 } from "@src/utils/archiveUtil"
 import { useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
+import {
+  getIterationInfo,
+  saveIterationInfo,
+} from "../syncApifoxModalButton/apifoxCache"
+import { parseDocLinks } from "@src/utils/docUtils"
 
 const { Text } = Typography
 
@@ -93,8 +98,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
 
       // 恢复迭代信息
       if (archiveData.iterationInfo) {
-        const { getIterationInfo, saveIterationInfo } =
-          await import("../syncApifoxModalButton/apifoxCache")
         const iterationInfoMap = await getIterationInfo()
         iterationInfoMap[archiveData.tag] = {
           tag: archiveData.iterationInfo.tag,
@@ -142,17 +145,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
     }
   }
 
-  // 解析文档链接
-  const parseDocLinks = (docs: string): string[] => {
-    if (!docs || !docs.trim()) {
-      return []
-    }
-    return docs
-      .split(/[\n\r,;]+/)
-      .map((doc) => doc.trim())
-      .filter((doc) => doc.length > 0)
-  }
-
   const columns = [
     {
       title: "迭代 Tag",
@@ -195,7 +187,11 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
         }
 
         return (
-          <Space direction="vertical" size="small" style={{ fontSize: "12px" }}>
+          <Space
+            orientation="vertical"
+            size="small"
+            style={{ fontSize: "12px" }}
+          >
             {requirementLinks.length > 0 && (
               <div>
                 <Text type="secondary" style={{ fontSize: "12px" }}>

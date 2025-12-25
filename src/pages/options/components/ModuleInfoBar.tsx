@@ -6,6 +6,7 @@ import {
   type IterationInfo,
   type IterationInfoMap,
 } from "./navButtons/syncApifoxModalButton/apifoxCache"
+import { parseDocLinks } from "@src/utils/docUtils"
 
 interface ModuleInfoBarProps {
   activeModule?: ModuleConfig
@@ -119,17 +120,6 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     // 如果没有 selectedTags 配置，显示所有 tags
     return Array.from(allTags).sort()
   }, [activeModule?.apiArr, config?.apifoxConfig?.selectedTags])
-
-  // 解析文档链接的辅助函数
-  const parseDocLinks = (docs: string): string[] => {
-    if (!docs || !docs.trim()) {
-      return []
-    }
-    return docs
-      .split(/[\n\r,;]+/)
-      .map((doc) => doc.trim())
-      .filter((doc) => doc.length > 0)
-  }
 
   // 构建描述内容
   const descriptionParts = useMemo(() => {
