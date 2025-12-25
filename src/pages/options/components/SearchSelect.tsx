@@ -6,7 +6,14 @@ import {
 } from "@src/store"
 import { ApiConfig } from "@src/types"
 import { AutoComplete } from "antd"
-import React, { useState } from "react"
+import React from "react"
+
+// 扩展的 AutoComplete Option 类型，包含自定义的 api 字段
+type ExtendedAutoCompleteOption = {
+  value: string
+  label: React.ReactNode
+  api: ApiConfig & { moduleId: string; moduleName: string }
+}
 
 const SearchSelect = () => {
   const { config } = useConfigStore()
@@ -40,12 +47,15 @@ const SearchSelect = () => {
   }
 
   // 自定义筛选函数
-  const filterOption = (inputValue: string, option: any) => {
-    const searchText = inputValue.toLowerCase()
-    const api = option.api as ApiConfig & {
-      moduleId: string
-      moduleName: string
+  const filterOption = (
+    inputValue: string,
+    option?: ExtendedAutoCompleteOption
+  ) => {
+    if (!option?.api) {
+      return false
     }
+    const searchText = inputValue.toLowerCase()
+    const api = option.api
 
     return (
       api.apiName.toLowerCase().includes(searchText) ||
@@ -60,13 +70,16 @@ const SearchSelect = () => {
       allowClear
       placeholder="全局搜索:接口名字、接口地址、模块名称"
       onSelect={(value, option) => {
-        if (option && option.api) {
-          handleSearchResultClick(option.api)
+        const extendedOption = option as ExtendedAutoCompleteOption
+        if (extendedOption?.api) {
+          handleSearchResultClick(extendedOption.api)
         }
       }}
       size="large"
       className="w-[650px]"
-      filterOption={filterOption}
+      showSearch={{
+        filterOption: filterOption,
+      }}
       notFoundContent="未找到匹配的接口"
       options={getAllApis().map((api) => ({
         value: api.apiUrl,

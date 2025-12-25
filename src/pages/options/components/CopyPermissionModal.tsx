@@ -80,7 +80,7 @@ const CopyPermissionModal: React.FC<CopyPermissionModalProps> = ({
       width={1200}
       height={800}
     >
-      <Space direction="vertical" className="w-full">
+      <Space orientation="vertical" className="w-full">
         <div>
           <label className="block mb-2 font-medium">父级模块名字：</label>
           <Input

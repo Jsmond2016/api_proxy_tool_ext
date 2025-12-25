@@ -1,6 +1,6 @@
-import React, { useRef, useState } from "react"
-import { Tabs, Button, Popconfirm, GetRef, Modal } from "antd"
-import { PlusOutlined, CloseOutlined, EditOutlined } from "@ant-design/icons"
+import React, { useRef } from "react"
+import { Tabs, GetRef, Modal } from "antd"
+import { EditOutlined } from "@ant-design/icons"
 import { ModuleConfig } from "../../../types"
 import EditModuleModal from "./EditModuleModal"
 import "antd/dist/reset.css"
@@ -73,7 +73,7 @@ export default function ModuleTabs({
         <span>{module.label}</span>
         <EditOutlined
           className="text-gray-400 hover:text-blue-500 cursor-pointer text-xs ml-1"
-          onClick={(e) =>
+          onClick={() =>
             editModuleModalRef.current?.open({
               moduleName: module.label,
               moduleId: module.id,
