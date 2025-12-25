@@ -24,6 +24,7 @@ export interface ApiConfig {
   customMockResponses?: QuickMockConfig[] // 自定义响应列表（自定义响应时使用）
   activeCustomMockKey?: string // 当前激活的自定义响应 key
   tags?: string[] // 接口的 tags（从 Apifox 同步时保存）
+  activeGlobalMockId?: string // 当前接口使用的全局 Mock 响应 ID
 }
 
 // 快速联调配置类型
@@ -127,6 +128,18 @@ export interface BackgroundMessageResponse {
   success: boolean
   config?: GlobalConfig
   error?: string
+}
+
+// 全局 Mock 响应配置类型
+export interface GlobalMockResponse {
+  id: string // 唯一 ID
+  name: string // 名字
+  statusCode: number // 状态码
+  delay: number // 延迟时间（毫秒）
+  responseJson: string // 返回的 JSON 字符串
+  enabled: boolean // 开启/关闭状态
+  createdAt: number // 创建时间戳
+  updatedAt: number // 更新时间戳
 }
 
 // 归档相关类型

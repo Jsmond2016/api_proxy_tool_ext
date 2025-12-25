@@ -1,17 +1,17 @@
 import React, { useEffect } from "react"
-import { Modal, Form, Input, message } from "antd"
-import { QuickMockConfig } from "@src/types"
+import { Modal, Form, Input, InputNumber, message } from "antd"
+import { GlobalMockResponse } from "@src/types"
 
 const { TextArea } = Input
 
-interface QuickMockFormModalProps {
+interface GlobalMockFormModalProps {
   visible: boolean
   onCancel: () => void
-  onOk: (data: Omit<QuickMockConfig, "id">) => void
-  data?: QuickMockConfig | null
+  onOk: (data: Omit<GlobalMockResponse, "id" | "createdAt" | "updatedAt">) => void
+  data?: GlobalMockResponse | null
 }
 
-const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
+const GlobalMockFormModal: React.FC<GlobalMockFormModalProps> = ({
   visible,
   onCancel,
   onOk,
@@ -24,11 +24,18 @@ const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
       if (data) {
         form.setFieldsValue({
           name: data.name,
-          key: data.key,
+          statusCode: data.statusCode,
+          delay: data.delay,
           responseJson: data.responseJson,
+          enabled: data.enabled,
         })
       } else {
         form.resetFields()
+        form.setFieldsValue({
+          statusCode: 200,
+          delay: 0,
+          enabled: false,
+        })
       }
     }
   }, [visible, data, form])
@@ -47,8 +54,10 @@ const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
 
       onOk({
         name: values.name,
-        key: values.key,
+        statusCode: values.statusCode,
+        delay: values.delay || 0,
         responseJson: values.responseJson,
+        enabled: values.enabled || false,
       })
     } catch (error) {
       console.error("Form validation failed:", error)
@@ -57,48 +66,66 @@ const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
 
   return (
     <Modal
-      title={data ? "编辑联调配置" : "添加联调配置"}
+      title={data ? "编辑全局响应" : "添加全局响应"}
       open={visible}
       onOk={handleSubmit}
       onCancel={onCancel}
       okText={data ? "更新" : "添加"}
       cancelText="取消"
-      width={600}
+      width={700}
     >
       <Form
         form={form}
         layout="vertical"
         initialValues={{
           name: "",
-          key: "",
+          statusCode: 200,
+          delay: 0,
           responseJson: "{}",
+          enabled: false,
         }}
       >
         <Form.Item
-          label="名称"
+          label="名字"
           name="name"
-          rules={[{ required: true, message: "请输入名称" }]}
+          rules={[{ required: true, message: "请输入名字" }]}
         >
-          <Input placeholder="请输入名称" />
+          <Input placeholder="例如：参数错误" />
         </Form.Item>
 
         <Form.Item
-          label="唯一标识"
-          name="key"
+          label="状态码"
+          name="statusCode"
           rules={[
-            { required: true, message: "请输入唯一标识" },
-            {
-              pattern: /^[a-zA-Z0-9_-]+$/,
-              message: "唯一标识只能包含字母、数字、下划线和横线",
-            },
+            { required: true, message: "请输入状态码" },
+            { type: "number", min: 100, max: 599, message: "状态码必须在 100-599 之间" },
           ]}
-          extra="用于标识该联调配置，只能包含字母、数字、下划线和横线"
         >
-          <Input placeholder="例如：error_response" />
+          <InputNumber
+            placeholder="例如：400"
+            min={100}
+            max={599}
+            style={{ width: "100%" }}
+          />
         </Form.Item>
 
         <Form.Item
-          label="响应数据 (JSON)"
+          label="延迟时间（毫秒）"
+          name="delay"
+          rules={[
+            { type: "number", min: 0, message: "延迟时间不能小于 0" },
+          ]}
+          extra="响应延迟时间，用于模拟网络延迟"
+        >
+          <InputNumber
+            placeholder="例如：1000"
+            min={0}
+            style={{ width: "100%" }}
+          />
+        </Form.Item>
+
+        <Form.Item
+          label="返回 JSON"
           name="responseJson"
           rules={[
             { required: true, message: "请输入响应数据" },
@@ -118,7 +145,7 @@ const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
         >
           <TextArea
             rows={10}
-            placeholder='例如：{"code": 500, "message": "服务器错误", "data": null}'
+            placeholder='例如：{"code": 400, "message": "参数错误", "data": null}'
           />
         </Form.Item>
       </Form>
@@ -126,4 +153,5 @@ const QuickMockFormModal: React.FC<QuickMockFormModalProps> = ({
   )
 }
 
-export default QuickMockFormModal
+export default GlobalMockFormModal
+

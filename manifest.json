@@ -29,6 +29,14 @@
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
   },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*", "<all_urls>"],
+      "js": ["src/pages/content/globalMockInterceptor.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
   "web_accessible_resources": [
     {
       "resources": [

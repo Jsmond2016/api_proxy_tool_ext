@@ -13,7 +13,7 @@ export const useConfigStore = create<{
   setConfig: (configOrUpdater: SetConfigAction) => void
 }>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       config: {
         isGlobalEnabled: false,
         modules: [],
@@ -42,7 +42,7 @@ export const useConfigStore = create<{
             return null
           }
         },
-        setItem: async (name: string, value: any) => {
+        setItem: async (name: string, value: unknown) => {
           try {
             await chrome.storage.local.set({ [name]: value })
           } catch (error) {
@@ -121,3 +121,20 @@ export const useHighlightApiStore = create<{
   highlightApiId: "",
   setHighlightApiId: (id: string) => set({ highlightApiId: id }),
 }))
+
+// 当前启用的全局 Mock ID Store - 使用 localStorage 持久化
+export const useGlobalMockStore = create<{
+  activeGlobalMockId: string | null
+  setActiveGlobalMockId: (id: string | null) => void
+}>()(
+  persist(
+    (set) => ({
+      activeGlobalMockId: null,
+      setActiveGlobalMockId: (id: string | null) =>
+        set({ activeGlobalMockId: id }),
+    }),
+    {
+      name: "active-global-mock-id-storage",
+    }
+  )
+)

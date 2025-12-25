@@ -9,6 +9,7 @@ import ResetButton from "./resetButton/ResetButton"
 import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
 import ArchiveButton from "./archiveButton/ArchiveButton"
 import ImportExportDropdown from "./importExportButton/ImportExportDropdown"
+import GlobalMockButton from "./globalMockButton/GlobalMockButton"
 
 const NavButtons: React.FC = () => {
   const { config, setConfig } = useConfigStore()
@@ -48,6 +49,7 @@ const NavButtons: React.FC = () => {
         />
       </Tooltip>
       <SyncApifoxModalButton />
+      <GlobalMockButton />
       <ArchiveButton />
       <ImportExportDropdown />
       <CopyAllPermissionButton />

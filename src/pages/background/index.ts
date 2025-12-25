@@ -159,23 +159,13 @@ async function updateDeclarativeRules(): Promise<void> {
         try {
           const condition = buildRuleCondition(apiConfig)
 
-          // 如果启用了快速联调，需要特殊处理
-          // 注意：由于 Manifest V3 的限制，declarativeNetRequest 无法直接返回自定义响应
-          // 这里我们暂时保持原有的重定向逻辑，快速联调的拦截逻辑需要后续优化
-          let redirectUrl = apiConfig.redirectURL
-          // TODO: 实现快速联调的拦截逻辑
-          // 可能的方案：
-          // 1. 使用 chrome.webRequest API（需要 webRequest 权限，但 Manifest V3 已废弃）
-          // 2. 使用 content script 拦截并替换响应（复杂）
-          // 3. 将请求重定向到包含响应数据的特殊 URL（需要外部服务）
-
           rules.push({
             id: ruleId++,
             priority: RULE_PRIORITY,
             action: {
               type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
               redirect: {
-                url: redirectUrl,
+                url: apiConfig.redirectURL,
               },
             },
             condition,
@@ -465,6 +455,29 @@ function handleMessage(
           break
 
         default:
+          // 处理 content script 的消息
+          if (
+            (request as unknown as { action?: string; url?: string }).action ===
+            "checkApiMatch"
+          ) {
+            const url = (
+              request as unknown as { action?: string; url?: string }
+            ).url
+            if (url) {
+              const matchResult = checkApiMatch(url)
+              sendResponse({
+                success: true,
+                shouldIntercept: matchResult.shouldIntercept,
+                apiId: matchResult.apiId,
+                globalMockId: matchResult.globalMockId,
+              } as BackgroundMessageResponse & {
+                shouldIntercept?: boolean
+                apiId?: string
+                globalMockId?: string
+              })
+              return
+            }
+          }
           response = { success: false, error: ERROR_MESSAGES.UNKNOWN_ACTION }
           sendResponse(response)
       }
@@ -481,67 +494,61 @@ function handleMessage(
   return true // 保持消息通道开放以支持异步响应
 }
 
-// ==================== 快速联调拦截处理 ====================
+// ==================== 全局 Mock 响应处理 ====================
 
 /**
- * 获取快速联调响应数据
+ * 检查 URL 是否匹配某个启用的 API，并返回对应的全局 Mock ID
  */
-function getQuickMockResponse(apiId: string): string | null {
+function checkApiMatch(url: string): {
+  shouldIntercept: boolean
+  apiId?: string
+  globalMockId?: string
+} {
   try {
-    const quickMockApi = globalConfig.modules
-      .flatMap((module) => module.apiArr)
-      .find((api) => api.id === apiId)
-
-    if (!quickMockApi || !quickMockApi.quickMockEnabled) {
-      return null
+    if (!globalConfig.isGlobalEnabled) {
+      return { shouldIntercept: false }
     }
 
-    const quickMockType = quickMockApi.quickMockType || "none"
+    // 遍历所有模块和 API，检查 URL 是否匹配
+    for (const module of globalConfig.modules) {
+      for (const apiConfig of module.apiArr) {
+        if (!apiConfig.isOpen) continue
 
-    // 预设响应
-    if (quickMockType === "preset") {
-      if (
-        !quickMockApi.quickMockKey ||
-        !globalConfig.quickMockConfigs
-      ) {
-        return null
+        let matches = false
+
+        // 根据匹配类型检查
+        switch (apiConfig.filterType) {
+          case "exact":
+            matches = url === apiConfig.apiUrl
+            break
+          case "contains":
+            matches = url.includes(apiConfig.apiUrl.replace(/\*/g, ""))
+            break
+          case "regex":
+            try {
+              const regex = new RegExp(apiConfig.apiUrl)
+              matches = regex.test(url)
+            } catch (error) {
+              Logger.error("Invalid regex pattern", error)
+            }
+            break
+        }
+
+        if (matches) {
+          // 如果接口配置了全局 Mock，返回对应的 Mock ID
+          return {
+            shouldIntercept: !!apiConfig.activeGlobalMockId,
+            apiId: apiConfig.id,
+            globalMockId: apiConfig.activeGlobalMockId,
+          }
+        }
       }
-
-      const quickMockConfig = globalConfig.quickMockConfigs.find(
-        (item) => item.key === quickMockApi.quickMockKey
-      )
-
-      if (!quickMockConfig) {
-        return null
-      }
-
-      return quickMockConfig.responseJson
     }
 
-    // // 自定义响应
-    // if (quickMockType === "custom") {
-    //   if (
-    //     !quickMockApi.activeCustomMockKey ||
-    //     !quickMockApi.customMockResponses
-    //   ) {
-    //     return null
-    //   }
-
-    //   const customMockConfig = quickMockApi.customMockResponses.find(
-    //     (item) => item.key === quickMockApi.activeCustomMockKey
-    //   )
-
-    //   if (!customMockConfig) {
-    //     return null
-    //   }
-
-    //   return customMockConfig.responseJson
-    // }
-
-    return null
+    return { shouldIntercept: false }
   } catch (error) {
-    Logger.error("Failed to get quick mock response", error)
-    return null
+    Logger.error("Failed to check API match", error)
+    return { shouldIntercept: false }
   }
 }
 
@@ -550,13 +557,8 @@ function getQuickMockResponse(apiId: string): string | null {
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener(handleMessage)
 
-// 监听来自扩展内部的请求（用于快速联调）
-// 注意：在 Manifest V3 中，我们需要使用 fetch 拦截来处理快速联调
-// 由于 declarativeNetRequest 的限制，我们需要在规则中重定向到特殊 URL
-// 然后在 Service Worker 中通过 fetch 事件处理这个请求
-
 // 处理扩展图标点击事件
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(() => {
   // 使用 activeTab 权限打开新标签页到配置页面
   chrome.tabs.create({
     url: chrome.runtime.getURL("src/pages/options/index.html"),

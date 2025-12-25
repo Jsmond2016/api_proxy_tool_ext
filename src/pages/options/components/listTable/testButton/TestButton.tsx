@@ -1,8 +1,9 @@
-import React, { useState } from "react"
-import { Button, Modal, Spin, Tag, Space, message } from "antd"
+import React, { useState, useEffect } from "react"
+import { Button, Modal, Spin, Tag, message } from "antd"
 import { ThunderboltOutlined } from "@ant-design/icons"
-import { ApiConfig } from "@src/types"
+import { ApiConfig, GlobalMockResponse } from "@src/types"
 import { useConfigStore } from "@src/store"
+import { getAllGlobalMocks } from "@src/utils/globalMockUtil"
 
 interface TestButtonProps {
   apiConfig: ApiConfig
@@ -20,9 +21,49 @@ const TestButton: React.FC<TestButtonProps> = ({
     status: number
     statusText?: string
     headers: Record<string, string>
-    data: any
+    data: unknown
     error?: string
   } | null>(null)
+  const [globalMockList, setGlobalMockList] = useState<GlobalMockResponse[]>([])
+
+  // 加载全局 Mock 列表
+  useEffect(() => {
+    const loadGlobalMocks = async () => {
+      try {
+        const list = await getAllGlobalMocks()
+        setGlobalMockList(list)
+      } catch (error) {
+        console.error("Load global mocks error:", error)
+      }
+    }
+    loadGlobalMocks()
+  }, [])
+
+  // 获取实际请求显示信息（使用 useMemo 缓存，避免每次渲染都重新计算）
+  const actualRequestInfo = React.useMemo(() => {
+    // 检查是否配置了全局 Mock
+    if (apiConfig.activeGlobalMockId) {
+      const globalMock = globalMockList.find(
+        (mock) => mock.id === apiConfig.activeGlobalMockId
+      )
+      if (globalMock?.name) {
+        return {
+          label: "实际请求",
+          value: `全局 Mock - ${globalMock.name}`,
+        }
+      }
+    }
+
+    // 如果没有全局 Mock，显示 redirectURL
+    if (apiConfig.redirectURL) {
+      return {
+        label: "实际请求 URL",
+        value: apiConfig.redirectURL,
+      }
+    }
+
+    return null
+  }, [apiConfig.activeGlobalMockId, apiConfig.redirectURL, globalMockList])
 
   const handleTest = async () => {
     // 检查 mock 开关状态
@@ -73,7 +114,7 @@ const TestButton: React.FC<TestButtonProps> = ({
         headers[key] = value
       })
 
-      let responseData: any
+      let responseData: unknown
       const contentType = response.headers.get("content-type")
       if (contentType && contentType.includes("application/json")) {
         responseData = await response.json()
@@ -143,7 +184,7 @@ const TestButton: React.FC<TestButtonProps> = ({
               正在发送请求...
             </div>
             <div className="mt-2 text-gray-400 text-sm">
-              {apiConfig.redirectURL || apiConfig.apiUrl}
+              {apiConfig.redirectURL}
             </div>
           </div>
         ) : testResult ? (
@@ -155,11 +196,13 @@ const TestButton: React.FC<TestButtonProps> = ({
                   <span className="font-medium">原始 URL: </span>
                   <span className="text-gray-600">{apiConfig.apiUrl}</span>
                 </div>
-                {apiConfig.redirectURL && (
+                {actualRequestInfo && (
                   <div className="mt-1">
-                    <span className="font-medium">实际请求 URL: </span>
+                    <span className="font-medium">
+                      {actualRequestInfo.label}:{" "}
+                    </span>
                     <span className="text-blue-600">
-                      {apiConfig.redirectURL}
+                      {actualRequestInfo.value}
                     </span>
                   </div>
                 )}
@@ -191,8 +234,8 @@ const TestButton: React.FC<TestButtonProps> = ({
                         testResult.status >= 200 && testResult.status < 300
                           ? "green"
                           : testResult.status >= 300 && testResult.status < 400
-                          ? "orange"
-                          : "red"
+                            ? "orange"
+                            : "red"
                       }
                     >
                       {testResult.status} {testResult.statusText || ""}
