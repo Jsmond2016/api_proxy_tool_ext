@@ -218,13 +218,13 @@ jobs:
             ## 🚀 API Proxy Tool ${{ steps.check_commit.outputs.version }}
             
             ### 📦 Downloads
-            - **Chrome Extension**: `api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip`
-            - **Firefox Extension**: `api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            - **Chrome Extension**: [api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip)
+            - **Firefox Extension**: [api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip)
             
             ### 📋 Installation Instructions
             
             #### Chrome
-            1. Download `api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip`
+            1. [Download api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip)
             2. Extract the ZIP file
             3. Open Chrome and go to `chrome://extensions/`
             4. Enable "Developer mode"
@@ -232,7 +232,7 @@ jobs:
             6. Select the extracted folder
             
             #### Firefox
-            1. Download `api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip`
+            1. [Download api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip)
             2. Extract the ZIP file
             3. Open Firefox and go to `about:debugging#/runtime/this-firefox`
             4. Click "Load temporary Add-on"
