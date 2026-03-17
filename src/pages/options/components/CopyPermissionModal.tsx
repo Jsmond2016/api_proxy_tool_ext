@@ -21,13 +21,13 @@ const CopyPermissionModal: React.FC<CopyPermissionModalProps> = ({
 
   const handleCopy = async () => {
     if (!parentAuthPointKey.trim()) {
-      message.warning("请输入父级模块名字")
+      message.warning("请输入cms父级菜单名字")
       return
     }
 
     setLoading(true)
     try {
-      // 更新权限点的父级模块名字
+      // 更新权限点的cms父级菜单名字
       const updatedPermissionPoints = permissionPoints.map((point) => ({
         ...point,
         parentAuthPointKey: parentAuthPointKey.trim(),
@@ -82,9 +82,9 @@ const CopyPermissionModal: React.FC<CopyPermissionModalProps> = ({
     >
       <Space orientation="vertical" className="w-full">
         <div>
-          <label className="block mb-2 font-medium">父级模块名字：</label>
+          <label className="block mb-2 font-medium">cms父级菜单名字：</label>
           <Input
-            placeholder="请输入父级模块名字，如：GEN_PAGE_TODO_请填写父节点-authPointKey"
+            placeholder="请输入cms父级菜单名字，如：GEN_PAGE_TODO_请填写父节点-authPointKey"
             value={parentAuthPointKey}
             onChange={(e) => setParentAuthPointKey(e.target.value)}
             onPressEnter={handleCopy}
