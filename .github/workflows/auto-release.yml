@@ -129,11 +129,11 @@ jobs:
           
           echo "🔍 Generating changelog for version: $VERSION"
           
-          # 使用 conventional-changelog 生成当前版本的 changelog（-r 1 只生成最新版本，避免输出过大）
+          # 使用 conventional-changelog 生成当前版本的 changelog（-r 1 只生成最新版本）
           npx conventional-changelog -p angular -i CHANGELOG.md -s -r 1
           
-          # 提取当前版本的 changelog 内容（跳过第一行 header，取前 80 行）
-          CHANGELOG_CONTENT=$(head -n 80 CHANGELOG.md | tail -n +2)
+          # 只提取当前版本的 changelog（从第二行到下一个 "## [" 版本标题之前）
+          CHANGELOG_CONTENT=$(tail -n +2 CHANGELOG.md | awk '/^## \[/ {if (++section == 2) exit} 1')
           
           # 若无 conventional commits，使用 fallback
           if [ -z "$(echo "$CHANGELOG_CONTENT" | tr -d '[:space:]')" ]; then
