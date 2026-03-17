@@ -15,17 +15,11 @@
 export const APIFOX_FIELD_RUN_IN_APIFOX = "x-run-in-apifox" as const
 
 /**
- * Apifox 接口状态字段
- * 用于标识接口在 Apifox 平台中的状态，支持按状态筛选接口
- *
- * 可选值:
- * - "developing" - 开发中（默认）
- * - "testing" - 测试中
- * - "released" - 已发布
- * - "deprecated" - 将废弃
- * - "obsolete" - 已废弃
+ * Apifox 目录/文件夹字段
+ * 用于标识接口所属目录，其值会混入 tag 列表，需从可选 tag 中过滤掉
+ * 示例值: "SAAS（部分接口分组有问题，请帮忙调整）/通用"
  */
-export const APIFOX_FIELD_STATUS = "x-apifox-status" as const
+export const APIFOX_FIELD_FOLDER = "x-apifox-folder" as const
 
 /**
  * Apifox 分组名/命名空间字段
@@ -71,7 +65,7 @@ export const APIFOX_FIELD_API_TYPE =
  */
 export const APIFOX_CUSTOM_FIELDS = {
   RUN_IN_APIFOX: APIFOX_FIELD_RUN_IN_APIFOX,
-  STATUS: APIFOX_FIELD_STATUS,
+  FOLDER: APIFOX_FIELD_FOLDER,
   GROUP_NAME: APIFOX_FIELD_GROUP_NAME,
   API_TYPE: APIFOX_FIELD_API_TYPE,
 } as const
