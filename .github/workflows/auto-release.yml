@@ -118,29 +118,75 @@ jobs:
           
           echo "✅ All build outputs verified successfully"
 
-      - name: Generate Changelog
+      - name: Generate Changelog and Release Body
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         id: generate_changelog
         run: |
           VERSION="${{ steps.check_commit.outputs.version }}"
           TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
+          REPO="${{ github.repository }}"
+          SERVER="${{ github.server_url }}"
           
           echo "🔍 Generating changelog for version: $VERSION"
           
-          # 使用conventional-changelog工具生成changelog
-          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 0
+          # 使用 conventional-changelog 生成当前版本的 changelog（-r 1 只生成最新版本，避免输出过大）
+          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 1
           
-          # 读取生成的changelog内容
-          CHANGELOG_CONTENT=$(head -n 50 CHANGELOG.md | tail -n +2)
+          # 提取当前版本的 changelog 内容（跳过第一行 header，取前 80 行）
+          CHANGELOG_CONTENT=$(head -n 80 CHANGELOG.md | tail -n +2)
           
-          # 设置输出变量
+          # 若无 conventional commits，使用 fallback
+          if [ -z "$(echo "$CHANGELOG_CONTENT" | tr -d '[:space:]')" ]; then
+            CHANGELOG_CONTENT=$'### 📝 Changes\n\n- 常规更新与改进\n- 详见 [CHANGELOG.md](https://github.com/'"$REPO"'/blob/main/CHANGELOG.md)'
+          fi
+          
+          # 使用 body_path 避免 GITHUB_OUTPUT 多行字符串限制（64KB/格式问题）
           {
-            echo "changelog<<EOF"
+            echo "## 🚀 API Proxy Tool $VERSION"
+            echo ""
+            echo "### 📦 Downloads"
+            echo "- **Chrome Extension**: [api_proxy_tool_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/api_proxy_tool_$VERSION.zip)"
+            echo "- **Firefox Extension**: [api_proxy_tool_firefox_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/api_proxy_tool_firefox_$VERSION.zip)"
+            echo ""
+            echo "### 📋 Installation Instructions"
+            echo ""
+            echo "#### Chrome"
+            echo "1. [Download api_proxy_tool_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/api_proxy_tool_$VERSION.zip)"
+            echo "2. Extract the ZIP file"
+            echo "3. Open Chrome and go to \`chrome://extensions/\`"
+            echo "4. Enable \"Developer mode\""
+            echo "5. Click \"Load unpacked extension\""
+            echo "6. Select the extracted folder"
+            echo ""
+            echo "#### Firefox"
+            echo "1. [Download api_proxy_tool_firefox_$VERSION.zip]($SERVER/$REPO/releases/download/$TAG_NAME/api_proxy_tool_firefox_$VERSION.zip)"
+            echo "2. Extract the ZIP file"
+            echo "3. Open Firefox and go to \`about:debugging#/runtime/this-firefox\`"
+            echo "4. Click \"Load temporary Add-on\""
+            echo "5. Select the \`manifest.json\` file from the extracted folder"
+            echo ""
+            echo "### 📝 What's Changed"
+            echo ""
             echo "$CHANGELOG_CONTENT"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+            echo ""
+            echo "### 🔧 Features"
+            echo "- API request interception and redirection"
+            echo "- Modular configuration management"
+            echo "- Mock data support"
+            echo "- Modern UI with Ant Design"
+            echo "- Cross-browser support (Chrome & Firefox)"
+            echo ""
+            echo "### 📖 Documentation"
+            echo "- [English README](README.md)"
+            echo "- [中文文档](README_CN.md)"
+            echo "- [Changelog](CHANGELOG.md)"
+            echo ""
+            echo "---"
+            echo ""
+            echo "**🤖 This release was automatically created from commit:** \`${{ github.sha }}\`"
+          } > release-body.md
           
-          echo "✅ Changelog generated successfully using conventional-changelog"
+          echo "✅ Changelog and release body generated successfully"
           echo "📄 Changelog preview:"
           echo "$CHANGELOG_CONTENT"
 
@@ -214,49 +260,7 @@ jobs:
         with:
           tag_name: ${{ steps.check_commit.outputs.tag_name }}
           name: v${{ steps.check_commit.outputs.version }}
-          body: |
-            ## 🚀 API Proxy Tool ${{ steps.check_commit.outputs.version }}
-            
-            ### 📦 Downloads
-            - **Chrome Extension**: [api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip)
-            - **Firefox Extension**: [api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip)
-            
-            ### 📋 Installation Instructions
-            
-            #### Chrome
-            1. [Download api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip)
-            2. Extract the ZIP file
-            3. Open Chrome and go to `chrome://extensions/`
-            4. Enable "Developer mode"
-            5. Click "Load unpacked extension"
-            6. Select the extracted folder
-            
-            #### Firefox
-            1. [Download api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip](${{ github.server_url }}/${{ github.repository }}/releases/download/${{ steps.check_commit.outputs.tag_name }}/api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip)
-            2. Extract the ZIP file
-            3. Open Firefox and go to `about:debugging#/runtime/this-firefox`
-            4. Click "Load temporary Add-on"
-            5. Select the `manifest.json` file from the extracted folder
-            
-            ### 📝 What's Changed
-            
-            ${{ steps.generate_changelog.outputs.changelog }}
-            
-            ### 🔧 Features
-            - API request interception and redirection
-            - Modular configuration management
-            - Mock data support
-            - Modern UI with Ant Design
-            - Cross-browser support (Chrome & Firefox)
-            
-            ### 📖 Documentation
-            - [English README](README.md)
-            - [中文文档](README_CN.md)
-            - [Changelog](CHANGELOG.md)
-            
-            ---
-            
-            **🤖 This release was automatically created from commit:** `${{ github.sha }}`
+          body_path: release-body.md
           files: |
             api_proxy_tool_${{ steps.check_commit.outputs.version }}.zip
             api_proxy_tool_firefox_${{ steps.check_commit.outputs.version }}.zip
