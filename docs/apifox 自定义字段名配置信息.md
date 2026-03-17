@@ -35,36 +35,29 @@
 
 ---
 
-### 2. `x-apifox-status`
+### 2. `x-apifox-status`（已废弃）
 
-**字段类型**: `ApifoxStatus`
+> **说明**：该字段曾用于按接口状态筛选，当前版本已移除接口状态筛选功能，同步时不再使用此字段。
+
+---
+
+### 2.5 `x-apifox-folder`
+
+**字段类型**: `string`
 **是否必填**: 否
-**字段含义**: 接口在 Apifox 平台中的状态
+**字段含义**: 接口在 Apifox 中的目录/文件夹路径，多级目录用 `/` 分隔
 
-**可选值**:
+**示例值**:
 
-- `"developing"` - 开发中（默认值）
-- `"testing"` - 测试中
-- `"released"` - 已发布
-- `"deprecated"` - 将废弃
-- `"obsolete"` - 已废弃
+```
+"SAAS（部分接口分组有问题，请帮忙调整）/通用"
+```
 
 **代码中的使用**:
 
-- **位置**: `src/pages/options/components/navButtons/syncApifoxModalButton/apifoxUtils.ts`
-- **作用**: 用于过滤和筛选要同步的接口
-- **使用逻辑**:
-  ```typescript
-  const apifoxStatus = swaggerInfo["x-apifox-status"];
-  // 只保留状态匹配的接口
-  if (apifoxStatus !== selectedStatus) {
-    return; // 跳过不匹配的接口
-  }
-  ```
-- **用途**:
-  - 在同步 Apifox 接口时，用户可以选择要同步的接口状态
-  - 默认只同步"开发中"状态的接口
-  - 支持按状态筛选，避免同步已废弃或已发布的接口
+- **位置**: `src/pages/options/components/navButtons/syncApifoxModalButton/apifoxUtils.ts`、`useApifoxValidation.ts`
+- **作用**: 从 tag 列表中过滤掉目录名，避免用户误选。Apifox 会将目录结构混入 tag 列表
+- **过滤逻辑**: 提取所有 `x-apifox-folder` 的完整值及其按 `/` 分割后的前缀路径，从可选 tag 中排除
 
 ---
 
@@ -100,13 +93,14 @@
 
   ```typescript
   // 1. 获取分组名
-  const groupName =
+  let groupName =
     swaggerInfo["x-apifox-fe-general-model-base-action-type"] ||
-    (tags.length > 0 ? tags[0] : "默认分组");
+    (tags.length > 0 ? tags[0] : "demo.default");
 
-  // 2. 验证格式
+  // 2. 格式无效时归入 demo.default，仅 console 警告
   if (!isValidGroupName(groupName)) {
-    console.warn("groupName 不符合格式要求");
+    console.warn(`groupName 不符合格式要求：${groupName}，已归入 demo.default`);
+    groupName = "demo.default";
   }
 
   // 3. 转换为模块配置
@@ -126,8 +120,8 @@
 **注意事项**:
 
 - 如果接口没有该字段，会使用 `tags[0]` 作为分组名
-- 如果 `tags` 也为空，则使用 `"默认分组"`
-- 格式不符合要求时会在控制台输出警告，但不会阻止同步
+- 如果 `tags` 也为空，则使用 `"demo.default"`
+- **格式不符合要求时**（如含中文「私教（PERSONAL-SAAS）」）：统一归入 `demo.default` 分组，仅在 console 输出警告，不中断同步
 
 ---
 
@@ -197,13 +191,13 @@ Swagger 数据解析
     ↓
 提取 x-run-in-apifox → 生成 apiId
     ↓
-检查 x-apifox-status → 过滤接口
-    ↓
-提取 x-apifox-fe-general-model-base-action-type → 确定分组名
+提取 x-apifox-fe-general-model-base-action-type → 确定分组名（无效则归入 demo.default）
     ↓
 提取 x-apifox-fe-general-model-api-type → 确定 API 类型
     ↓
 生成权限点 key: {groupName}-{apiName}
+    ↓
+校验 tag 筛选数量（上限 60，仅选择 tag 后校验）
     ↓
 转换为 ModuleConfig 和 ApiConfig
 ```
@@ -211,13 +205,21 @@ Swagger 数据解析
 ## 字段依赖关系
 
 1. **x-apifox-fe-general-model-base-action-type** 和 **x-apifox-fe-general-model-api-type** 共同用于生成权限点 key
-2. **x-apifox-status** 用于过滤，不影响其他字段的处理
-3. **x-run-in-apifox** 独立使用，仅用于提取 apiId
+2. **x-run-in-apifox** 独立使用，仅用于提取 apiId
+3. **tag 筛选数量**：单次筛选超过 60 个接口时中断，仅在选择 tag 后校验
+
+## 校验规则（同步 Apifox 时）
+
+1. **groupName 无效**：未配置或格式无效（如含中文）的 groupName，接口统一归入 `demo.default`，仅 console 警告
+2. **tag 目录名过滤**：从可选 tag 中过滤掉 `x-apifox-folder` 的完整值及其按 `/` 分割的前缀路径
+3. **校验失败提示**：选择标签后校验失败时，通过 `message.error` 弹出提示
+4. **数量上限**：单次 tag 筛选接口超过 60 个时，中断并提示「筛选接口过多，请检查 tag 配置是否正确」
+5. **校验时机**：仅在选择 tag 后校验数量，弹框刚打开未选择 tag 时不校验
 
 ## 注意事项
 
 1. 所有 `x-` 开头的字段都是可选的，代码中都有默认值处理
-2. `x-apifox-fe-general-model-base-action-type` 的格式必须符合要求，否则会影响权限点生成
+2. `x-apifox-fe-general-model-base-action-type` 的格式不符合要求时，接口会归入 `demo.default`，不影响同步
 3. 如果接口缺少关键字段，会使用备用方案（如使用 tags、默认值等）
 4. 字段名称较长，建议使用常量引用，避免硬编码
 

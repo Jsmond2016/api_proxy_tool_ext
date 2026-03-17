@@ -1,26 +1,18 @@
 import React, { useState } from 'react';
-import { Button, message } from 'antd';
+import { Button } from "antd"
 import { CopyOutlined } from '@ant-design/icons';
 import { ApiConfig } from '@src/types';
 import { generatePermissionPointsFromApiConfigs } from '@src/utils/permissionUtils';
 import CopyPermissionModal from '../../CopyPermissionModal';
-import { useConfigStore, useActiveModuleIdStore } from '@src/store';
 
 interface CopyPermissionButtonProps {
-  apiId: string;
-  apiConfig: ApiConfig;
+  apiConfig: ApiConfig
 }
 
 const CopyPermissionButton: React.FC<CopyPermissionButtonProps> = ({
-  apiId,
-  apiConfig
+  apiConfig,
 }) => {
   const [modalVisible, setModalVisible] = useState<boolean>(false);
-  const { config } = useConfigStore();
-  const { activeModuleId } = useActiveModuleIdStore();
-  
-  const activeModule = config.modules.find(module => module.id === activeModuleId);
-  const groupName = activeModule?.label || 'default';
 
   const handleCopyPermission = () => {
     setModalVisible(true);
@@ -30,7 +22,10 @@ const CopyPermissionButton: React.FC<CopyPermissionButtonProps> = ({
     setModalVisible(false);
   };
 
-  const permissionPoints = generatePermissionPointsFromApiConfigs([apiConfig], '', groupName);
+  const permissionPoints = generatePermissionPointsFromApiConfigs(
+    [apiConfig],
+    ""
+  )
 
   return (
     <>

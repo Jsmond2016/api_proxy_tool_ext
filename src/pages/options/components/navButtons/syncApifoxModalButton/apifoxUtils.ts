@@ -7,40 +7,11 @@ import {
 } from "../../../../../constant/model"
 import {
   APIFOX_FIELD_RUN_IN_APIFOX,
-  APIFOX_FIELD_STATUS,
+  APIFOX_FIELD_FOLDER,
   APIFOX_FIELD_GROUP_NAME,
   APIFOX_FIELD_API_TYPE,
 } from "../../../../../constant/apifoxFields"
 import { camelCase } from "change-case"
-
-/**
- * Apifox 接口状态类型
- */
-export type ApifoxStatus =
-  | "developing" // 开发中
-  | "obsolete" // 已废弃
-  | "deprecated" // 将废弃
-  | "testing" // 测试中
-  | "released" // 已发布
-
-/**
- * Apifox 状态选项配置
- */
-export const APIFOX_STATUS_OPTIONS: Array<{
-  label: string
-  value: ApifoxStatus
-}> = [
-  { label: "开发中", value: "developing" },
-  { label: "测试中", value: "testing" },
-  { label: "已发布", value: "released" },
-  { label: "将废弃", value: "deprecated" },
-  { label: "已废弃", value: "obsolete" },
-]
-
-/**
- * 默认状态：开发中
- */
-export const DEFAULT_APIFOX_STATUS: ApifoxStatus = "developing"
 
 /**
  * 解析后的 API 类型
@@ -63,7 +34,6 @@ interface SwaggerApiInfo {
   tags?: string[]
   summary?: string
   [APIFOX_FIELD_RUN_IN_APIFOX]?: string
-  [APIFOX_FIELD_STATUS]?: ApifoxStatus
   [APIFOX_FIELD_GROUP_NAME]?: string
   [APIFOX_FIELD_API_TYPE]?: ModelApiActionType
   [key: string]: unknown
@@ -82,6 +52,34 @@ export interface SwaggerData {
   }
   tags: Array<{ name: string }>
   paths: Record<string, Record<string, SwaggerApiInfo>>
+}
+
+/**
+ * 从 Swagger 数据中提取所有需过滤的目录名（用于 tag 列表过滤）
+ * 1. x-apifox-folder 的完整值
+ * 2. x-apifox-folder 按 '/' 分割后的所有前缀路径（如 "A/B/C" → "A", "A/B", "A/B/C"）
+ */
+export const extractApifoxFolderNames = (swaggerData: SwaggerData): Set<string> => {
+  const folderNames = new Set<string>()
+  if (!swaggerData.paths) return folderNames
+
+  Object.values(swaggerData.paths).forEach((methods) => {
+    Object.values(methods).forEach((apiInfo) => {
+      if (typeof apiInfo === "object" && apiInfo !== null) {
+        const folder = (apiInfo as SwaggerApiInfo)[APIFOX_FIELD_FOLDER]
+        if (typeof folder === "string" && folder) {
+          folderNames.add(folder)
+          // 添加所有前缀路径（Apifox 可能将各级目录都作为 tag）
+          folder.split("/").reduce((prefix, part) => {
+            const path = prefix ? `${prefix}/${part}` : part
+            folderNames.add(path)
+            return path
+          }, "")
+        }
+      }
+    })
+  })
+  return folderNames
 }
 
 /**
@@ -115,11 +113,6 @@ export const convertParsedApisToModules = (
     apiArr: apis.map((api) => {
       // 使用 Apifox 的 apiId 作为唯一标识，如果不存在则生成新ID
       const finalId = api.apiId || generateId()
-      console.log(
-        `🔑 转换接口: ${api.summary}, 使用ID: ${finalId}, 来源: ${
-          api.apiId ? "Apifox" : "生成"
-        }`
-      )
 
       // 确保 method 是正确的类型
       const validMethods = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const
@@ -153,16 +146,22 @@ export const convertParsedApisToModules = (
   }))
 }
 
+/** 未配置或无效 groupName 的接口统一归入的分组 */
+const DEFAULT_GROUP_NAME = "demo.default"
+
+/** 单次 tag 筛选接口数量上限 */
+const MAX_FILTERED_APIS = 60
+
 /**
  * 解析 Swagger 数据
+ * 未配置或格式无效的 groupName 会归入 demo.default 分组，并在 console 输出警告
  */
 export const parseSwaggerData = (
   swaggerData: SwaggerData,
-  selectedTags: string[],
-  selectedStatus: ApifoxStatus = DEFAULT_APIFOX_STATUS
+  selectedTags: string[]
 ): ParsedApi[] => {
   const apis: ParsedApi[] = []
-  console.log("swaggerData", swaggerData)
+  const warnedGroupNames = new Set<string>()
 
   Object.entries(swaggerData.paths).forEach(([path, methods]) => {
     Object.entries(methods).forEach(([method, apiInfo]) => {
@@ -175,14 +174,6 @@ export const parseSwaggerData = (
         // 提取中间的数字部分作为 apiId（如 102913012）
         const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
 
-        // 检查接口状态，根据用户选择的状态进行过滤
-        const apifoxStatus = swaggerInfo[APIFOX_FIELD_STATUS]
-
-        // 只保留状态匹配的接口，如果接口没有状态字段且用户选择的状态不是默认值，则跳过
-        if (apifoxStatus !== selectedStatus) {
-          return
-        }
-
         // 检查是否匹配选中的tags
         const hasMatchingTag =
           selectedTags.length === 0 ||
@@ -190,16 +181,19 @@ export const parseSwaggerData = (
 
         if (hasMatchingTag) {
           // 获取分组名，优先使用x-apifox-fe-general-model-base-action-type
-          const groupName =
+          let groupName =
             swaggerInfo[APIFOX_FIELD_GROUP_NAME] ||
-            (tags.length > 0 ? tags[0] : "默认分组")
+            (tags.length > 0 ? tags[0] : DEFAULT_GROUP_NAME)
 
-          // 如果 groupName 不符合格式，给出警告
+          // 未配置或格式无效的 groupName 归入 default 分组，仅 console 警告
           if (!isValidGroupName(groupName)) {
-            console.warn(
-              `⚠️ groupName 不符合格式要求（应为英文 a.b.c 形式）：${groupName}`,
-              `接口：${method.toUpperCase()} ${path}`
-            )
+            if (!warnedGroupNames.has(groupName)) {
+              warnedGroupNames.add(groupName)
+              console.warn(
+                `⚠️ groupName 不符合格式要求（应为英文 a.b.c 形式）：${groupName}，已归入 ${DEFAULT_GROUP_NAME}，示例接口：${method.toUpperCase()} ${path}`
+              )
+            }
+            groupName = DEFAULT_GROUP_NAME
           }
 
           const modelApiType =
@@ -224,6 +218,13 @@ export const parseSwaggerData = (
     })
   })
 
+  // 仅在选择 tag 后校验数量，未选择 tag 时不校验（如弹框刚打开时的初始状态）
+  if (selectedTags.length > 0 && apis.length > MAX_FILTERED_APIS) {
+    throw new Error(
+      `筛选接口过多（${apis.length} 个），请检查 tag 配置是否正确。单次筛选上限为 ${MAX_FILTERED_APIS} 个接口。`
+    )
+  }
+
   return apis
 }
 
@@ -243,11 +244,8 @@ export function generateAuthPointKey({
   modelApiType,
 }: GenerateAuthKeyParams) {
   // 校验 groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符
+  // 注：无效 groupName 的警告已在 parseSwaggerData 中统一输出，此处不再重复 log
   if (!isValidGroupName(groupName)) {
-    console.error(
-      "groupName 必须为英文 a.b.c 形式，不能有数字中文和其他字符，如：demo.user.management",
-      groupName
-    )
     return ""
   }
   const authPrefix = groupName.split(".").join("-")

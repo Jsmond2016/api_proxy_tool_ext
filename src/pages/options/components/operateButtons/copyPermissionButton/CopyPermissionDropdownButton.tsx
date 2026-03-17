@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { Dropdown, message } from "antd"
 import { generatePermissionPointsFromApiConfigs } from "@src/utils/permissionUtils"
+import type { PermissionPoint } from "@src/types/permission"
 import { isValidGroupName } from "../../navButtons/syncApifoxModalButton/apifoxUtils"
 import CopyPermissionModal from "../../CopyPermissionModal"
 import {
@@ -16,14 +17,16 @@ const CopyPermissionDropdownButton: React.FC<
 > = () => {
   const [modalVisible, setModalVisible] = useState<boolean>(false)
   const [modalTitle, setModalTitle] = useState<string>("")
-  const [permissionPoints, setPermissionPoints] = useState<any[]>([])
+  const [permissionPoints, setPermissionPoints] = useState<PermissionPoint[]>(
+    []
+  )
 
   const { config } = useConfigStore()
   const { activeModuleId } = useActiveModuleIdStore()
   const { selectedApiIds } = useSelectedApiStore()
 
   const activeModule = config.modules.find(
-    (module) => module.id === activeModuleId
+    (module) => module.id === activeModuleId,
   )
   const apis = activeModule?.apiArr || []
 
@@ -38,8 +41,7 @@ const CopyPermissionDropdownButton: React.FC<
 
     const allPermissionPoints = generatePermissionPointsFromApiConfigs(
       apis,
-      "",
-      groupName
+      ""
     )
     setPermissionPoints(allPermissionPoints)
     setModalTitle("复制所有权限点")
@@ -63,8 +65,7 @@ const CopyPermissionDropdownButton: React.FC<
     const selectedApis = apis.filter((api) => selectedApiIds.includes(api.id))
     const selectedPermissionPoints = generatePermissionPointsFromApiConfigs(
       selectedApis,
-      "",
-      groupName
+      ""
     )
     setPermissionPoints(selectedPermissionPoints)
     setModalTitle(`复制勾选权限点 (${selectedApiIds.length}个)`)
@@ -92,7 +93,11 @@ const CopyPermissionDropdownButton: React.FC<
 
   return (
     <>
-      <Dropdown.Button type="primary" menu={{ items: menuItems }}>
+      <Dropdown.Button
+        type="primary"
+        menu={{ items: menuItems }}
+        trigger={["click"]}
+      >
         复制权限点
       </Dropdown.Button>
 

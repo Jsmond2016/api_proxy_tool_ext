@@ -8,7 +8,6 @@ import SyncApifoxModalButton from "./syncApifoxModalButton/SyncApifoxModalButton
 import ResetButton from "./resetButton/ResetButton"
 import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
 import ArchiveButton from "./archiveButton/ArchiveButton"
-import ImportExportDropdown from "./importExportButton/ImportExportDropdown"
 
 const NavButtons: React.FC = () => {
   const { config, setConfig } = useConfigStore()
@@ -49,7 +48,6 @@ const NavButtons: React.FC = () => {
       </Tooltip>
       <SyncApifoxModalButton />
       <ArchiveButton />
-      <ImportExportDropdown />
       <CopyAllPermissionButton />
       <ResetButton />
     </Space>

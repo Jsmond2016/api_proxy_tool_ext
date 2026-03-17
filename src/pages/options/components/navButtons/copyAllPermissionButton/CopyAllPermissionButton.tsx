@@ -41,7 +41,7 @@ const CopyAllPermissionButton: React.FC = () => {
 
   // 获取所有模块的所有API，并按模块分组生成权限点
   const allPermissionPoints = config.modules.flatMap((module) =>
-    generatePermissionPointsFromApiConfigs(module.apiArr, "", module.label)
+    generatePermissionPointsFromApiConfigs(module.apiArr, "")
   )
 
   return (

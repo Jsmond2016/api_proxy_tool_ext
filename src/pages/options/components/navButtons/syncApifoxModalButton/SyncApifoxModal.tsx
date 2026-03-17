@@ -3,10 +3,7 @@ import { Modal, Form, Input, Select, message } from "antd"
 import { GlobalConfig, ModuleConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
-  type ApifoxStatus,
   type ParsedApi,
-  APIFOX_STATUS_OPTIONS,
-  DEFAULT_APIFOX_STATUS,
 } from "./apifoxUtils"
 import { getCachedApifoxUrl, saveCachedApifoxUrl } from "./apifoxCache"
 import { useApifoxValidation } from "./hooks/useApifoxValidation"
@@ -31,7 +28,6 @@ interface SyncApifoxModalProps {
     apifoxUrl: string
     mockPrefix: string
     selectedTags?: string[]
-    selectedStatus?: ApifoxStatus
   }) => void
   config: GlobalConfig
 }
@@ -50,9 +46,6 @@ export default function SyncApifoxModal({
 }: SyncApifoxModalProps) {
   const [form] = Form.useForm()
   const [selectedTags, setSelectedTags] = useState<string[]>([])
-  const [selectedStatus, setSelectedStatus] = useState<ApifoxStatus>(
-    DEFAULT_APIFOX_STATUS
-  )
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
 
@@ -71,10 +64,17 @@ export default function SyncApifoxModal({
   const { duplicateTags } = useConflictDetection(selectedTags, config)
 
   // 更新解析的 APIs
-  const updateParsedApis = (tags: string[], status: ApifoxStatus) => {
-    const apis = parseSwaggerData(tags, status)
-    if (apis) {
-      setParsedApis(apis)
+  const updateParsedApis = (tags: string[]) => {
+    try {
+      const apis = parseSwaggerData(tags)
+      if (apis) {
+        setParsedApis(apis)
+      }
+    } catch (error) {
+      setParsedApis([])
+      message.error(
+        error instanceof Error ? error.message : "标签校验失败，请检查接口配置"
+      )
     }
   }
 
@@ -83,7 +83,6 @@ export default function SyncApifoxModal({
     form.resetFields()
     resetValidation()
     setSelectedTags([])
-    setSelectedStatus(DEFAULT_APIFOX_STATUS)
     setParsedApis([])
     setMergeStrategy("merge")
   }
@@ -91,20 +90,14 @@ export default function SyncApifoxModal({
   // 处理标签变化
   const handleTagsChange = (tags: string[]) => {
     setSelectedTags(tags)
-    updateParsedApis(tags, selectedStatus)
-  }
-
-  // 处理状态变化
-  const handleStatusChange = (status: ApifoxStatus) => {
-    setSelectedStatus(status)
-    updateParsedApis(selectedTags, status)
+    updateParsedApis(tags)
   }
 
   // 处理Apifox地址变化
   const handleApifoxUrlChange = async () => {
     const url = form.getFieldValue("apifoxUrl")
     if (url) {
-      const result = await validateApifoxUrl(url, selectedTags, selectedStatus)
+      const result = await validateApifoxUrl(url, selectedTags)
       if (result.success && result.parsedApis) {
         setParsedApis(result.parsedApis)
       }
@@ -133,8 +126,6 @@ export default function SyncApifoxModal({
         apifoxUrl,
         mockPrefix,
         selectedTags: selectedTags.length > 0 ? selectedTags : undefined,
-        selectedStatus:
-          selectedStatus !== DEFAULT_APIFOX_STATUS ? selectedStatus : undefined,
       })
     }
 
@@ -175,7 +166,7 @@ export default function SyncApifoxModal({
   const handleQuickSelectTags = (historyItem: { tags: string[] }) => {
     const tags = [...historyItem.tags]
     setSelectedTags(tags)
-    updateParsedApis(tags, selectedStatus)
+    updateParsedApis(tags)
   }
 
   // 监听弹框显示状态，加载已保存的配置
@@ -188,18 +179,15 @@ export default function SyncApifoxModal({
 
         if (urlToUse) {
           const savedTags = config.apifoxConfig?.selectedTags || []
-          const savedStatus =
-            config.apifoxConfig?.selectedStatus || DEFAULT_APIFOX_STATUS
 
           form.setFieldsValue({
             apifoxUrl: urlToUse,
             mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX,
           })
           setSelectedTags(savedTags)
-          setSelectedStatus(savedStatus)
 
           // 自动验证并加载数据
-          validateApifoxUrl(urlToUse, savedTags, savedStatus)
+          validateApifoxUrl(urlToUse, savedTags)
             .then((result) => {
               if (result.success && result.parsedApis) {
                 setParsedApis(result.parsedApis)
@@ -213,7 +201,6 @@ export default function SyncApifoxModal({
           form.setFieldsValue({
             mockPrefix: MOCK_PREFIX,
           })
-          setSelectedStatus(DEFAULT_APIFOX_STATUS)
         }
       })
     } else {
@@ -260,21 +247,6 @@ export default function SyncApifoxModal({
 
         {swaggerData && (
           <>
-            <Form.Item
-              label="接口状态"
-              name="status"
-              tooltip="选择要同步的接口状态"
-              initialValue={DEFAULT_APIFOX_STATUS}
-              rules={[{ required: true, message: "请选择接口状态" }]}
-            >
-              <Select
-                placeholder="请选择接口状态"
-                value={selectedStatus}
-                onChange={handleStatusChange}
-                options={APIFOX_STATUS_OPTIONS}
-              />
-            </Form.Item>
-
             <Form.Item
               label="选择标签"
               name="tags"

@@ -2,9 +2,8 @@ import { useState, useCallback } from "react"
 import { message } from "antd"
 import {
   parseSwaggerData as parseSwaggerDataUtil,
+  extractApifoxFolderNames,
   type SwaggerData,
-  type ApifoxStatus,
-  DEFAULT_APIFOX_STATUS,
   type ParsedApi,
 } from "../apifoxUtils"
 import { saveCachedApifoxUrl } from "../apifoxCache"
@@ -17,8 +16,7 @@ export const useApifoxValidation = () => {
   const validateApifoxUrl = useCallback(
     async (
       url: string,
-      selectedTags: string[],
-      selectedStatus: ApifoxStatus
+      selectedTags: string[]
     ): Promise<{
       success: boolean
       parsedApis?: ParsedApi[]
@@ -43,17 +41,18 @@ export const useApifoxValidation = () => {
         const swaggerDataResult = data as SwaggerData
         setSwaggerData(swaggerDataResult)
 
-        // 提取tags
-        const tags = data.tags?.map((tag: { name: string }) => tag.name) || []
+        // 提取 tags，过滤掉目录名（x-apifox-folder 及其前缀路径）
+        const folderNames = extractApifoxFolderNames(swaggerDataResult)
+        const tags = (
+          data.tags?.map((tag: { name: string }) => tag.name) || []
+        ).filter((tagName: string) => !folderNames.has(tagName))
         setAvailableTags(tags)
 
         // 解析数据
         const currentSelectedTags = selectedTags.length > 0 ? selectedTags : []
-        const currentSelectedStatus = selectedStatus || DEFAULT_APIFOX_STATUS
         const apis = parseSwaggerDataUtil(
           swaggerDataResult,
-          currentSelectedTags,
-          currentSelectedStatus
+          currentSelectedTags
         )
 
         // 验证成功后，保存地址到缓存
@@ -76,14 +75,11 @@ export const useApifoxValidation = () => {
   )
 
   const parseSwaggerData = useCallback(
-    (
-      selectedTags: string[],
-      selectedStatus: ApifoxStatus
-    ): ParsedApi[] | null => {
+    (selectedTags: string[]): ParsedApi[] | null => {
       if (!swaggerData) {
         return null
       }
-      return parseSwaggerDataUtil(swaggerData, selectedTags, selectedStatus)
+      return parseSwaggerDataUtil(swaggerData, selectedTags)
     },
     [swaggerData]
   )
