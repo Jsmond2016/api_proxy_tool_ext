@@ -46,6 +46,7 @@ const ArchiveButton: React.FC = () => {
         onClick={() => {
           setArchiveModalVisible(true)
         }}
+        trigger={["click"]}
         icon={<SaveOutlined />}
       >
         存档
