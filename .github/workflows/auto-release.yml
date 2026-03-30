@@ -242,21 +242,6 @@ jobs:
           
           echo "✅ Git tag $TAG_NAME created and pushed successfully"
 
-      - name: Update CHANGELOG.md
-        if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
-        run: |
-          VERSION="${{ steps.check_commit.outputs.version }}"
-          
-          echo "📝 Updating CHANGELOG.md for version: $VERSION"
-          
-          # CHANGELOG.md已经在Generate Changelog步骤中更新了
-          # 这里只需要提交更新
-          git add CHANGELOG.md
-          git commit -m "docs: update CHANGELOG.md for v$VERSION" || echo "No changes to commit"
-          git push origin main || echo "Failed to push CHANGELOG.md update"
-          
-          echo "✅ CHANGELOG.md updated successfully"
-
       - name: Create Release
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         uses: softprops/action-gh-release@v2
