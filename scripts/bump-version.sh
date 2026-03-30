@@ -16,8 +16,24 @@ NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
 VERSION_NUMBER=$(echo $NEW_VERSION | sed 's/^v//')
 
 # 生成 changelog（确保版本号正确）
-# conventional-changelog 会从 package.json 读取版本号
-pnpm run changelog
+# 使用 -r 1 只生成最新版本的 changelog，避免覆盖历史记录
+# 先备份当前 changelog 的历史部分（从第5行开始到末尾）
+TEMP_FILE=$(mktemp)
+if [ -f CHANGELOG.md ]; then
+  # 保存从第5行开始的所有内容（跳过新版本标题和空行）
+  tail -n +5 CHANGELOG.md > "$TEMP_FILE"
+fi
+
+# 生成新版本的 changelog（只生成最近一个版本）
+conventional-changelog -p angular -i CHANGELOG.md -s -r 1
+
+# 如果备份文件有内容，追加到新生成的 changelog 后面
+if [ -s "$TEMP_FILE" ]; then
+  # 移除新 changelog 末尾可能的历史内容（conventional-changelog 可能会生成部分历史）
+  # 然后追加我们保存的历史内容
+  cat "$TEMP_FILE" >> CHANGELOG.md
+fi
+rm -f "$TEMP_FILE"
 
 # 修复 CHANGELOG.md 中可能为空的版本号标题
 # 将 "# [](" 替换为 "# [版本号]("
