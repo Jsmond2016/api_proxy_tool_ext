@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import { Drawer, Form, Input, Select, Button, message, Space } from "antd"
 
 const { TextArea } = Input
@@ -10,6 +10,18 @@ import {
   isApiUrlDuplicate,
   isApiKeyDuplicate,
 } from "../../../../../utils/chromeApi"
+import {
+  validateApifoxUrl,
+  SwaggerData,
+  ParsedApi,
+} from "../../navButtons/syncApifoxModalButton/apifoxUtils"
+import {
+  APIFOX_FIELD_RUN_IN_APIFOX,
+  APIFOX_FIELD_GROUP_NAME,
+  APIFOX_FIELD_API_TYPE,
+} from "../../../../../constant/apifoxFields"
+import { ModelAction, ModelNamesMap } from "../../../../../constant/model"
+import { camelCase } from "change-case"
 // import QuickMockSection from "./QuickMockSection"
 // import CustomMockFormModal from "./CustomMockFormModal"
 
@@ -22,6 +34,64 @@ interface ApiFormDrawerProps {
   title?: string
 }
 
+// 解析 Swagger 数据获取接口信息
+const parseApiInfoFromSwagger = (
+  swaggerData: SwaggerData,
+  apiUrl: string
+): ParsedApi | null => {
+  if (!swaggerData.paths) return null
+
+  for (const [path, methods] of Object.entries(swaggerData.paths)) {
+    // 支持模糊匹配：如果 apiUrl 包含在 path 中，或者 path 包含在 apiUrl 中
+    if (path.includes(apiUrl) || apiUrl.includes(path)) {
+      for (const [method, apiInfo] of Object.entries(methods)) {
+        if (typeof apiInfo === "object" && apiInfo !== null) {
+          const swaggerInfo = apiInfo as {
+            tags?: string[]
+            summary?: string
+            [key: string]: unknown
+          }
+          const tags = swaggerInfo.tags || []
+          const summary =
+            swaggerInfo.summary || `${method.toUpperCase()} ${path}`
+          const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX] as
+            | string
+            | undefined
+          const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
+          const groupName =
+            (swaggerInfo[APIFOX_FIELD_GROUP_NAME] as string) ||
+            (tags.length > 0 ? tags[0] : "demo.default")
+          const modelApiType =
+            (swaggerInfo[APIFOX_FIELD_API_TYPE] as string) || ModelAction.CUSTOM
+
+          // 生成权限点
+          let authPointKey = ""
+          if (/^[a-zA-Z.]+$/.test(groupName)) {
+            const authPrefix = groupName.split(".").join("-")
+            let apiName = ModelNamesMap[modelApiType] as string
+            if (apiName === "custom") {
+              apiName = camelCase(path.split("/").pop() ?? "")
+            }
+            authPointKey = `${authPrefix}-${apiName}`
+          }
+
+          return {
+            apiId,
+            path,
+            method: method.toUpperCase(),
+            summary,
+            tags,
+            groupName,
+            authPointKey,
+            modelApiType,
+          }
+        }
+      }
+    }
+  }
+  return null
+}
+
 export default function ApiFormDrawer({
   visible,
   onClose,
@@ -31,6 +101,8 @@ export default function ApiFormDrawer({
   title = "添加接口",
 }: ApiFormDrawerProps) {
   const [form] = Form.useForm()
+  const [swaggerCache, setSwaggerCache] = useState<SwaggerData | null>(null)
+  const [isLoadingSwagger, setIsLoadingSwagger] = useState(false)
   // const [loading, setLoading] = useState(false)
   // const [customMockModalVisible, setCustomMockModalVisible] = useState(false)
   // const [editingCustomMock, setEditingCustomMock] =
@@ -43,6 +115,27 @@ export default function ApiFormDrawer({
   //   | undefined
   // const customMockResponses = (Form.useWatch("customMockResponses", form) ||
   //   []) as QuickMockConfig[]
+
+  // 加载 Swagger 数据缓存
+  useEffect(() => {
+    const loadSwaggerCache = async () => {
+      const apifoxConfig = config.apifoxConfig
+      if (apifoxConfig?.apifoxUrl && visible && !data) {
+        // 只在添加模式且配置了 Apifox 地址时加载
+        setIsLoadingSwagger(true)
+        try {
+          const swaggerData = await validateApifoxUrl(apifoxConfig.apifoxUrl)
+          setSwaggerCache(swaggerData)
+        } catch (error) {
+          console.warn("Failed to load Apifox swagger data:", error)
+          setSwaggerCache(null)
+        } finally {
+          setIsLoadingSwagger(false)
+        }
+      }
+    }
+    loadSwaggerCache()
+  }, [config.apifoxConfig, visible, data])
 
   // 当编辑时，设置表单初始值
   useEffect(() => {
@@ -164,6 +257,31 @@ export default function ApiFormDrawer({
     onClose()
   }
 
+  // 处理接口地址变化，自动填充其他字段
+  const handleApiUrlChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const apiUrl = e.target.value.trim()
+    if (!apiUrl) return
+
+    const apifoxConfig = config.apifoxConfig
+    if (!apifoxConfig?.mockPrefix) return
+
+    // 自动填充重定向 URL
+    const redirectURL = `${apifoxConfig.mockPrefix}${apiUrl}`
+    form.setFieldsValue({ redirectURL })
+
+    // 如果有 Swagger 缓存，尝试从缓存中获取更多信息
+    if (swaggerCache) {
+      const apiInfo = parseApiInfoFromSwagger(swaggerCache, apiUrl)
+      if (apiInfo) {
+        form.setFieldsValue({
+          apiName: apiInfo.summary,
+          method: apiInfo.method as ApiConfig["method"],
+          authPointKey: apiInfo.authPointKey,
+        })
+      }
+    }
+  }
+
   return (
     <Drawer
       title={data ? "编辑接口" : title}
@@ -196,24 +314,31 @@ export default function ApiFormDrawer({
         }}
       >
         <Form.Item
-          label="接口名称"
-          name="apiName"
-          rules={[{ required: true, message: "请输入接口名称" }]}
-        >
-          <Input placeholder="请输入接口名称" />
-        </Form.Item>
-
-        <Form.Item
           label="接口地址"
           name="apiUrl"
           rules={[{ required: true, message: "请输入接口地址" }]}
-          extra="示例：/api/users 或 http://localhost:3000/api/users"
+          extra={
+            isLoadingSwagger
+              ? "正在加载 Apifox 数据..."
+              : config.apifoxConfig?.mockPrefix
+                ? `已配置 Apifox Mock 地址，输入后将自动填充其他字段`
+                : "示例：/api/users 或 http://localhost:3000/api/users"
+          }
         >
           <TextArea
             placeholder="请输入接口地址"
             rows={1}
             autoSize={{ minRows: 1, maxRows: 5 }}
+            onBlur={handleApiUrlChange}
           />
+        </Form.Item>
+
+        <Form.Item
+          label="接口名称"
+          name="apiName"
+          rules={[{ required: true, message: "请输入接口名称" }]}
+        >
+          <Input placeholder="请输入接口名称" />
         </Form.Item>
 
         <Form.Item
