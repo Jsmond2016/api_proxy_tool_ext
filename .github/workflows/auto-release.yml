@@ -118,7 +118,7 @@ jobs:
           
           echo "✅ All build outputs verified successfully"
 
-      - name: Generate Changelog and Release Body
+      - name: Read Changelog from CHANGELOG.md
         if: steps.check_commit.outputs.should_release == 'true' && steps.check_tag.outputs.tag_exists == 'false'
         id: generate_changelog
         run: |
@@ -126,19 +126,22 @@ jobs:
           TAG_NAME="${{ steps.check_commit.outputs.tag_name }}"
           REPO="${{ github.repository }}"
           SERVER="${{ github.server_url }}"
-          
-          echo "🔍 Generating changelog for version: $VERSION"
-          
-          # 使用 conventional-changelog 生成当前版本的 changelog（-r 1 只生成最新版本）
-          npx conventional-changelog -p angular -i CHANGELOG.md -s -r 1
-          
-          # 只提取当前版本的 changelog（从第二行到下一个 "## [" 版本标题之前）
-          CHANGELOG_CONTENT=$(tail -n +2 CHANGELOG.md | awk '/^## \[/ {if (++section == 2) exit} 1')
-          
-          # 若无 conventional commits，使用 fallback
+
+          echo "🔍 Reading changelog for version: $VERSION from CHANGELOG.md"
+
+          # 直接从 CHANGELOG.md 提取当前版本的 changelog 内容
+          # CHANGELOG.md 格式示例: ## [v1.5.15](...) 或 ## [1.5.15](...)
+
+          # 尝试匹配版本号（支持带 v 前缀和不带 v 前缀的格式）
+          CHANGELOG_CONTENT=$(awk "/^## \[v?${VERSION}/,/^## \[/ {exit}" CHANGELOG.md | head -n -1)
+
+          # 若无内容, 使用 fallback
           if [ -z "$(echo "$CHANGELOG_CONTENT" | tr -d '[:space:]')" ]; then
             CHANGELOG_CONTENT=$'### 📝 Changes\n\n- 常规更新与改进\n- 详见 [CHANGELOG.md](https://github.com/'"$REPO"'/blob/main/CHANGELOG.md)'
           fi
+
+          echo "📝 Changelog content extracted:"
+          echo "$CHANGELOG_CONTENT"
           
           # 使用 body_path 避免 GITHUB_OUTPUT 多行字符串限制（64KB/格式问题）
           {

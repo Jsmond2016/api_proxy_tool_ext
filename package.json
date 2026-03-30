@@ -21,9 +21,9 @@
     "release": "bash scripts/release.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "changelog:all": "conventional-changelog -p angular -i CHANGELOG.md -s",
-    "version:patch": "npm version patch --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
-    "version:minor": "npm version minor --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
-    "version:major": "npm version major --no-git-tag-version && VERSION=$(node -p \"require('./package.json').version\") && git add package.json && git commit -m \"chore(release): $VERSION\"",
+    "version:patch": "npm version patch --no-git-tag-version && pnpm run changelog && git add package.json CHANGELOG.md && git commit -m \"chore(release): $(node -p \\\"require('./package.json').version\\\")\"",
+    "version:minor": "npm version minor --no-git-tag-version && pnpm run changelog && git add package.json CHANGELOG.md && git commit -m \"chore(release): $(node -p \\\"require('./package.json').version\\\")\"",
+    "version:major": "npm version major --no-git-tag-version && pnpm run changelog && git add package.json CHANGELOG.md && git commit -m \"chore(release): $(node -p \\\"require('./package.json').version\\\")\"",
     "init": "node scripts/generate-docs.js && echo '🎉 AI 开发环境已初始化完成！'",
     "init:ai": "node scripts/generate-docs.js && echo '📚 AI 提示词环境文档已生成'"
   },
