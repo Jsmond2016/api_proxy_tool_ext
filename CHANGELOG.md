@@ -1,8 +1,12 @@
-# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.11...v) (2026-03-30)
+# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.14...v) (2026-03-30)
+
+## [1.5.14](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.13...v1.5.14) (2026-03-30)
 
 ### Bug Fixes
 
 - 优化添加接口时的自动填充逻辑 ([992a50e](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/992a50e606c3780e3631fe8f47d0dd4b010d232e))
+
+## [1.5.13](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.11...v1.5.13) (2026-03-30)
 
 ### Features
 
