@@ -1,4 +1,13 @@
-# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.14...v) (2026-03-30)
+# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.15...v) (2026-03-30)
+
+
+### Bug Fixes
+
+* 修复 commit message 格式以触发 GitHub Actions ([adb16f1](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/adb16f1c47142902b650459fcdfb97a7ad85d21b))
+
+
+
+## [1.5.15](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.14...v1.5.15) (2026-03-30)
 
 
 
