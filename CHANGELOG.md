@@ -1,4 +1,18 @@
-# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.10...v) (2026-03-17)
+# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.11...v) (2026-03-30)
+
+### Bug Fixes
+
+- 优化添加接口时的自动填充逻辑 ([992a50e](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/992a50e606c3780e3631fe8f47d0dd4b010d232e))
+
+### Features
+
+- 添加接口时自动填充 Apifox 相关字段 ([a2e6f90](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/a2e6f90608cde14f67a3cc84455f94fbc295fed2))
+
+## [1.5.11](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.10...v1.5.11) (2026-03-17)
+
+### Bug Fixes
+
+- **ci:** 只提取当前版本的 changelog 到 Release ([4a11551](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/4a11551f925c9df4d1bc0fb5f34fd33a02e77f1b))
 
 ## [1.5.10](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.9...v1.5.10) (2026-03-17)
 
