@@ -1,4 +1,13 @@
-# [](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.15...v) (2026-03-30)
+## [1.5.21](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.20...v1.5.21) (2026-03-30)
+
+
+### Bug Fixes
+
+* 修复 CHANGELOG 版本号生成问题 ([b92b48f](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/b92b48fcda12cc17a1b3e7b93759810a2f5c6a83))
+
+
+
+## [1.5.20](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.15...v1.5.20) (2026-03-30)
 
 
 ### Bug Fixes
