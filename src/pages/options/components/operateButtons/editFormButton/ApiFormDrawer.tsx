@@ -34,16 +34,37 @@ interface ApiFormDrawerProps {
   title?: string
 }
 
-// 解析 Swagger 数据获取接口信息
+// 匹配结果类型
+interface MatchResult {
+  apiInfo: ParsedApi | null
+  matchCount: number // 匹配到的接口数量
+}
+
+// 解析 Swagger 数据获取接口信息（支持模糊匹配）
 const parseApiInfoFromSwagger = (
   swaggerData: SwaggerData,
   apiUrl: string
-): ParsedApi | null => {
-  if (!swaggerData.paths) return null
+): MatchResult => {
+  if (!swaggerData.paths) {
+    return { apiInfo: null, matchCount: 0 }
+  }
+
+  // 规范化用户输入的 URL（去除前导斜杠，统一比较）
+  const normalizedApiUrl = apiUrl.replace(/^\/+/, "").toLowerCase()
+  const matchedApis: Array<{ path: string; method: string; info: ParsedApi }> =
+    []
 
   for (const [path, methods] of Object.entries(swaggerData.paths)) {
-    // 支持模糊匹配：如果 apiUrl 包含在 path 中，或者 path 包含在 apiUrl 中
-    if (path.includes(apiUrl) || apiUrl.includes(path)) {
+    // 规范化 path（去除前导斜杠，统一比较）
+    const normalizedPath = path.replace(/^\/+/, "").toLowerCase()
+
+    // 模糊匹配：检查是否互相包含
+    // 例如：用户输入 "/users" 可以匹配 "/api/saas/v1/users"
+    const isMatch =
+      normalizedPath.includes(normalizedApiUrl) ||
+      normalizedApiUrl.includes(normalizedPath)
+
+    if (isMatch) {
       for (const [method, apiInfo] of Object.entries(methods)) {
         if (typeof apiInfo === "object" && apiInfo !== null) {
           const swaggerInfo = apiInfo as {
@@ -57,12 +78,14 @@ const parseApiInfoFromSwagger = (
           const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX] as
             | string
             | undefined
-          const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
+          const apiId =
+            xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
           const groupName =
             (swaggerInfo[APIFOX_FIELD_GROUP_NAME] as string) ||
             (tags.length > 0 ? tags[0] : "demo.default")
           const modelApiType =
-            (swaggerInfo[APIFOX_FIELD_API_TYPE] as string) || ModelAction.CUSTOM
+            (swaggerInfo[APIFOX_FIELD_API_TYPE] as string) ||
+            ModelAction.CUSTOM
 
           // 生成权限点
           let authPointKey = ""
@@ -75,21 +98,34 @@ const parseApiInfoFromSwagger = (
             authPointKey = `${authPrefix}-${apiName}`
           }
 
-          return {
-            apiId,
+          matchedApis.push({
             path,
-            method: method.toUpperCase(),
-            summary,
-            tags,
-            groupName,
-            authPointKey,
-            modelApiType,
-          }
+            method,
+            info: {
+              apiId,
+              path,
+              method: method.toUpperCase(),
+              summary,
+              tags,
+              groupName,
+              authPointKey,
+              modelApiType,
+            },
+          })
         }
       }
     }
   }
-  return null
+
+  // 根据匹配数量返回结果
+  if (matchedApis.length === 1) {
+    return { apiInfo: matchedApis[0].info, matchCount: 1 }
+  } else if (matchedApis.length > 1) {
+    // 多个匹配，返回 null，让调用方处理
+    return { apiInfo: null, matchCount: matchedApis.length }
+  }
+
+  return { apiInfo: null, matchCount: 0 }
 }
 
 export default function ApiFormDrawer({
@@ -265,21 +301,35 @@ export default function ApiFormDrawer({
     const apifoxConfig = config.apifoxConfig
     if (!apifoxConfig?.mockPrefix) return
 
-    // 自动填充重定向 URL
-    const redirectURL = `${apifoxConfig.mockPrefix}${apiUrl}`
-    form.setFieldsValue({ redirectURL })
-
     // 如果有 Swagger 缓存，尝试从缓存中获取更多信息
     if (swaggerCache) {
-      const apiInfo = parseApiInfoFromSwagger(swaggerCache, apiUrl)
-      if (apiInfo) {
+      const { apiInfo, matchCount } = parseApiInfoFromSwagger(
+        swaggerCache,
+        apiUrl
+      )
+
+      if (matchCount === 1 && apiInfo) {
+        // 精确匹配到一个接口，用匹配到的完整 path 自动填充
+        const fullPath = apiInfo.path
+        const redirectURL = `${apifoxConfig.mockPrefix}${fullPath}`
         form.setFieldsValue({
+          apiUrl: fullPath, // 更新为完整的接口地址
+          redirectURL, // 使用完整 path 构建重定向 URL
           apiName: apiInfo.summary,
           method: apiInfo.method as ApiConfig["method"],
           authPointKey: apiInfo.authPointKey,
         })
+      } else if (matchCount > 1) {
+        // 匹配到多个接口，提示用户
+        message.warning(
+          `匹配到 ${matchCount} 个接口，请输入更完整的接口地址`
+        )
+      } else {
+        // 没有匹配到接口，提示用户
+        message.warning("未找到匹配的接口，请检查接口地址是否正确")
       }
     }
+    // 没有 Swagger 缓存或匹配不精确时，不自动填充重定向 URL
   }
 
   return (
