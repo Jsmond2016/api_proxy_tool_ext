@@ -18,6 +18,8 @@ pnpm run changelog
 
 # 提交更改
 git add package.json CHANGELOG.md
-git commit --no-verify -m "chore(release): $NEW_VERSION"
+# 提交更改（commit message 不带 v 前缀，以便触发 GitHub Actions）
+VERSION_NUMBER=$(echo $NEW_VERSION | sed 's/^v//')
+git commit --no-verify -m "chore(release): $VERSION_NUMBER"
 
 echo "✅ Version bumped to $NEW_VERSION"
