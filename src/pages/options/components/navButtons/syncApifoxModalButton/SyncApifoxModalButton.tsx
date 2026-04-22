@@ -54,6 +54,17 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
   const isOnlyHaveDefaultMock = useOnlyHaveDefaultMockConfig()
 
+  const getApifoxModulesByUrl = (
+    modules: ModuleConfig[],
+    apifoxUrl?: string,
+  ) => {
+    if (!apifoxUrl) {
+      return []
+    }
+
+    return modules.filter((module) => module.apiDocUrl === apifoxUrl)
+  }
+
   /**
    * 检查是否有 Mock 数据，如果有则显示警告
    * @returns 是否可以继续操作
@@ -109,9 +120,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     }
 
     // 找出旧的 Apifox 模块（通过 apiDocUrl 识别）
-    const oldApifoxModules = config.modules.filter(
-      (m) => m.apiDocUrl === apifoxUrl,
-    )
+    const oldApifoxModules = getApifoxModulesByUrl(config.modules, apifoxUrl)
 
     // 如果是首次设置（没有旧模块），直接添加
     if (oldApifoxModules.length === 0) {
@@ -136,23 +145,21 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       okText: "确认更新",
       cancelText: "取消",
       onOk() {
-        replaceApifoxModules(oldApifoxModules, newModules)
+        replaceApifoxModules(apifoxUrl, newModules)
       },
     })
   }
 
   // 替换 Apifox 模块（全量替换，不检测变化）
   const replaceApifoxModules = (
-    oldModules: ModuleConfig[],
+    apifoxUrl: string | undefined,
     newModules: ModuleConfig[],
   ) => {
     setConfig((prev) => {
-      // 过滤掉旧的 Apifox 模块
-      const otherModules = prev.modules.filter(
-        (m) => !oldModules.find((old) => old.id === m.id),
-      )
+      const otherModules = apifoxUrl
+        ? prev.modules.filter((module) => module.apiDocUrl !== apifoxUrl)
+        : prev.modules
 
-      // 添加新模块
       const newConfig = {
         ...prev,
         modules: [...otherModules, ...newModules],
@@ -181,9 +188,10 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     try {
       setRefreshing(true)
       const apifoxConfig = config.apifoxConfig
+      const apifoxUrl = apifoxConfig.apifoxUrl
 
       // 验证并获取 Swagger 数据
-      const swaggerData = await validateApifoxUrl(apifoxConfig.apifoxUrl)
+      const swaggerData = await validateApifoxUrl(apifoxUrl)
       if (!swaggerData) {
         message.error("无法获取 Apifox 数据，请检查配置")
         return
@@ -412,10 +420,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   ) => {
     try {
       const apifoxUrl = config.apifoxConfig?.apifoxUrl
-      // 找出旧的 Apifox 模块
-      const oldApifoxModules = config.modules.filter(
-        (m) => m.apiDocUrl === apifoxUrl,
-      )
+      const oldApifoxModules = getApifoxModulesByUrl(config.modules, apifoxUrl)
 
       // 判断是否为首次设置（没有旧模块）
       const isFirstSetup = oldApifoxModules.length === 0
@@ -429,7 +434,7 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
         mergeApifoxModules(oldApifoxModules, newModules)
       } else {
         // 全量替换：删除旧模块，添加新模块
-        replaceApifoxModules(oldApifoxModules, newModules)
+        replaceApifoxModules(apifoxUrl, newModules)
       }
 
       setSyncApifoxModalVisible(false)
