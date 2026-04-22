@@ -1,5 +1,7 @@
 {
   "action": {
+    "default_title": "API Proxy Tool",
+    "default_popup": "src/pages/popup/index.html",
     "default_icon": "public/dev-icon-32.png"
   },
   "icons": {
@@ -7,11 +9,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": [
-        "contentStyle.css",
-        "dev-icon-128.png",
-        "dev-icon-32.png"
-      ],
+      "resources": ["contentStyle.css", "dev-icon-128.png", "dev-icon-32.png"],
       "matches": []
     }
   ]

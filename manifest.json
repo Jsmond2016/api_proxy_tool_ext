@@ -8,6 +8,7 @@
   },
   "action": {
     "default_title": "API Proxy Tool",
+    "default_popup": "src/pages/popup/index.html",
     "default_icon": {
       "16": "icon-32.png",
       "32": "icon-32.png"
