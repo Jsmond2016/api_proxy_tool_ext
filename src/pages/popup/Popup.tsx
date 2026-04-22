@@ -60,8 +60,20 @@ export default function Popup() {
 
   const handleOpenOptions = async () => {
     try {
+      const [activeTab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      })
+      const optionsUrl = new URL(
+        chrome.runtime.getURL("src/pages/options/index.html")
+      )
+
+      if (activeTab?.id !== undefined) {
+        optionsUrl.searchParams.set("sourceTabId", String(activeTab.id))
+      }
+
       await chrome.tabs.create({
-        url: chrome.runtime.getURL("src/pages/options/index.html"),
+        url: optionsUrl.toString(),
       })
       window.close()
     } catch (error) {

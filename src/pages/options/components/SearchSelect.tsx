@@ -82,8 +82,8 @@ const SearchSelect = () => {
         }
       }}
       size="large"
-      className="w-[650px]"
-      style={{ width: 650 }}
+      className="w-full"
+      style={{ width: "100%" }}
       showSearch={{
         filterOption: filterOption,
       }}
