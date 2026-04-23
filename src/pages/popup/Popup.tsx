@@ -28,6 +28,23 @@ export default function Popup() {
     }
 
     loadConfig()
+
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !changes.globalConfig?.newValue) {
+        return
+      }
+
+      setConfig(changes.globalConfig.newValue as GlobalConfig)
+    }
+
+    chrome.storage.onChanged.addListener(handleStorageChange)
+
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange)
+    }
   }, [])
 
   const handleToggleGlobal = async (enabled: boolean) => {

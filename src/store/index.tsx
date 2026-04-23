@@ -11,59 +11,21 @@ type SetConfigAction =
 export const useConfigStore = create<{
   config: GlobalConfig
   setConfig: (configOrUpdater: SetConfigAction) => void
-}>()(
-  persist(
-    (set, get) => ({
-      config: {
-        isGlobalEnabled: false,
-        modules: [],
-        apifoxConfig: undefined,
-      },
-      setConfig: (configOrUpdater: SetConfigAction) => {
-        // 利用 Zustand 原生的函数式更新能力
-        set((state) => ({
-          config:
-            typeof configOrUpdater === "function"
-              ? configOrUpdater(state.config)
-              : configOrUpdater,
-        }))
-      },
-    }),
-    {
-      name: "config-storage",
-      // 自定义存储实现，使用 Chrome Storage
-      storage: {
-        getItem: async (name: string) => {
-          try {
-            const result = await chrome.storage.local.get([name])
-            return result[name] || null
-          } catch (error) {
-            console.error("Failed to get item from Chrome Storage:", error)
-            return null
-          }
-        },
-        setItem: async (name: string, value: any) => {
-          try {
-            await chrome.storage.local.set({ [name]: value })
-          } catch (error) {
-            console.error("Failed to set item in Chrome Storage:", error)
-          }
-        },
-        removeItem: async (name: string) => {
-          try {
-            await chrome.storage.local.remove([name])
-          } catch (error) {
-            console.error("Failed to remove item from Chrome Storage:", error)
-          }
-        },
-      },
-      // 只持久化 config 数据
-      partialize: (state) => ({ config: state.config }),
-      // 禁用跨标签页同步，避免冲突
-      skipHydration: false,
-    }
-  )
-)
+}>()((set) => ({
+  config: {
+    isGlobalEnabled: false,
+    modules: [],
+    apifoxConfig: undefined,
+  },
+  setConfig: (configOrUpdater: SetConfigAction) => {
+    set((state) => ({
+      config:
+        typeof configOrUpdater === "function"
+          ? configOrUpdater(state.config)
+          : configOrUpdater,
+    }))
+  },
+}))
 
 // 激活模块 ID Store - 使用 localStorage 持久化
 export const useActiveModuleIdStore = create<{

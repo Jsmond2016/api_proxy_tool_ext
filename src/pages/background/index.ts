@@ -376,29 +376,18 @@ function handleMessage(
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: BackgroundMessageResponse) => void
 ): boolean {
-  // 处理同步操作
-  if (request.action === BackgroundMessageAction.GET_CONFIG) {
-    try {
-      const response = handleGetConfig()
-      sendResponse(response)
-      return false // 同步操作，不需要保持通道开放
-    } catch (error) {
-      Logger.error(ERROR_MESSAGES.HANDLE_MESSAGE, error)
-      sendResponse({
-        success: false,
-        error:
-          error instanceof Error ? error.message : ERROR_MESSAGES.UNKNOWN_ERROR,
-      })
-      return false
-    }
-  }
-
-  // 处理异步操作 - 立即返回 true 保持通道开放
   ;(async () => {
     try {
+      await ensureInitialized()
+
       let response: BackgroundMessageResponse
 
       switch (request.action) {
+        case BackgroundMessageAction.GET_CONFIG:
+          response = handleGetConfig()
+          sendResponse(response)
+          break
+
         case BackgroundMessageAction.UPDATE_CONFIG:
           if (!request.config) {
             response = {
@@ -481,70 +470,6 @@ function handleMessage(
   return true // 保持消息通道开放以支持异步响应
 }
 
-// ==================== 快速联调拦截处理 ====================
-
-/**
- * 获取快速联调响应数据
- */
-function getQuickMockResponse(apiId: string): string | null {
-  try {
-    const quickMockApi = globalConfig.modules
-      .flatMap((module) => module.apiArr)
-      .find((api) => api.id === apiId)
-
-    if (!quickMockApi || !quickMockApi.quickMockEnabled) {
-      return null
-    }
-
-    const quickMockType = quickMockApi.quickMockType || "none"
-
-    // 预设响应
-    if (quickMockType === "preset") {
-      if (
-        !quickMockApi.quickMockKey ||
-        !globalConfig.quickMockConfigs
-      ) {
-        return null
-      }
-
-      const quickMockConfig = globalConfig.quickMockConfigs.find(
-        (item) => item.key === quickMockApi.quickMockKey
-      )
-
-      if (!quickMockConfig) {
-        return null
-      }
-
-      return quickMockConfig.responseJson
-    }
-
-    // // 自定义响应
-    // if (quickMockType === "custom") {
-    //   if (
-    //     !quickMockApi.activeCustomMockKey ||
-    //     !quickMockApi.customMockResponses
-    //   ) {
-    //     return null
-    //   }
-
-    //   const customMockConfig = quickMockApi.customMockResponses.find(
-    //     (item) => item.key === quickMockApi.activeCustomMockKey
-    //   )
-
-    //   if (!customMockConfig) {
-    //     return null
-    //   }
-
-    //   return customMockConfig.responseJson
-    // }
-
-    return null
-  } catch (error) {
-    Logger.error("Failed to get quick mock response", error)
-    return null
-  }
-}
-
 // ==================== 事件监听 ====================
 
 // 监听来自popup的消息
@@ -556,7 +481,7 @@ chrome.runtime.onMessage.addListener(handleMessage)
 // 然后在 Service Worker 中通过 fetch 事件处理这个请求
 
 // 处理扩展图标点击事件
-chrome.action.onClicked.addListener((tab) => {
+chrome.action.onClicked.addListener(() => {
   // 使用 activeTab 权限打开新标签页到配置页面
   chrome.tabs.create({
     url: chrome.runtime.getURL("src/pages/options/index.html"),
@@ -585,4 +510,14 @@ async function initialize(): Promise<void> {
   }
 }
 
-initialize()
+let initializationPromise: Promise<void> | null = null
+
+function ensureInitialized(): Promise<void> {
+  if (!initializationPromise) {
+    initializationPromise = initialize()
+  }
+
+  return initializationPromise
+}
+
+ensureInitialized()

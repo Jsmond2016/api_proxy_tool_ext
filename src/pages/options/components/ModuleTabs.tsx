@@ -48,13 +48,14 @@ export default function ModuleTabs({
     Modal.confirm({
       title: "确定删除该模块吗？",
       content: "删除后将无法恢复",
-      onOk: () => {
+      onOk: async () => {
+        const currentConfig = useConfigStore.getState().config
         const newConfig = {
-          ...config,
-          modules: config.modules.filter((module) => module.id !== moduleId),
+          ...currentConfig,
+          modules: currentConfig.modules.filter((module) => module.id !== moduleId),
         }
         setConfig(newConfig)
-        saveConfig(newConfig)
+        await saveConfig(newConfig)
 
         if (activeModuleId === moduleId) {
           const remainingModules = newConfig.modules

@@ -1,4 +1,4 @@
-import React, { useMemo } from "react"
+import React, { useEffect, useMemo } from "react"
 import { useMount, useRequest } from "ahooks"
 import { Layout, message, ConfigProvider, Typography, Button, Tooltip } from "antd"
 import { ArrowLeftOutlined } from "@ant-design/icons"
@@ -54,6 +54,32 @@ export default function Options() {
   useMount(() => {
     loadConfig()
   })
+
+  useEffect(() => {
+    const handleStorageChange = (
+      changes: { [key: string]: chrome.storage.StorageChange },
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !changes.globalConfig?.newValue) {
+        return
+      }
+
+      const latestConfig = changes.globalConfig.newValue
+      setConfig(latestConfig)
+
+      if (
+        latestConfig.modules.length > 0 &&
+        !latestConfig.modules.some((module) => module.id === activeModuleId)
+      ) {
+        setActiveModuleId(latestConfig.modules[0].id)
+      }
+    }
+
+    chrome.storage.onChanged.addListener(handleStorageChange)
+    return () => {
+      chrome.storage.onChanged.removeListener(handleStorageChange)
+    }
+  }, [activeModuleId, setActiveModuleId, setConfig])
 
   // 获取当前激活的模块
   const activeModule = config.modules.find(
