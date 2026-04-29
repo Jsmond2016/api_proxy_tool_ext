@@ -253,6 +253,27 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
                       </Space>
                     </div>
                   )}
+                  {parseDocLinks(archivePreview.iterationInfo!.testCaseDocs)
+                    .length > 0 && (
+                    <div>
+                      <Text type="secondary">测试用例：</Text>
+                      <Space wrap className="ml-2">
+                        {parseDocLinks(
+                          archivePreview.iterationInfo!.testCaseDocs
+                        ).map((doc, index) => (
+                          <a
+                            key={index}
+                            href={doc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-600 hover:underline"
+                          >
+                            用例-{index + 1}
+                          </a>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

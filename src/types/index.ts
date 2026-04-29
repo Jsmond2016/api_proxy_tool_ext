@@ -133,6 +133,7 @@ export interface ArchiveData {
     requirementDocs: string
     technicalDocs: string
     prototypeDocs: string
+    testCaseDocs: string
   } // 迭代信息
   modules: ModuleConfig[] // 相关模块配置（只包含该 tag 的接口）
   quickMockConfigs?: QuickMockConfig[] // 相关的快速联调配置

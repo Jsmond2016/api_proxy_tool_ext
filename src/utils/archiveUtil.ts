@@ -125,11 +125,12 @@ export const archiveTagData = async (
     tag,
     archivedAt: Date.now(),
     iterationInfo: iterationInfo
-      ? {
+        ? {
           tag: iterationInfo.tag,
           requirementDocs: iterationInfo.requirementDocs,
           technicalDocs: iterationInfo.technicalDocs,
           prototypeDocs: iterationInfo.prototypeDocs,
+          testCaseDocs: iterationInfo.testCaseDocs,
         }
       : undefined,
     modules: archivedModules,
@@ -282,4 +283,3 @@ export const getArchivesByTag = async (
     }
   })
 }
-

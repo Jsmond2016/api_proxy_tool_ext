@@ -26,6 +26,7 @@ export interface IterationInfo {
   requirementDocs: string // 需求文档
   technicalDocs: string // 技术文档
   prototypeDocs: string // 原型文档
+  testCaseDocs: string // 测试用例链接
 }
 
 /**

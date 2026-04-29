@@ -105,6 +105,7 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
           requirementDocs: archiveData.iterationInfo.requirementDocs,
           technicalDocs: archiveData.iterationInfo.technicalDocs,
           prototypeDocs: archiveData.iterationInfo.prototypeDocs,
+          testCaseDocs: archiveData.iterationInfo.testCaseDocs,
         }
         await saveIterationInfo(iterationInfoMap)
       }
@@ -183,11 +184,13 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
         const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
         const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
         const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
+        const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
 
         if (
           requirementLinks.length === 0 &&
           technicalLinks.length === 0 &&
-          prototypeLinks.length === 0
+          prototypeLinks.length === 0 &&
+          testCaseLinks.length === 0
         ) {
           return <Text type="secondary">-</Text>
         }
@@ -259,6 +262,28 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
                       title={doc}
                     >
                       原型-{index + 1}
+                    </a>
+                  ))}
+                </Space>
+              </div>
+            )}
+            {testCaseLinks.length > 0 && (
+              <div>
+                <Text type="secondary" style={{ fontSize: "12px" }}>
+                  用例：
+                </Text>
+                <Space wrap size="small">
+                  {testCaseLinks.map((doc, index) => (
+                    <a
+                      key={index}
+                      href={doc}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-amber-600 hover:underline"
+                      style={{ fontSize: "12px" }}
+                      title={doc}
+                    >
+                      用例-{index + 1}
                     </a>
                   ))}
                 </Space>
@@ -507,6 +532,29 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
                             className="text-purple-600 hover:underline"
                           >
                             原型-{index + 1}
+                          </a>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
+                  {parseDocLinks(
+                    selectedArchive.archiveData.iterationInfo!.testCaseDocs
+                  ).length > 0 && (
+                    <div>
+                      <Text type="secondary">测试用例：</Text>
+                      <Space wrap className="ml-2">
+                        {parseDocLinks(
+                          selectedArchive.archiveData.iterationInfo!
+                            .testCaseDocs
+                        ).map((doc, index) => (
+                          <a
+                            key={index}
+                            href={doc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-amber-600 hover:underline"
+                          >
+                            用例-{index + 1}
                           </a>
                         ))}
                       </Space>

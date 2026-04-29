@@ -45,6 +45,7 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
               formValues[`requirementDocs_${tag}`] = info.requirementDocs
               formValues[`technicalDocs_${tag}`] = info.technicalDocs
               formValues[`prototypeDocs_${tag}`] = info.prototypeDocs
+              formValues[`testCaseDocs_${tag}`] = info.testCaseDocs
             }
           })
           form.setFieldsValue(formValues)
@@ -74,6 +75,7 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
           requirementDocs: values[`requirementDocs_${tag}`] || "",
           technicalDocs: values[`technicalDocs_${tag}`] || "",
           prototypeDocs: values[`prototypeDocs_${tag}`] || "",
+          testCaseDocs: values[`testCaseDocs_${tag}`] || "",
         }
       })
 
@@ -151,6 +153,16 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
                   <TextArea
                     rows={2}
                     placeholder="请输入原型文档链接，多个链接用换行、空格、逗号或分号分隔"
+                  />
+                </Form.Item>
+                <Form.Item
+                  label="测试用例链接"
+                  name={`testCaseDocs_${tag}`}
+                  tooltip="支持多个文档链接，用换行、空格、逗号或分号分隔"
+                >
+                  <TextArea
+                    rows={2}
+                    placeholder="请输入测试用例链接，多个链接用换行、空格、逗号或分号分隔"
                   />
                 </Form.Item>
               </Card>

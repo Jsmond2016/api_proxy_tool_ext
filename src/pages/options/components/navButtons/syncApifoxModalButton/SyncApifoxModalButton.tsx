@@ -248,10 +248,9 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
               </li>
               <li>
                 <InfoCircleOutlined className="text-blue-600" /> 温馨提示:
-                如果修改设置，
-                <span className="font-bold">记得备份当前数据</span>
-                ：点击<span className="font-bold">导出</span>即可备份当前
-                mock-api-json 文件
+                <span className="font-bold">
+                  请点击【存档】按钮 存档当前接口和配置，方便后续恢复
+                </span>
               </li>
             </ul>
           </div>

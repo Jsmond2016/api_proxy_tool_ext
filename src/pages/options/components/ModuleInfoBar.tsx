@@ -141,11 +141,13 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
       const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
       const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
       const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
+      const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
 
       if (
         requirementLinks.length === 0 &&
         technicalLinks.length === 0 &&
-        prototypeLinks.length === 0
+        prototypeLinks.length === 0 &&
+        testCaseLinks.length === 0
       ) {
         return
       }
@@ -221,6 +223,29 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
         )
       }
 
+      // 测试用例链接
+      if (testCaseLinks.length > 0) {
+        tagParts.push(
+          <span key={`test-${tag}`} className="mr-3">
+            <span className="font-medium">测试用例：</span>
+            <Space split="|" size="small" wrap className="ml-1">
+              {testCaseLinks.map((doc, index) => (
+                <a
+                  key={index}
+                  href={doc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-amber-600 hover:text-amber-800 hover:underline"
+                  title={doc}
+                >
+                  用例-{index + 1}
+                </a>
+              ))}
+            </Space>
+          </span>
+        )
+      }
+
       if (tagParts.length > 0) {
         parts.push(
           <span key={`iteration-${tag}`} className="mr-4">
@@ -246,10 +271,12 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
       const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
       const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
       const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
+      const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
       return (
         requirementLinks.length > 0 ||
         technicalLinks.length > 0 ||
-        prototypeLinks.length > 0
+        prototypeLinks.length > 0 ||
+        testCaseLinks.length > 0
       )
     })
   }, [interfaceTags, iterationInfoMap])
