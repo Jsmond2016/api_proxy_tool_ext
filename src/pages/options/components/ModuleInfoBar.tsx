@@ -1,12 +1,19 @@
 import React, { useMemo, useEffect, useState, useCallback } from "react"
-import { Alert, Space, Tag } from "antd"
+import { Alert, Button, Space, Tag, message } from "antd"
+import { CopyOutlined } from "@ant-design/icons"
 import { ModuleConfig, GlobalConfig } from "@src/types"
 import {
   getIterationInfo,
   type IterationInfo,
   type IterationInfoMap,
 } from "./navButtons/syncApifoxModalButton/apifoxCache"
-import { parseDocLinks } from "@src/utils/docUtils"
+import { copyToClipboard } from "@src/utils/permissionUtils"
+import {
+  buildIterationCopyText,
+  getIterationFieldLinks,
+  hasIterationFieldValue,
+  iterationInfoFieldConfigs,
+} from "./navButtons/syncApifoxModalButton/iterationInfoConfig"
 
 interface ModuleInfoBarProps {
   activeModule?: ModuleConfig
@@ -115,12 +122,11 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   const descriptionParts = useMemo(() => {
     const parts: React.ReactNode[] = []
 
-    // 接口 tags（仅展示此次配置有关的 tag）
     if (interfaceTags.length > 0) {
       parts.push(
-        <span key="tags" className="mr-4">
-          <span className="font-medium">接口 tag：</span>
-          <Space size="small" wrap>
+        <span key="tags" className="inline-flex items-center gap-2 whitespace-nowrap">
+          <span className="font-medium shrink-0">接口 tag：</span>
+          <Space size="small">
             {interfaceTags.map((text, index) => (
               <Tag key={text} color={tagPresets[index % tagPresets.length]}>
                 {text}
@@ -138,119 +144,49 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
         return
       }
 
-      const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
-      const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
-      const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
-      const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
-
-      if (
-        requirementLinks.length === 0 &&
-        technicalLinks.length === 0 &&
-        prototypeLinks.length === 0 &&
-        testCaseLinks.length === 0
-      ) {
+      if (!hasIterationFieldValue(iterationInfo)) {
         return
       }
 
       const tagParts: React.ReactNode[] = []
 
-      // 需求文档
-      if (requirementLinks.length > 0) {
-        tagParts.push(
-          <span key={`req-${tag}`} className="mr-3">
-            <span className="font-medium">需求文档：</span>
-            <Space separator="|" size="small" wrap className="ml-1">
-              {requirementLinks.map((doc, index) => (
-                <a
-                  key={index}
-                  href={doc}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 hover:underline"
-                  title={doc}
-                >
-                  需求-{index + 1}
-                </a>
-              ))}
-            </Space>
-          </span>
-        )
-      }
+      iterationInfoFieldConfigs.forEach(
+        ({ key, label, shortLabel, linkColorClassName }) => {
+          const links = getIterationFieldLinks(iterationInfo, key)
+          if (links.length === 0) {
+            return
+          }
 
-      // 技术文档
-      if (technicalLinks.length > 0) {
-        tagParts.push(
-          <span key={`tech-${tag}`} className="mr-3">
-            <span className="font-medium">技术文档：</span>
-            <Space split="|" size="small" wrap className="ml-1">
-              {technicalLinks.map((doc, index) => (
-                <a
-                  key={index}
-                  href={doc}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-600 hover:text-green-800 hover:underline"
-                  title={doc}
-                >
-                  技术-{index + 1}
-                </a>
-              ))}
-            </Space>
-          </span>
-        )
-      }
-
-      // 原型文档
-      if (prototypeLinks.length > 0) {
-        tagParts.push(
-          <span key={`proto-${tag}`} className="mr-3">
-            <span className="font-medium">原型文档：</span>
-            <Space split="|" size="small" wrap className="ml-1">
-              {prototypeLinks.map((doc, index) => (
-                <a
-                  key={index}
-                  href={doc}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-purple-600 hover:text-purple-800 hover:underline"
-                  title={doc}
-                >
-                  原型-{index + 1}
-                </a>
-              ))}
-            </Space>
-          </span>
-        )
-      }
-
-      // 测试用例链接
-      if (testCaseLinks.length > 0) {
-        tagParts.push(
-          <span key={`test-${tag}`} className="mr-3">
-            <span className="font-medium">测试用例：</span>
-            <Space split="|" size="small" wrap className="ml-1">
-              {testCaseLinks.map((doc, index) => (
-                <a
-                  key={index}
-                  href={doc}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-amber-600 hover:text-amber-800 hover:underline"
-                  title={doc}
-                >
-                  用例-{index + 1}
-                </a>
-              ))}
-            </Space>
-          </span>
-        )
-      }
+          tagParts.push(
+            <span key={`${key}-${tag}`} className="mr-3">
+              <span className="font-medium">{label}：</span>
+              <Space split="|" size="small" wrap className="ml-1">
+                {links.map((doc, index) => (
+                  <a
+                    key={index}
+                    href={doc}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={linkColorClassName}
+                    title={doc}
+                  >
+                    {shortLabel}-{index + 1}
+                  </a>
+                ))}
+              </Space>
+            </span>
+          )
+        }
+      )
 
       if (tagParts.length > 0) {
         parts.push(
-          <span key={`iteration-${tag}`} className="mr-4">
+          <span
+            key={`iteration-${tag}`}
+            className="inline-flex items-center whitespace-nowrap"
+          >
             <span className="font-medium text-gray-600">[{tag}]</span>
-            <Space size="small" wrap className="ml-1">
+            <Space size="small" className="ml-1">
               {tagParts}
             </Space>
           </span>
@@ -263,22 +199,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
 
   // 判断是否有迭代信息
   const hasIterationInfo = useMemo(() => {
-    return interfaceTags.some((tag) => {
-      const iterationInfo = iterationInfoMap[tag]
-      if (!iterationInfo) {
-        return false
-      }
-      const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
-      const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
-      const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
-      const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
-      return (
-        requirementLinks.length > 0 ||
-        technicalLinks.length > 0 ||
-        prototypeLinks.length > 0 ||
-        testCaseLinks.length > 0
-      )
-    })
+    return interfaceTags.some((tag) => hasIterationFieldValue(iterationInfoMap[tag]))
   }, [interfaceTags, iterationInfoMap])
 
   // 判断是否需要显示信息栏
@@ -288,12 +209,34 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     return null
   }
 
+  const copyText = interfaceTags
+    .map((tag) => buildIterationCopyText(tag, iterationInfoMap[tag]))
+    .join("\n\n")
+
   return (
     <div className="my-[12px] mx-[4px]">
       <Alert
         title={
-          <div className="text-gray-700 flex flex-wrap items-center gap-2">
-            {descriptionParts}
+          <div className="text-gray-700 flex items-center justify-between gap-3 overflow-x-auto">
+            <div className="flex items-center gap-4 whitespace-nowrap">
+              {descriptionParts}
+            </div>
+            <Button
+              type="link"
+              size="small"
+              icon={<CopyOutlined />}
+              className="px-0 shrink-0"
+              onClick={async () => {
+                const success = await copyToClipboard(copyText)
+                if (success) {
+                  message.success("迭代信息已复制")
+                } else {
+                  message.error("复制失败，请重试")
+                }
+              }}
+            >
+              复制
+            </Button>
           </div>
         }
         type="info"

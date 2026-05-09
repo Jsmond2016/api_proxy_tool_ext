@@ -14,6 +14,7 @@ import {
   ReloadOutlined,
   DeleteOutlined,
   RollbackOutlined,
+  CopyOutlined,
 } from "@ant-design/icons"
 import { ArchiveRecord } from "@src/types"
 import {
@@ -28,7 +29,13 @@ import {
   getIterationInfo,
   saveIterationInfo,
 } from "../syncApifoxModalButton/apifoxCache"
-import { parseDocLinks } from "@src/utils/docUtils"
+import { copyToClipboard } from "@src/utils/permissionUtils"
+import {
+  buildIterationCopyText,
+  getIterationFieldLinks,
+  hasIterationFieldValue,
+  iterationInfoFieldConfigs,
+} from "../syncApifoxModalButton/iterationInfoConfig"
 
 const { Text } = Typography
 
@@ -152,6 +159,20 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
     }
   }
 
+  const handleCopyDocs = async (record: ArchiveRecord) => {
+    const copyText = buildIterationCopyText(
+      record.tag,
+      record.archiveData.iterationInfo
+    )
+    const success = await copyToClipboard(copyText)
+
+    if (success) {
+      message.success("归档文档信息已复制")
+    } else {
+      message.error("复制失败，请重试")
+    }
+  }
+
   const columns = [
     {
       title: "迭代 Tag",
@@ -177,21 +198,7 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
       width: 300,
       render: (_: unknown, record: ArchiveRecord) => {
         const iterationInfo = record.archiveData.iterationInfo
-        if (!iterationInfo) {
-          return <Text type="secondary">-</Text>
-        }
-
-        const requirementLinks = parseDocLinks(iterationInfo.requirementDocs)
-        const technicalLinks = parseDocLinks(iterationInfo.technicalDocs)
-        const prototypeLinks = parseDocLinks(iterationInfo.prototypeDocs)
-        const testCaseLinks = parseDocLinks(iterationInfo.testCaseDocs)
-
-        if (
-          requirementLinks.length === 0 &&
-          technicalLinks.length === 0 &&
-          prototypeLinks.length === 0 &&
-          testCaseLinks.length === 0
-        ) {
+        if (!hasIterationFieldValue(iterationInfo)) {
           return <Text type="secondary">-</Text>
         }
 
@@ -201,93 +208,42 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
             size="small"
             style={{ fontSize: "12px" }}
           >
-            {requirementLinks.length > 0 && (
-              <div>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  需求：
-                </Text>
-                <Space wrap size="small">
-                  {requirementLinks.map((doc, index) => (
-                    <a
-                      key={index}
-                      href={doc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                      style={{ fontSize: "12px" }}
-                      title={doc}
-                    >
-                      需求-{index + 1}
-                    </a>
-                  ))}
-                </Space>
-              </div>
-            )}
-            {technicalLinks.length > 0 && (
-              <div>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  技术：
-                </Text>
-                <Space wrap size="small">
-                  {technicalLinks.map((doc, index) => (
-                    <a
-                      key={index}
-                      href={doc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-600 hover:underline"
-                      style={{ fontSize: "12px" }}
-                      title={doc}
-                    >
-                      技术-{index + 1}
-                    </a>
-                  ))}
-                </Space>
-              </div>
-            )}
-            {prototypeLinks.length > 0 && (
-              <div>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  原型：
-                </Text>
-                <Space wrap size="small">
-                  {prototypeLinks.map((doc, index) => (
-                    <a
-                      key={index}
-                      href={doc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-purple-600 hover:underline"
-                      style={{ fontSize: "12px" }}
-                      title={doc}
-                    >
-                      原型-{index + 1}
-                    </a>
-                  ))}
-                </Space>
-              </div>
-            )}
-            {testCaseLinks.length > 0 && (
-              <div>
-                <Text type="secondary" style={{ fontSize: "12px" }}>
-                  用例：
-                </Text>
-                <Space wrap size="small">
-                  {testCaseLinks.map((doc, index) => (
-                    <a
-                      key={index}
-                      href={doc}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-amber-600 hover:underline"
-                      style={{ fontSize: "12px" }}
-                      title={doc}
-                    >
-                      用例-{index + 1}
-                    </a>
-                  ))}
-                </Space>
-              </div>
+            {iterationInfoFieldConfigs.map(
+              ({ key, shortLabel, linkColorClassName }) => {
+                const links = getIterationFieldLinks(iterationInfo, key)
+                if (links.length === 0) {
+                  return null
+                }
+
+                return (
+                  <div key={key}>
+                    <Text type="secondary" style={{ fontSize: "12px" }}>
+                      {shortLabel}：
+                    </Text>
+                    <Space wrap size="small">
+                      {links.map((doc, index) => (
+                        <a
+                          key={index}
+                          href={doc}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={linkColorClassName.replace(
+                            " hover:text-blue-800",
+                            ""
+                          ).replace(" hover:text-green-800", "").replace(
+                            " hover:text-purple-800",
+                            ""
+                          ).replace(" hover:text-amber-800", "")}
+                          style={{ fontSize: "12px" }}
+                          title={doc}
+                        >
+                          {shortLabel}-{index + 1}
+                        </a>
+                      ))}
+                    </Space>
+                  </div>
+                )
+              }
             )}
           </Space>
         )
@@ -313,6 +269,14 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
       width: 200,
       render: (_: unknown, record: ArchiveRecord) => (
         <Space>
+          <Button
+            type="link"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={() => handleCopyDocs(record)}
+          >
+            复制文档
+          </Button>
           <Button
             type="link"
             size="small"
@@ -468,97 +432,35 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
                   迭代文档：
                 </Text>
                 <div className="pl-4 space-y-2">
-                  {parseDocLinks(
-                    selectedArchive.archiveData.iterationInfo.requirementDocs
-                  ).length > 0 && (
-                    <div>
-                      <Text type="secondary">需求文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          selectedArchive.archiveData.iterationInfo!
-                            .requirementDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            需求-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(
-                    selectedArchive.archiveData.iterationInfo!.technicalDocs
-                  ).length > 0 && (
-                    <div>
-                      <Text type="secondary">技术文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          selectedArchive.archiveData.iterationInfo!
-                            .technicalDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:underline"
-                          >
-                            技术-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(
-                    selectedArchive.archiveData.iterationInfo!.prototypeDocs
-                  ).length > 0 && (
-                    <div>
-                      <Text type="secondary">原型文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          selectedArchive.archiveData.iterationInfo!
-                            .prototypeDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-purple-600 hover:underline"
-                          >
-                            原型-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(
-                    selectedArchive.archiveData.iterationInfo!.testCaseDocs
-                  ).length > 0 && (
-                    <div>
-                      <Text type="secondary">测试用例：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          selectedArchive.archiveData.iterationInfo!
-                            .testCaseDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-amber-600 hover:underline"
-                          >
-                            用例-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
+                  {iterationInfoFieldConfigs.map(
+                    ({ key, label, shortLabel, linkColorClassName }) => {
+                      const links = getIterationFieldLinks(
+                        selectedArchive.archiveData.iterationInfo!,
+                        key
+                      )
+                      if (links.length === 0) {
+                        return null
+                      }
+
+                      return (
+                        <div key={key}>
+                          <Text type="secondary">{label}：</Text>
+                          <Space wrap className="ml-2">
+                            {links.map((doc, index) => (
+                              <a
+                                key={index}
+                                href={doc}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={linkColorClassName}
+                              >
+                                {shortLabel}-{index + 1}
+                              </a>
+                            ))}
+                          </Space>
+                        </div>
+                      )
+                    }
                   )}
                 </div>
               </div>

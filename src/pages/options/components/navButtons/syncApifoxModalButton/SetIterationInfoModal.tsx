@@ -6,6 +6,10 @@ import {
   saveIterationInfo,
   type IterationInfoMap,
 } from "./apifoxCache"
+import {
+  getIterationFieldName,
+  iterationInfoFieldConfigs,
+} from "./iterationInfoConfig"
 
 const { TextArea } = Input
 
@@ -29,7 +33,7 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
   // 获取当前配置的 tags
   const selectedTags = useMemo(
     () => config.apifoxConfig?.selectedTags || [],
-    [config.apifoxConfig?.selectedTags]
+    [config.apifoxConfig?.selectedTags],
   )
 
   // 加载已保存的迭代信息
@@ -42,10 +46,9 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
           selectedTags.forEach((tag) => {
             const info = savedInfo[tag]
             if (info) {
-              formValues[`requirementDocs_${tag}`] = info.requirementDocs
-              formValues[`technicalDocs_${tag}`] = info.technicalDocs
-              formValues[`prototypeDocs_${tag}`] = info.prototypeDocs
-              formValues[`testCaseDocs_${tag}`] = info.testCaseDocs
+              iterationInfoFieldConfigs.forEach(({ key }) => {
+                formValues[getIterationFieldName(key, tag)] = info[key] || ""
+              })
             }
           })
           form.setFieldsValue(formValues)
@@ -72,10 +75,14 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
       selectedTags.forEach((tag) => {
         iterationInfoMap[tag] = {
           tag,
-          requirementDocs: values[`requirementDocs_${tag}`] || "",
-          technicalDocs: values[`technicalDocs_${tag}`] || "",
-          prototypeDocs: values[`prototypeDocs_${tag}`] || "",
-          testCaseDocs: values[`testCaseDocs_${tag}`] || "",
+          requirementDocs:
+            values[getIterationFieldName("requirementDocs", tag)] || "",
+          technicalDocs:
+            values[getIterationFieldName("technicalDocs", tag)] || "",
+          prototypeDocs:
+            values[getIterationFieldName("prototypeDocs", tag)] || "",
+          testCaseDocs:
+            values[getIterationFieldName("testCaseDocs", tag)] || "",
         }
       })
 
@@ -112,11 +119,12 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
       width={800}
       okText="保存"
       cancelText="取消"
+      loading={loading}
     >
       {selectedTags.length === 0 ? (
         <div className="py-8 text-center text-gray-500">请先配置接口 tag</div>
       ) : (
-        <Form form={form} layout="vertical" loading={loading}>
+        <Form form={form} layout="vertical">
           <Space orientation="vertical" size="large" className="w-full">
             {selectedTags.map((tag) => (
               <Card
@@ -125,46 +133,18 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
                 size="small"
                 className="mb-4"
               >
-                <Form.Item
-                  label="需求文档"
-                  name={`requirementDocs_${tag}`}
-                  tooltip="支持多个文档链接，用换行、空格、逗号或分号分隔"
-                >
-                  <TextArea
-                    rows={2}
-                    placeholder="请输入需求文档链接，多个链接用换行、空格、逗号或分号分隔"
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="技术文档"
-                  name={`technicalDocs_${tag}`}
-                  tooltip="支持多个文档链接，用换行、空格、逗号或分号分隔"
-                >
-                  <TextArea
-                    rows={2}
-                    placeholder="请输入技术文档链接，多个链接用换行、空格、逗号或分号分隔"
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="原型文档"
-                  name={`prototypeDocs_${tag}`}
-                  tooltip="支持多个文档链接，用换行、空格、逗号或分号分隔"
-                >
-                  <TextArea
-                    rows={2}
-                    placeholder="请输入原型文档链接，多个链接用换行、空格、逗号或分号分隔"
-                  />
-                </Form.Item>
-                <Form.Item
-                  label="测试用例链接"
-                  name={`testCaseDocs_${tag}`}
-                  tooltip="支持多个文档链接，用换行、空格、逗号或分号分隔"
-                >
-                  <TextArea
-                    rows={2}
-                    placeholder="请输入测试用例链接，多个链接用换行、空格、逗号或分号分隔"
-                  />
-                </Form.Item>
+                {iterationInfoFieldConfigs.map(
+                  ({ key, label, tooltip, placeholder }) => (
+                    <Form.Item
+                      key={key}
+                      label={label}
+                      name={getIterationFieldName(key, tag)}
+                      tooltip={tooltip}
+                    >
+                      <TextArea rows={2} placeholder={placeholder} />
+                    </Form.Item>
+                  ),
+                )}
               </Card>
             ))}
           </Space>
