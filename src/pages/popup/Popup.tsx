@@ -149,7 +149,7 @@ export default function Popup() {
               <span className="font-semibold text-slate-900">
                 {enabledApiCount}
               </span>{" "}
-              个接口已启用
+              个接口已配置
             </Text>
           </div>
 
