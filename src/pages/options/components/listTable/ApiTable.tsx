@@ -10,7 +10,7 @@ import {
   Dropdown,
   MenuProps,
 } from "antd"
-import { DownOutlined } from "@ant-design/icons"
+import { DownOutlined, CopyOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "@src/types"
 import "antd/dist/reset.css"
@@ -32,6 +32,12 @@ import { TableColumnsX } from "../../../../types/util.type"
 import { ColumnsType } from "antd/es/table"
 
 const { Paragraph } = Typography
+
+const copyText = (text: string) => {
+  navigator.clipboard.writeText(text).then(() => {
+    message.success("复制成功")
+  })
+}
 
 export default function ApiTable() {
   const { searchKeyword } = useSearchKeywordStore()
@@ -251,23 +257,29 @@ export default function ApiTable() {
               )}
             </div>
             {/* 接口 URL */}
-            <div className="text-sm">
-              <Paragraph
-                copyable={{ text: record.apiUrl }}
-                type="secondary"
-                className="mb-0 text-sm"
-              >
+            <div className="text-sm flex items-start gap-1">
+              <CopyOutlined
+                className="cursor-pointer !text-blue-600 hover:!text-blue-800 text-xs mt-1"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyText(record.apiUrl)
+                }}
+              />
+              <Paragraph type="secondary" className="mb-0 text-sm">
                 <span className="text-gray-500">接口地址：</span>
                 {record.apiUrl}
               </Paragraph>
             </div>
             {/* Mock 接口 URL */}
-            <div className="text-sm">
-              <Paragraph
-                copyable={{ text: record.redirectURL }}
-                type="danger"
-                className="mb-0 text-sm"
-              >
+            <div className="text-sm flex items-start gap-1">
+              <CopyOutlined
+                className="cursor-pointer !text-blue-600 hover:!text-blue-800 text-xs mt-1"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  copyText(record.redirectURL)
+                }}
+              />
+              <Paragraph type="danger" className="mb-0 text-sm">
                 <span className="text-gray-500">Mock URL：</span>
                 {record.redirectURL}
               </Paragraph>
@@ -283,9 +295,18 @@ export default function ApiTable() {
       // 当没有权限点的时候，显示 '-',若有，则可以复制
       render: (v: string | undefined) =>
         isNotEmpty(v) ? (
-          <Paragraph copyable={{ text: v }} type="secondary">
-            {v}
-          </Paragraph>
+          <div className="flex items-start gap-1">
+            <CopyOutlined
+              className="cursor-pointer !text-blue-600 hover:!text-blue-800 text-xs mt-1"
+              onClick={(e) => {
+                e.stopPropagation()
+                copyText(v as string)
+              }}
+            />
+            <Paragraph type="secondary" className="mb-0">
+              {v}
+            </Paragraph>
+          </div>
         ) : (
           "-"
         ),
