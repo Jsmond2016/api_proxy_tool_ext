@@ -1,6 +1,16 @@
 import React, { useMemo, useEffect, useState, useCallback } from "react"
-import { Alert, Button, Space, Tag, message } from "antd"
-import { CopyOutlined } from "@ant-design/icons"
+import {
+  Alert,
+  Button,
+  Space,
+  Tag,
+  message,
+  Dropdown,
+  Modal,
+  Form,
+  DatePicker,
+} from "antd"
+import { CopyOutlined, DownOutlined } from "@ant-design/icons"
 import { ModuleConfig, GlobalConfig } from "@src/types"
 import {
   getIterationInfo,
@@ -41,6 +51,8 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   const [iterationInfoMap, setIterationInfoMap] = useState<
     Record<string, IterationInfo>
   >({})
+  const [isCRModalOpen, setIsCRModalOpen] = useState(false)
+  const [crForm] = Form.useForm()
 
   // 加载迭代信息
   const loadIterationInfo = useCallback(() => {
@@ -61,7 +73,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     // 监听 Chrome storage 变化
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
-      areaName: string
+      areaName: string,
     ) => {
       // 监听迭代信息的变化
       if (
@@ -124,7 +136,10 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
 
     if (interfaceTags.length > 0) {
       parts.push(
-        <span key="tags" className="inline-flex items-center gap-2 whitespace-nowrap">
+        <span
+          key="tags"
+          className="inline-flex items-center gap-2 whitespace-nowrap"
+        >
           <span className="font-medium shrink-0">接口 tag：</span>
           <Space size="small">
             {interfaceTags.map((text, index) => (
@@ -133,7 +148,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
               </Tag>
             ))}
           </Space>
-        </span>
+        </span>,
       )
     }
 
@@ -174,9 +189,9 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
                   </a>
                 ))}
               </Space>
-            </span>
+            </span>,
           )
-        }
+        },
       )
 
       if (tagParts.length > 0) {
@@ -189,7 +204,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
             <Space size="small" className="ml-1">
               {tagParts}
             </Space>
-          </span>
+          </span>,
         )
       }
     })
@@ -199,7 +214,9 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
 
   // 判断是否有迭代信息
   const hasIterationInfo = useMemo(() => {
-    return interfaceTags.some((tag) => hasIterationFieldValue(iterationInfoMap[tag]))
+    return interfaceTags.some((tag) =>
+      hasIterationFieldValue(iterationInfoMap[tag]),
+    )
   }, [interfaceTags, iterationInfoMap])
 
   // 判断是否需要显示信息栏
@@ -213,6 +230,46 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     .map((tag) => buildIterationCopyText(tag, iterationInfoMap[tag]))
     .join("\n\n")
 
+  const handleCopyIteration = async () => {
+    const success = await copyToClipboard(copyText)
+    if (success) {
+      message.success("迭代信息已复制")
+    } else {
+      message.error("复制失败，请重试")
+    }
+  }
+
+  const handleCopyMenuClick = ({ key }: { key: string }) => {
+    if (key === "iteration") {
+      handleCopyIteration()
+    } else if (key === "cr") {
+      setIsCRModalOpen(true)
+    }
+  }
+
+  const handleCRCopy = async () => {
+    try {
+      const values = await crForm.validateFields()
+      const releaseDate = values.releaseDate.format("YYYY-MM-DD")
+      const text = `上线日期：${releaseDate}\n\n${copyText}`
+      const success = await copyToClipboard(text)
+      if (success) {
+        message.success("CR信息已复制")
+        setIsCRModalOpen(false)
+        crForm.resetFields()
+      } else {
+        message.error("复制失败，请重试")
+      }
+    } catch {
+      // 表单校验失败，无需处理
+    }
+  }
+
+  const copyMenuItems = [
+    { key: "iteration", label: "复制迭代信息" },
+    { key: "cr", label: "复制CR信息" },
+  ]
+
   return (
     <div className="my-[12px] mx-[4px]">
       <Alert
@@ -221,27 +278,50 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
             <div className="flex items-center gap-4 whitespace-nowrap">
               {descriptionParts}
             </div>
-            <Button
-              type="link"
-              size="small"
-              icon={<CopyOutlined />}
-              className="px-0 shrink-0"
-              onClick={async () => {
-                const success = await copyToClipboard(copyText)
-                if (success) {
-                  message.success("迭代信息已复制")
-                } else {
-                  message.error("复制失败，请重试")
-                }
-              }}
+            <Dropdown
+              menu={{ items: copyMenuItems, onClick: handleCopyMenuClick }}
+              placement="bottomRight"
+              trigger={["click"]}
             >
-              复制
-            </Button>
+              <Button
+                type="link"
+                size="small"
+                icon={<CopyOutlined />}
+                className="px-0 shrink-0"
+              >
+                复制 <DownOutlined />
+              </Button>
+            </Dropdown>
           </div>
         }
         type="info"
         showIcon
       />
+      <Modal
+        title="复制CR信息"
+        open={isCRModalOpen}
+        onOk={handleCRCopy}
+        onCancel={() => {
+          setIsCRModalOpen(false)
+          crForm.resetFields()
+        }}
+        okText="确认"
+        cancelText="取消"
+      >
+        <Form form={crForm} layout="vertical">
+          <Form.Item
+            label="上线时间"
+            name="releaseDate"
+            rules={[{ required: true, message: "请选择上线时间" }]}
+          >
+            <DatePicker
+              format="YYYY-MM-DD"
+              placeholder="请选择上线时间"
+              style={{ width: "100%" }}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   )
 }
