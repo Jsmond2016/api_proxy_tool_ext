@@ -1,5 +1,5 @@
 import React, { useState } from "react"
-import { Button, Modal, Spin, Tag, Space, message } from "antd"
+import { Button, Modal, Spin, Tag, message } from "antd"
 import { ThunderboltOutlined } from "@ant-design/icons"
 import { ApiConfig } from "@src/types"
 import { useConfigStore } from "@src/store"
@@ -20,7 +20,7 @@ const TestButton: React.FC<TestButtonProps> = ({
     status: number
     statusText?: string
     headers: Record<string, string>
-    data: any
+    data: unknown
     error?: string
   } | null>(null)
 
@@ -73,7 +73,7 @@ const TestButton: React.FC<TestButtonProps> = ({
         headers[key] = value
       })
 
-      let responseData: any
+      let responseData: unknown
       const contentType = response.headers.get("content-type")
       if (contentType && contentType.includes("application/json")) {
         responseData = await response.json()
@@ -197,15 +197,6 @@ const TestButton: React.FC<TestButtonProps> = ({
                     >
                       {testResult.status} {testResult.statusText || ""}
                     </Tag>
-                  </div>
-                </div>
-
-                <div>
-                  <div className="font-semibold mb-2">响应头：</div>
-                  <div className="bg-gray-50 p-3 rounded text-sm max-h-40 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap">
-                      {JSON.stringify(testResult.headers, null, 2)}
-                    </pre>
                   </div>
                 </div>
 
