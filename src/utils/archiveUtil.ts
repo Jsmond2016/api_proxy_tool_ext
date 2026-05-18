@@ -131,6 +131,7 @@ export const archiveTagData = async (
           technicalDocs: iterationInfo.technicalDocs,
           prototypeDocs: iterationInfo.prototypeDocs,
           testCaseDocs: iterationInfo.testCaseDocs,
+          scheduleDocs: iterationInfo.scheduleDocs,
         }
       : undefined,
     modules: archivedModules,

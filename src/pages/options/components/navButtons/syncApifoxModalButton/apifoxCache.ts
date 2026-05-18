@@ -27,6 +27,7 @@ export interface IterationInfo {
   technicalDocs: string // 技术文档
   prototypeDocs: string // 原型文档
   testCaseDocs: string // 测试用例链接
+  scheduleDocs: string // 排期文档
 }
 
 /**

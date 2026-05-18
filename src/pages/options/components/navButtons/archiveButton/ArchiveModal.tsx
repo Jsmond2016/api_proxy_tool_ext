@@ -274,6 +274,27 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
                       </Space>
                     </div>
                   )}
+                  {parseDocLinks(archivePreview.iterationInfo!.scheduleDocs)
+                    .length > 0 && (
+                    <div>
+                      <Text type="secondary">排期文档：</Text>
+                      <Space wrap className="ml-2">
+                        {parseDocLinks(
+                          archivePreview.iterationInfo!.scheduleDocs
+                        ).map((doc, index) => (
+                          <a
+                            key={index}
+                            href={doc}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-cyan-600 hover:underline"
+                          >
+                            排期-{index + 1}
+                          </a>
+                        ))}
+                      </Space>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

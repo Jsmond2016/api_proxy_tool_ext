@@ -113,6 +113,7 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
           technicalDocs: archiveData.iterationInfo.technicalDocs,
           prototypeDocs: archiveData.iterationInfo.prototypeDocs,
           testCaseDocs: archiveData.iterationInfo.testCaseDocs,
+          scheduleDocs: archiveData.iterationInfo.scheduleDocs,
         }
         await saveIterationInfo(iterationInfoMap)
       }

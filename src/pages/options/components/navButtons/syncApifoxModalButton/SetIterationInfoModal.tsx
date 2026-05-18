@@ -83,6 +83,8 @@ const SetIterationInfoModal: React.FC<SetIterationInfoModalProps> = ({
             values[getIterationFieldName("prototypeDocs", tag)] || "",
           testCaseDocs:
             values[getIterationFieldName("testCaseDocs", tag)] || "",
+          scheduleDocs:
+            values[getIterationFieldName("scheduleDocs", tag)] || "",
         }
       })
 

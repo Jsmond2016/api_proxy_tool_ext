@@ -52,6 +52,15 @@ export const iterationInfoFieldConfigs: IterationInfoFieldConfig[] = [
     tooltip: MULTIPLE_LINK_TOOLTIP,
     linkColorClassName: "text-amber-600 hover:text-amber-800 hover:underline",
   },
+  {
+    key: "scheduleDocs",
+    label: "排期文档",
+    shortLabel: "排期",
+    placeholder:
+      "请输入排期文档链接，多个链接用换行、空格、逗号或分号分隔",
+    tooltip: MULTIPLE_LINK_TOOLTIP,
+    linkColorClassName: "text-cyan-600 hover:text-cyan-800 hover:underline",
+  },
 ]
 
 export const getIterationFieldName = (
