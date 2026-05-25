@@ -7,6 +7,7 @@
 ## 🛠️ 工具链
 
 ### 1. Conventional Changelog - 自动生成changelog
+
 ```bash
 # 生成最新版本的changelog
 pnpm run changelog
@@ -16,6 +17,7 @@ pnpm run changelog:all
 ```
 
 ### 2. 自定义脚本 - 备用方案
+
 ```bash
 # 使用自定义脚本生成changelog
 bash scripts/generate-changelog.sh
@@ -26,6 +28,7 @@ bash scripts/generate-changelog.sh
 虽然我们没有强制校验，但建议使用Angular提交格式：
 
 ### 基本格式
+
 ```
 <type>: <subject>
 
@@ -35,6 +38,7 @@ bash scripts/generate-changelog.sh
 ```
 
 ### 类型 (type)
+
 - `feat`: 新功能
 - `fix`: 修复bug
 - `docs`: 文档变更
@@ -48,6 +52,7 @@ bash scripts/generate-changelog.sh
 - `revert`: 回滚之前的commit
 
 ### 示例
+
 ```bash
 # ✅ 推荐的提交信息
 feat: Add user authentication system
@@ -65,6 +70,7 @@ chore: 更新依赖包
 ## 🔄 CI流程
 
 ### 自动化流程
+
 1. **检测release commit**: `chore(release): x.x.x`
 2. **生成changelog**: 使用`conventional-changelog`工具
 3. **构建扩展**: Chrome和Firefox版本
@@ -72,6 +78,7 @@ chore: 更新依赖包
 5. **更新CHANGELOG.md**: 自动提交更新
 
 ### 手动流程
+
 ```bash
 # 1. 更新版本号
 pnpm run version:patch  # 或 minor, major
@@ -84,17 +91,18 @@ git push origin main
 
 ## 📊 优势
 
-| 方面 | 之前（复杂工具链） | 现在（简化方案） |
-|------|------------------|----------------|
-| **配置复杂度** | 高（多个工具+钩子） | 低（单一工具） |
-| **稳定性** | 容易出错 | 稳定可靠 |
-| **维护成本** | 高 | 低 |
-| **功能** | 完整但复杂 | 核心功能完整 |
-| **学习成本** | 高 | 低 |
+| 方面           | 之前（复杂工具链）  | 现在（简化方案） |
+| -------------- | ------------------- | ---------------- |
+| **配置复杂度** | 高（多个工具+钩子） | 低（单一工具）   |
+| **稳定性**     | 容易出错            | 稳定可靠         |
+| **维护成本**   | 高                  | 低               |
+| **功能**       | 完整但复杂          | 核心功能完整     |
+| **学习成本**   | 高                  | 低               |
 
 ## 🎯 使用建议
 
 ### 开发时
+
 ```bash
 # 推荐使用规范的提交信息
 git commit -m "feat: Add new feature"
@@ -103,6 +111,7 @@ git commit -m "docs: Update README"
 ```
 
 ### 发布时
+
 ```bash
 # 使用版本管理脚本
 pnpm run version:patch
@@ -110,6 +119,7 @@ git push origin main
 ```
 
 ### 手动生成changelog
+
 ```bash
 # 如果需要手动生成
 pnpm run changelog
@@ -118,6 +128,7 @@ pnpm run changelog
 ## 🔧 配置说明
 
 ### package.json
+
 ```json
 {
   "scripts": {
@@ -128,6 +139,7 @@ pnpm run changelog
 ```
 
 ### CI流程
+
 - 使用`conventional-changelog`工具自动生成
 - 自动更新CHANGELOG.md文件
 - 在release中包含changelog内容

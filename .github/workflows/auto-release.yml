@@ -10,9 +10,9 @@ on:
       - 'README.md'
       - 'README_CN.md'
       - 'RELEASE_GUIDE.md'
-      - 'edge-market-description.md'
-      - 'edge-tester-info.md'
-      - '需求-*.md'
+      - 'docs/publish/edge-market-description.md'
+      - 'docs/publish/edge-tester-info.md'
+      - 'docs/需求/**'
 
 jobs:
   auto-release:

@@ -10,7 +10,7 @@
     - ui 组件：Input.Textarea
     - 默认值预设：空值，给出提示如：`http://127.0.0.1:4523/export/openapi/3?version=3.0`
     - 交互校验说明：当用户填写完后，自动请求该接口是否能够获取正确的 swagger schema 信息，若不能，校验不过；
-  - tag: 
+  - tag:
     - ui 组件为 Select 组件，支持多选，选项值为基于上面 请求拉取获得的 tag 汇总列表；
     - 默认值：空
     - 联动：当前面字段填写的时候，自动更新此选项列表；
@@ -29,6 +29,3 @@
   - x-apifox-fe-general-model-base-action-type: 该字段为 apifox 自定义字段，用于作为分组名，每个接口都应该有该字段，若没有，则将该接口分配至 默认分组；
   - paths: 对象的 key 即为 url，里面的 key 为请求方法；
   - summary: 该字段作为接口中文名字
-
-
-

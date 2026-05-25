@@ -7,17 +7,20 @@
 ## 🛠️ 工具链
 
 ### 1. Commitizen - 交互式提交
+
 ```bash
 # 使用交互式提交工具
 pnpm run commit
 ```
 
 ### 2. Commitlint - 提交信息校验
+
 - 自动校验提交信息格式
 - 通过husky钩子在提交前执行
 - 支持自定义规则
 
 ### 3. Conventional Changelog - 自动生成changelog
+
 ```bash
 # 生成最新版本的changelog
 pnpm run changelog
@@ -27,12 +30,14 @@ pnpm run changelog:all
 ```
 
 ### 4. Husky - Git钩子管理
+
 - 自动配置pre-commit和commit-msg钩子
 - 确保代码质量和提交规范
 
 ## 📝 提交格式规范
 
 ### 基本格式
+
 ```
 <type>(<scope>): <subject>
 
@@ -42,6 +47,7 @@ pnpm run changelog:all
 ```
 
 ### 类型 (type)
+
 - `feat`: 新功能
 - `fix`: 修复bug
 - `docs`: 文档变更
@@ -55,6 +61,7 @@ pnpm run changelog:all
 - `revert`: 回滚之前的commit
 
 ### 示例
+
 ```bash
 # ✅ 正确的提交信息
 feat: Add user authentication system
@@ -70,11 +77,13 @@ feat add feature              # 缺少冒号
 ## 🔄 CI流程简化
 
 ### 之前（自定义脚本）
+
 - 复杂的bash脚本处理commit分类
 - 手动解析git历史
 - 容易出错，难以维护
 
 ### 现在（使用工具）
+
 - 使用`conventional-changelog`工具
 - 自动解析Angular格式的提交
 - 生成标准化的changelog
@@ -83,6 +92,7 @@ feat add feature              # 缺少冒号
 ## 🎯 使用流程
 
 ### 1. 开发新功能
+
 ```bash
 # 1. 编写代码
 # 2. 使用交互式提交
@@ -95,6 +105,7 @@ pnpm run commit
 ```
 
 ### 2. 发布新版本
+
 ```bash
 # 1. 更新版本号
 pnpm run version:patch  # 或 minor, major
@@ -111,17 +122,18 @@ git push origin main
 
 ## 📊 优势对比
 
-| 方面 | 之前（自定义脚本） | 现在（工具链） |
-|------|------------------|----------------|
-| **代码量** | ~100行bash脚本 | ~10行配置 |
-| **维护性** | 需要手动维护 | 工具自动处理 |
-| **可靠性** | 容易出错 | 经过验证的工具 |
-| **标准化** | 自定义格式 | Angular标准格式 |
-| **功能** | 基础分类 | 丰富的分类和链接 |
+| 方面       | 之前（自定义脚本） | 现在（工具链）   |
+| ---------- | ------------------ | ---------------- |
+| **代码量** | ~100行bash脚本     | ~10行配置        |
+| **维护性** | 需要手动维护       | 工具自动处理     |
+| **可靠性** | 容易出错           | 经过验证的工具   |
+| **标准化** | 自定义格式         | Angular标准格式  |
+| **功能**   | 基础分类           | 丰富的分类和链接 |
 
 ## 🔧 配置说明
 
 ### commitlint.config.js
+
 ```javascript
 export default {
   extends: ['@commitlint/config-conventional'],
@@ -134,6 +146,7 @@ export default {
 ```
 
 ### package.json
+
 ```json
 {
   "scripts": {

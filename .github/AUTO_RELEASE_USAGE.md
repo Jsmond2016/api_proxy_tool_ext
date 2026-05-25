@@ -23,7 +23,7 @@
 # 补丁版本 (1.0.0 -> 1.0.1)
 pnpm run version:patch
 
-# 次要版本 (1.0.0 -> 1.1.0)  
+# 次要版本 (1.0.0 -> 1.1.0)
 pnpm run version:minor
 
 # 主要版本 (1.0.0 -> 2.0.0)
@@ -31,6 +31,7 @@ pnpm run version:major
 ```
 
 这些命令会自动：
+
 - 更新 `package.json` 中的版本号
 - 创建符合格式的 commit 消息
 - 推送到远程仓库
@@ -53,6 +54,7 @@ git push origin main
 ## Commit 消息格式
 
 **正确格式：**
+
 ```
 chore(release): 1.0.1
 chore(release): 2.1.0
@@ -62,6 +64,7 @@ chore(release): 2.1.0-rc.1
 ```
 
 **错误格式：**
+
 ```
 chore(release): v1.0.1          # 不要包含 v 前缀
 chore(release): 1.0.1 "fix bug" # 不要包含额外描述
@@ -72,22 +75,26 @@ feat: add new feature           # 不是发布类型
 ## 工作流程
 
 ### 1. 自动检测
+
 - 监听推送到 `main` 分支的 commit
 - 解析 commit 消息，提取版本号
 - 验证版本格式（支持 `x.x.x` 和 `x.x.x-prerelease` 格式）
 
 ### 2. 安全检查
+
 - 检查版本 tag 是否已存在
 - 如果 tag 已存在，跳过发布流程
 - 避免重复发布同一版本
 
 ### 3. 构建流程
+
 - 安装依赖 (`pnpm install`)
 - 构建 Chrome 扩展 (`pnpm run build:chrome`)
 - 构建 Firefox 扩展 (`pnpm run build:firefox`)
 - 验证构建输出
 
 ### 4. 打包发布
+
 - 创建 Chrome 扩展 ZIP 包
 - 创建 Firefox 扩展 ZIP 包
 - 创建 Git tag (`vx.x.x`)
@@ -104,6 +111,7 @@ feat: add new feature           # 不是发布类型
 ## 监控和调试
 
 ### 查看工作流状态
+
 1. 访问 GitHub Actions 页面
 2. 查看 "Auto Release on Commit" 工作流
 3. 检查运行日志
@@ -112,21 +120,24 @@ feat: add new feature           # 不是发布类型
 
 **Q: 为什么我的 commit 没有触发发布？**
 A: 请检查：
+
 - Commit 消息格式是否正确：`chore(release): x.x.x`
 - 是否推送到 `main` 分支
 - 版本 tag 是否已存在
 
 **Q: 如何跳过某些文件的更改？**
 A: 工作流已配置忽略以下文件：
+
 - `README.md`
-- `README_CN.md` 
+- `README_CN.md`
 - `RELEASE_GUIDE.md`
-- `edge-market-description.md`
-- `edge-tester-info.md`
-- `需求-*.md`
+- `docs/publish/edge-market-description.md`
+- `docs/publish/edge-tester-info.md`
+- `docs/需求/**`
 
 **Q: 发布失败怎么办？**
 A: 检查：
+
 - 构建是否成功
 - 是否有足够的权限创建 tag 和 release
 - 网络连接是否正常
@@ -134,13 +145,14 @@ A: 检查：
 ## 与现有流程的兼容性
 
 - ✅ 不影响现有的 `ci.yml` 工作流
-- ✅ 不影响现有的 `release.yml` 工作流  
+- ✅ 不影响现有的 `release.yml` 工作流
 - ✅ 不影响现有的 `scripts/release.sh` 脚本
 - ✅ 可以同时使用手动发布和自动发布
 
 ## 权限要求
 
 确保 GitHub Actions 具有以下权限：
+
 - `contents: write` - 创建 tag 和 release
 - `packages: write` - 上传发布资源
 
@@ -190,11 +202,13 @@ git push origin main
 如果遇到问题，请检查：
 
 1. **Commit 消息格式**
+
    ```bash
    git log -1 --pretty=%B  # 查看最新 commit 消息
    ```
 
 2. **Tag 是否存在**
+
    ```bash
    git tag -l | grep v1.0.1  # 检查特定版本 tag
    ```
