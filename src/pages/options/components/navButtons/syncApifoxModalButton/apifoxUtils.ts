@@ -21,6 +21,7 @@ export interface ParsedApi {
   path: string
   method: string
   summary: string
+  link?: string
   tags: string[]
   groupName: string
   authPointKey: string
@@ -52,6 +53,12 @@ export interface SwaggerData {
   }
   tags: Array<{ name: string }>
   paths: Record<string, Record<string, SwaggerApiInfo>>
+}
+
+export const normalizeApifoxLink = (link?: string) => {
+  if (!link) return ""
+
+  return link.replace(/-(?:run|link)(?=\/?$|[?#])/i, "")
 }
 
 /**
@@ -126,6 +133,7 @@ export const convertParsedApisToModules = (
         id: finalId,
         apiKey: api.path,
         apiName: api.summary,
+        link: api.link,
         apiUrl: api.path,
         redirectURL: `${apifoxConfig.mockPrefix}${api.path}`,
         method,
@@ -170,6 +178,7 @@ export const parseSwaggerData = (
         const tags = swaggerInfo.tags || []
         const summary = swaggerInfo.summary || `${method.toUpperCase()} ${path}`
         const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX]
+        const normalizedApifoxLink = normalizeApifoxLink(xApifoxRunUrl)
         // eg: x-run-in-apifox: "https://apifox.com/web/project/123456789/apis/api-102913012-run"
         // 提取中间的数字部分作为 apiId（如 102913012）
         const apiId = xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
@@ -203,6 +212,7 @@ export const parseSwaggerData = (
             path,
             method: method.toUpperCase(),
             summary,
+            link: normalizedApifoxLink,
             tags,
             groupName,
             apiId,

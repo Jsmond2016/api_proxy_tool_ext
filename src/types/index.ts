@@ -3,6 +3,7 @@ export interface ApiConfig {
   id: string
   apiKey: string
   apiName: string
+  link?: string
   apiUrl: string
   redirectURL: string
   method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"

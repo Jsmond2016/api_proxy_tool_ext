@@ -234,16 +234,21 @@ export default function ApiTable() {
       dataIndex: "apiName",
       width: 280,
       render: (_, record: ApiConfig) => {
+        const directLink = record.link?.trim()
         const isApifoxId = /^\d+$/.test(record.id)
-        const canLink = projectId && isApifoxId
+        const fallbackLink =
+          projectId && isApifoxId
+            ? `https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`
+            : ""
+        const apiLink = directLink || fallbackLink
 
         return (
           <Space orientation="vertical" size="small" className="w-full">
             {/* 接口名称 */}
             <div className="text-base font-semibold text-gray-900">
-              {canLink ? (
+              {apiLink ? (
                 <a
-                  href={`https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`}
+                  href={apiLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"

@@ -14,6 +14,7 @@ import {
   validateApifoxUrl,
   SwaggerData,
   ParsedApi,
+  normalizeApifoxLink,
 } from "../../navButtons/syncApifoxModalButton/apifoxUtils"
 import {
   APIFOX_FIELD_RUN_IN_APIFOX,
@@ -78,6 +79,7 @@ const parseApiInfoFromSwagger = (
           const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX] as
             | string
             | undefined
+          const normalizedApifoxLink = normalizeApifoxLink(xApifoxRunUrl)
           const apiId =
             xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
           const groupName =
@@ -106,6 +108,7 @@ const parseApiInfoFromSwagger = (
               path,
               method: method.toUpperCase(),
               summary,
+              link: normalizedApifoxLink,
               tags,
               groupName,
               authPointKey,
@@ -184,6 +187,7 @@ export default function ApiFormDrawer({
 
       form.setFieldsValue({
         apiName: data.apiName,
+        link: data.link,
         apiUrl: data.apiUrl,
         redirectURL: data.redirectURL,
         method: data.method,
@@ -254,6 +258,7 @@ export default function ApiFormDrawer({
       const apiData: Omit<ApiConfig, "id"> = {
         apiKey: values.apiKey || "",
         apiName: values.apiName || "",
+        link: values.link || "",
         apiUrl: values.apiUrl || "",
         redirectURL: values.redirectURL || "",
         method: values.method || "GET",
@@ -316,6 +321,7 @@ export default function ApiFormDrawer({
           apiUrl: fullPath, // 更新为完整的接口地址
           redirectURL, // 使用完整 path 构建重定向 URL
           apiName: apiInfo.summary,
+          link: apiInfo.link,
           method: apiInfo.method as ApiConfig["method"],
           authPointKey: apiInfo.authPointKey,
         })
@@ -363,6 +369,10 @@ export default function ApiFormDrawer({
           // customMockResponses: [],
         }}
       >
+        <Form.Item name="link" hidden>
+          <Input />
+        </Form.Item>
+
         <Form.Item
           label="接口地址"
           name="apiUrl"
