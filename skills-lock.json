@@ -5,13 +5,13 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/code-simplifier/SKILL.md",
-      "computedHash": "1689defbdf8d3ec4ddc1a4cca6da7a90dab73dc8391a0bcc3f6b9cf2ede28a22"
+      "computedHash": "fb10f840a03191d3fcac1211e868af0f4534481dc14e768b9a810fca80727a3e"
     },
     "fe-chrome-ext-store-pre-publish": {
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/fe-chrome-ext-store-pre-publish/SKILL.md",
-      "computedHash": "be3adc87f6e051cf5b7968425715b24df324fa4ca034d4d92d6b5dd3be5a368f"
+      "computedHash": "c79e639e91b57437b2be6b17f302a5368c1e56a338578789b75db885c1db4444"
     },
     "fe-code-review": {
       "source": "jsmond2016/fe-skills",
@@ -29,7 +29,7 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/fe-doc-format/SKILL.md",
-      "computedHash": "474d8431ac75dcae201927beafecf7909efe81e091683c6698c3291a26ad2ae5"
+      "computedHash": "b4a1748bb996383051b2f373c5c3f4cd30b49de23ec521fbab41ad3acb558bad"
     },
     "fe-fullstack-dev": {
       "source": "jsmond2016/fe-skills",
@@ -65,7 +65,7 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/fe-set-ai-base/SKILL.md",
-      "computedHash": "2bbc068fd1fbf37596ac51ee5f59798960e603e5f35ceb8907a7360317a46b73"
+      "computedHash": "5e8af373b41eca0ce928863f0cfcdd63d63dea3dfe81eb4b4b2e5c89a03dab6f"
     },
     "fe-setup-basic-project-env": {
       "source": "jsmond2016/fe-skills",
@@ -89,7 +89,7 @@
       "source": "jsmond2016/fe-skills",
       "sourceType": "github",
       "skillPath": "skills/frontend-design/SKILL.md",
-      "computedHash": "c0785df0e44d95dc11d8136bf502aa94971ae896462d8e7316e0de5909849af0"
+      "computedHash": "9d64906d8b0842c2304a22964d820221e6fb0ef3a2f6e6d551c32222ec7169d1"
     },
     "sync-agent-skills": {
       "source": "jsmond2016/fe-skills",
