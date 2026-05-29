@@ -14,7 +14,6 @@ import {
   useActiveModuleIdStore,
   useConfigStore,
   useHighlightApiStore,
-  useSelectedApiStore,
 } from "@src/store"
 import OperateButtons from "./components/operateButtons/OperateButtons"
 import SearchSelect from "./components/SearchSelect"
@@ -29,7 +28,6 @@ const { Text } = Typography
 
 export default function Options() {
   const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
-  const { setSelectedApiIds } = useSelectedApiStore()
   const { setHighlightApiId } = useHighlightApiStore()
   const { config, setConfig } = useConfigStore()
   const batchQuickMockContext = useMemo(() => {
@@ -92,9 +90,6 @@ export default function Options() {
         }
 
         setBatchQuickMockJob(job)
-        setSelectedApiIds(
-          job.items.filter((item) => !item.error).map((item) => item.apiId)
-        )
 
         const firstSuccessApiId = job.items.find((item) => !item.error)?.apiId
         if (firstSuccessApiId) {
@@ -108,7 +103,6 @@ export default function Options() {
     batchQuickMockContext.enabled,
     batchQuickMockContext.jobId,
     setHighlightApiId,
-    setSelectedApiIds,
   ])
 
   useEffect(() => {

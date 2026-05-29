@@ -19,14 +19,14 @@ export default function BatchQuickMockBanner({
 
   return (
     <Alert
-      className="mx-6 mt-4"
+      className="mx-6 mt-4 batch-quick-mock-banner"
       type={job.status === "failed" ? "error" : "success"}
       showIcon
       closable
       onClose={onClose}
-      message={job.message}
-      description={
-        <Space size={[8, 8]} wrap>
+      message={
+        <Space size={[8, 8]} wrap className="batch-quick-mock-banner-content">
+          <Text strong>{job.message}</Text>
           <Text>总数：{job.total}</Text>
           <Text>成功：{job.successCount}</Text>
           <Text>失败：{job.failCount}</Text>

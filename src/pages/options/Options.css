@@ -54,6 +54,28 @@
   font-size: 13px;
 }
 
+.proxy-tool .batch-quick-mock-banner {
+  margin-top: 12px;
+}
+
+.proxy-tool .batch-quick-mock-banner .ant-alert-message {
+  margin-bottom: 0 !important;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.proxy-tool .batch-quick-mock-banner .ant-alert-description {
+  display: none;
+}
+
+.proxy-tool .batch-quick-mock-banner-content {
+  row-gap: 4px !important;
+}
+
+.proxy-tool .batch-quick-mock-banner .ant-tag {
+  margin-inline-end: 0;
+}
+
 
 /* 自定义滚动条 */
 .proxy-tool ::-webkit-scrollbar {
