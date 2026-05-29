@@ -124,6 +124,62 @@ export interface BackgroundMessageResponse {
   error?: string
 }
 
+// ==================== 跨插件批量 Quick Mock ====================
+
+export const EXTERNAL_BATCH_QUICK_MOCK_REQUEST_TYPE =
+  "BATCH_QUICK_MOCK" as const
+
+export type ExternalBatchQuickMockRequest = {
+  type: typeof EXTERNAL_BATCH_QUICK_MOCK_REQUEST_TYPE
+  requestId: string
+  urls: string[]
+}
+
+export type ExternalBatchQuickMockStatus =
+  | "success"
+  | "partial_success"
+  | "failed"
+
+export interface ExternalBatchQuickMockResponse {
+  success: boolean
+  jobId?: string
+  status: ExternalBatchQuickMockStatus
+  total: number
+  successCount: number
+  failCount: number
+  message: string
+}
+
+export interface BatchQuickMockJobItem {
+  url: string
+  normalizedUrl: string
+  apiId: string
+  apiName: string
+  method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH"
+  moduleId: string
+  moduleLabel: string
+  foundInLocalConfig: boolean
+  foundInApifox: boolean
+  apifoxLink?: string
+  tags?: string[]
+  error?: string
+}
+
+export interface BatchQuickMockJob {
+  jobId: string
+  requestId: string
+  sourceExtensionId: string
+  moduleId: string
+  moduleLabel: string
+  createdAt: number
+  total: number
+  successCount: number
+  failCount: number
+  status: ExternalBatchQuickMockStatus
+  message: string
+  items: BatchQuickMockJobItem[]
+}
+
 // 归档相关类型
 export interface ArchiveData {
   version: string // 归档格式版本

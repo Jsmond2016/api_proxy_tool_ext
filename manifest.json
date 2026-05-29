@@ -30,6 +30,9 @@
     "service_worker": "src/pages/background/index.ts",
     "type": "module"
   },
+  "externally_connectable": {
+    "ids": ["*"]
+  },
   "web_accessible_resources": [
     {
       "resources": [

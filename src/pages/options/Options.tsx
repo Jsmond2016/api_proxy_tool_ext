@@ -10,19 +10,40 @@ import "antd/dist/reset.css"
 import "../../assets/styles/tailwind.css"
 import "./Options.css"
 import NavButtons from "./components/navButtons/NavButtons"
-import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import {
+  useActiveModuleIdStore,
+  useConfigStore,
+  useHighlightApiStore,
+  useSelectedApiStore,
+} from "@src/store"
 import OperateButtons from "./components/operateButtons/OperateButtons"
 import SearchSelect from "./components/SearchSelect"
 import zhCN from "antd/locale/zh_CN"
 import packageJson from "../../../package.json"
+import BatchQuickMockBanner from "./components/BatchQuickMockBanner"
+import { BatchQuickMockJob, ModuleConfig } from "@src/types"
+import { BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX } from "@src/utils/batchQuickMock"
 
 const { Content, Footer } = Layout
 const { Text } = Typography
 
 export default function Options() {
   const { activeModuleId, setActiveModuleId } = useActiveModuleIdStore()
-
+  const { setSelectedApiIds } = useSelectedApiStore()
+  const { setHighlightApiId } = useHighlightApiStore()
   const { config, setConfig } = useConfigStore()
+  const batchQuickMockContext = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    const enabled = params.get("batchQuickMock") === "1"
+    const jobId = params.get("jobId")
+    const moduleId = params.get("moduleId")
+
+    return enabled && jobId && moduleId
+      ? { enabled, jobId, moduleId }
+      : { enabled: false, jobId: null, moduleId: null }
+  }, [])
+  const [batchQuickMockJob, setBatchQuickMockJob] =
+    React.useState<BatchQuickMockJob | null>(null)
   const sourceTabId = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
     const tabId = params.get("sourceTabId")
@@ -56,6 +77,41 @@ export default function Options() {
   })
 
   useEffect(() => {
+    if (!batchQuickMockContext.enabled || !batchQuickMockContext.jobId) {
+      return
+    }
+
+    const storageKey = `${BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX}${batchQuickMockContext.jobId}`
+
+    chrome.storage.session
+      .get([storageKey])
+      .then((result) => {
+        const job = result[storageKey] as BatchQuickMockJob | undefined
+        if (!job) {
+          return
+        }
+
+        setBatchQuickMockJob(job)
+        setSelectedApiIds(
+          job.items.filter((item) => !item.error).map((item) => item.apiId)
+        )
+
+        const firstSuccessApiId = job.items.find((item) => !item.error)?.apiId
+        if (firstSuccessApiId) {
+          setHighlightApiId(firstSuccessApiId)
+        }
+      })
+      .catch((error) => {
+        console.error("Load batch quick mock job error:", error)
+      })
+  }, [
+    batchQuickMockContext.enabled,
+    batchQuickMockContext.jobId,
+    setHighlightApiId,
+    setSelectedApiIds,
+  ])
+
+  useEffect(() => {
     const handleStorageChange = (
       changes: { [key: string]: chrome.storage.StorageChange },
       areaName: string
@@ -69,7 +125,9 @@ export default function Options() {
 
       if (
         latestConfig.modules.length > 0 &&
-        !latestConfig.modules.some((module) => module.id === activeModuleId)
+        !latestConfig.modules.some(
+          (module: ModuleConfig) => module.id === activeModuleId
+        )
       ) {
         setActiveModuleId(latestConfig.modules[0].id)
       }
@@ -85,6 +143,21 @@ export default function Options() {
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId
   )
+
+  useEffect(() => {
+    if (!batchQuickMockContext.enabled || !batchQuickMockContext.moduleId) {
+      return
+    }
+
+    if (activeModuleId !== batchQuickMockContext.moduleId) {
+      setActiveModuleId(batchQuickMockContext.moduleId)
+    }
+  }, [
+    activeModuleId,
+    batchQuickMockContext.enabled,
+    batchQuickMockContext.moduleId,
+    setActiveModuleId,
+  ])
 
   const handleBackToSourceTab = async () => {
     if (sourceTabId === null) {
@@ -133,6 +206,12 @@ export default function Options() {
             onModuleChange={setActiveModuleId}
           />
           {/* 模块信息栏 */}
+          {batchQuickMockJob ? (
+            <BatchQuickMockBanner
+              job={batchQuickMockJob}
+              onClose={() => setBatchQuickMockJob(null)}
+            />
+          ) : null}
           <ModuleInfoBar activeModule={activeModule} config={config} />
           {/* 分组操作栏 */}
           <OperateButtons />

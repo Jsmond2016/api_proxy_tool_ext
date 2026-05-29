@@ -1,9 +1,13 @@
 import {
   ApiConfig,
+  BatchQuickMockJobItem,
   GlobalConfig,
   BackgroundMessage,
   BackgroundMessageResponse,
   BackgroundMessageAction,
+  EXTERNAL_BATCH_QUICK_MOCK_REQUEST_TYPE,
+  ExternalBatchQuickMockRequest,
+  ExternalBatchQuickMockResponse,
 } from "../../types"
 import {
   getDefaultGlobalConfig,
@@ -11,6 +15,17 @@ import {
   ERROR_MESSAGES,
 } from "../../constant/constant"
 import { Logger } from "../../utils/logger"
+import { generateId } from "../../utils/chromeApi"
+import {
+  BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX,
+  BATCH_QUICK_MOCK_MODULE_KEY,
+  BATCH_QUICK_MOCK_MODULE_LABEL,
+  buildBatchQuickMockApi,
+  createBatchQuickMockJob,
+  dedupeBatchQuickMockUrls,
+  fetchApifoxApiMap,
+  findApiByNormalizedUrl,
+} from "../../utils/batchQuickMock"
 
 // ==================== 常量定义 ====================
 
@@ -28,6 +43,7 @@ const ICON_PATHS = {
 
 /** Storage 键名 */
 const STORAGE_KEY = "globalConfig"
+const EXTERNAL_BATCH_QUICK_MOCK_ALLOW_ALL_IDS = true
 
 // ==================== 控制台输出 ====================
 
@@ -236,6 +252,195 @@ async function updateIcon(enabled: boolean): Promise<void> {
     Logger.error(ERROR_MESSAGES.UPDATE_ICON, error)
     Logger.errorDetails(LOG_MESSAGES.ERROR_DETAILS, error)
     // 图标更新失败不影响主要功能，只记录错误
+  }
+}
+
+function isExternalBatchQuickMockRequest(
+  request: unknown
+): request is ExternalBatchQuickMockRequest {
+  if (!request || typeof request !== "object") {
+    return false
+  }
+
+  const payload = request as ExternalBatchQuickMockRequest
+  return (
+    payload.type === EXTERNAL_BATCH_QUICK_MOCK_REQUEST_TYPE &&
+    typeof payload.requestId === "string" &&
+    Array.isArray(payload.urls)
+  )
+}
+
+async function handleExternalBatchQuickMock(
+  request: ExternalBatchQuickMockRequest,
+  sender: chrome.runtime.MessageSender
+): Promise<ExternalBatchQuickMockResponse> {
+  const sourceExtensionId = sender.id || ""
+  if (!sourceExtensionId) {
+    return {
+      success: false,
+      status: "failed",
+      total: 0,
+      successCount: 0,
+      failCount: 0,
+      message: "操作失败",
+    }
+  }
+
+  if (!EXTERNAL_BATCH_QUICK_MOCK_ALLOW_ALL_IDS) {
+    return {
+      success: false,
+      status: "failed",
+      total: 0,
+      successCount: 0,
+      failCount: 0,
+      message: "操作失败",
+    }
+  }
+
+  const normalizedUrls = dedupeBatchQuickMockUrls(request.urls)
+  if (normalizedUrls.length === 0) {
+    return {
+      success: false,
+      status: "failed",
+      total: 0,
+      successCount: 0,
+      failCount: 0,
+      message: "操作失败",
+    }
+  }
+
+  let apifoxApiMap = new Map()
+  try {
+    apifoxApiMap = await fetchApifoxApiMap(globalConfig)
+  } catch (error) {
+    Logger.error("Load Apifox data for batch quick mock failed", error)
+  }
+
+  const batchModuleId =
+    globalConfig.modules.find((module) => module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY)
+      ?.id || generateId()
+
+  const batchItems: BatchQuickMockJobItem[] = []
+  const batchApis: ApiConfig[] = []
+
+  for (const normalizedUrl of normalizedUrls) {
+    try {
+      const localMatch = findApiByNormalizedUrl(globalConfig, normalizedUrl)
+      const parsedApi = apifoxApiMap.get(normalizedUrl)
+      const batchApi = buildBatchQuickMockApi({
+        normalizedUrl,
+        existingApi: localMatch?.api,
+        parsedApi,
+        mockPrefix: globalConfig.apifoxConfig?.mockPrefix || "",
+      })
+
+      batchApis.push(batchApi)
+      batchItems.push({
+        url: normalizedUrl,
+        normalizedUrl,
+        apiId: batchApi.id,
+        apiName: batchApi.apiName,
+        method: batchApi.method,
+        moduleId: batchModuleId,
+        moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+        foundInLocalConfig: Boolean(localMatch),
+        foundInApifox: Boolean(parsedApi),
+        apifoxLink: batchApi.link,
+        tags: batchApi.tags,
+      })
+    } catch (error) {
+      batchItems.push({
+        url: normalizedUrl,
+        normalizedUrl,
+        apiId: "",
+        apiName: normalizedUrl,
+        method: "GET",
+        moduleId: batchModuleId,
+        moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+        foundInLocalConfig: false,
+        foundInApifox: false,
+        error: error instanceof Error ? error.message : "未知错误",
+      })
+    }
+  }
+
+  const nextModules = globalConfig.modules.some(
+    (module) => module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY
+  )
+    ? globalConfig.modules.map((module) =>
+        module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY
+          ? {
+              ...module,
+              label: BATCH_QUICK_MOCK_MODULE_LABEL,
+              apiDocKey: BATCH_QUICK_MOCK_MODULE_KEY,
+              apiArr: batchApis,
+            }
+          : module
+      )
+    : [
+        {
+          id: batchModuleId,
+          apiDocKey: BATCH_QUICK_MOCK_MODULE_KEY,
+          label: BATCH_QUICK_MOCK_MODULE_LABEL,
+          apiDocUrl: globalConfig.apifoxConfig?.apifoxUrl || "",
+          dataWrapper: "",
+          pageDomain: "",
+          requestHeaders: "",
+          apiArr: batchApis,
+        },
+        ...globalConfig.modules,
+      ]
+
+  globalConfig = {
+    ...globalConfig,
+    modules: nextModules,
+  }
+
+  try {
+    await saveConfig()
+    await updateDeclarativeRules()
+  } catch (error) {
+    Logger.error("Persist batch quick mock config failed", error)
+    return {
+      success: false,
+      status: "failed",
+      total: normalizedUrls.length,
+      successCount: 0,
+      failCount: normalizedUrls.length,
+      message: "操作失败",
+    }
+  }
+
+  const jobId = generateId()
+  const job = createBatchQuickMockJob({
+    jobId,
+    requestId: request.requestId,
+    sourceExtensionId,
+    moduleId: batchModuleId,
+    moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+    items: batchItems,
+  })
+
+  await chrome.storage.session.set({
+    [`${BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX}${jobId}`]: job,
+  })
+
+  await chrome.tabs.create({
+    url: `${chrome.runtime.getURL(
+      "src/pages/options/index.html"
+    )}?batchQuickMock=1&jobId=${encodeURIComponent(
+      jobId
+    )}&moduleId=${encodeURIComponent(batchModuleId)}`,
+  })
+
+  return {
+    success: job.status !== "failed",
+    jobId,
+    status: job.status,
+    total: job.total,
+    successCount: job.successCount,
+    failCount: job.failCount,
+    message: job.message,
   }
 }
 
@@ -474,6 +679,41 @@ function handleMessage(
 
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener(handleMessage)
+
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  ;(async () => {
+    try {
+      await ensureInitialized()
+
+      if (!isExternalBatchQuickMockRequest(request)) {
+        sendResponse({
+          success: false,
+          status: "failed",
+          total: 0,
+          successCount: 0,
+          failCount: 0,
+          message: "操作失败",
+        } satisfies ExternalBatchQuickMockResponse)
+        return
+      }
+
+      const response = await handleExternalBatchQuickMock(request, sender)
+      sendResponse(response)
+    } catch (error) {
+      Logger.error("Handle external batch quick mock failed", error)
+      sendResponse({
+        success: false,
+        status: "failed",
+        total: 0,
+        successCount: 0,
+        failCount: 0,
+        message: "操作失败",
+      } satisfies ExternalBatchQuickMockResponse)
+    }
+  })()
+
+  return true
+})
 
 // 监听来自扩展内部的请求（用于快速联调）
 // 注意：在 Manifest V3 中，我们需要使用 fetch 拦截来处理快速联调
