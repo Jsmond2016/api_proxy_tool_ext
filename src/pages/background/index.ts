@@ -18,9 +18,8 @@ import { Logger } from "../../utils/logger"
 import { generateId } from "../../utils/chromeApi"
 import {
   BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX,
-  BATCH_QUICK_MOCK_MODULE_KEY,
-  BATCH_QUICK_MOCK_MODULE_LABEL,
   buildBatchQuickMockApi,
+  buildUniqueBatchQuickMockModuleMeta,
   createBatchQuickMockJob,
   dedupeBatchQuickMockUrls,
   fetchApifoxApiMap,
@@ -316,9 +315,9 @@ async function handleExternalBatchQuickMock(
     Logger.error("Load Apifox data for batch quick mock failed", error)
   }
 
-  const batchModuleId =
-    globalConfig.modules.find((module) => module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY)
-      ?.id || generateId()
+  const batchModuleId = generateId()
+  const { label: batchModuleLabel, apiDocKey: batchModuleKey } =
+    buildUniqueBatchQuickMockModuleMeta(globalConfig.modules)
 
   const batchItems: BatchQuickMockJobItem[] = []
   const batchApis: ApiConfig[] = []
@@ -342,7 +341,7 @@ async function handleExternalBatchQuickMock(
         apiName: batchApi.apiName,
         method: batchApi.method,
         moduleId: batchModuleId,
-        moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+        moduleLabel: batchModuleLabel,
         foundInLocalConfig: Boolean(localMatch),
         foundInApifox: Boolean(parsedApi),
         apifoxLink: batchApi.link,
@@ -356,7 +355,7 @@ async function handleExternalBatchQuickMock(
         apiName: normalizedUrl,
         method: "GET",
         moduleId: batchModuleId,
-        moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+        moduleLabel: batchModuleLabel,
         foundInLocalConfig: false,
         foundInApifox: false,
         error: error instanceof Error ? error.message : "未知错误",
@@ -364,32 +363,19 @@ async function handleExternalBatchQuickMock(
     }
   }
 
-  const nextModules = globalConfig.modules.some(
-    (module) => module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY
-  )
-    ? globalConfig.modules.map((module) =>
-        module.apiDocKey === BATCH_QUICK_MOCK_MODULE_KEY
-          ? {
-              ...module,
-              label: BATCH_QUICK_MOCK_MODULE_LABEL,
-              apiDocKey: BATCH_QUICK_MOCK_MODULE_KEY,
-              apiArr: batchApis,
-            }
-          : module
-      )
-    : [
-        {
-          id: batchModuleId,
-          apiDocKey: BATCH_QUICK_MOCK_MODULE_KEY,
-          label: BATCH_QUICK_MOCK_MODULE_LABEL,
-          apiDocUrl: globalConfig.apifoxConfig?.apifoxUrl || "",
-          dataWrapper: "",
-          pageDomain: "",
-          requestHeaders: "",
-          apiArr: batchApis,
-        },
-        ...globalConfig.modules,
-      ]
+  const nextModules = [
+    {
+      id: batchModuleId,
+      apiDocKey: batchModuleKey,
+      label: batchModuleLabel,
+      apiDocUrl: globalConfig.apifoxConfig?.apifoxUrl || "",
+      dataWrapper: "",
+      pageDomain: "",
+      requestHeaders: "",
+      apiArr: batchApis,
+    },
+    ...globalConfig.modules,
+  ]
 
   globalConfig = {
     ...globalConfig,
@@ -417,7 +403,7 @@ async function handleExternalBatchQuickMock(
     requestId: request.requestId,
     sourceExtensionId,
     moduleId: batchModuleId,
-    moduleLabel: BATCH_QUICK_MOCK_MODULE_LABEL,
+    moduleLabel: batchModuleLabel,
     items: batchItems,
   })
 

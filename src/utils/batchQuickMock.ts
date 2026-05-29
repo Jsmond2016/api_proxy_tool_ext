@@ -4,6 +4,7 @@ import {
   BatchQuickMockJobItem,
   ExternalBatchQuickMockStatus,
   GlobalConfig,
+  ModuleConfig,
 } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
 import {
@@ -60,6 +61,25 @@ export const dedupeBatchQuickMockUrls = (urls: string[]) => {
     result.push(normalizedUrl)
     return result
   }, [])
+}
+
+export const buildUniqueBatchQuickMockModuleMeta = (
+  modules: ModuleConfig[]
+) => {
+  const existingLabels = new Set(modules.map((module) => module.label))
+  const existingKeys = new Set(modules.map((module) => module.apiDocKey))
+
+  let suffix = 0
+  let label = BATCH_QUICK_MOCK_MODULE_LABEL
+  let apiDocKey = BATCH_QUICK_MOCK_MODULE_KEY
+
+  while (existingLabels.has(label) || existingKeys.has(apiDocKey)) {
+    suffix += 1
+    label = `${BATCH_QUICK_MOCK_MODULE_LABEL}-${suffix}`
+    apiDocKey = `${BATCH_QUICK_MOCK_MODULE_KEY}-${suffix}`
+  }
+
+  return { label, apiDocKey }
 }
 
 export const findApiByNormalizedUrl = (

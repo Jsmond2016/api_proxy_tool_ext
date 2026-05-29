@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from "react"
+import React, { useEffect, useMemo, useRef } from "react"
 import { useMount, useRequest } from "ahooks"
 import { Layout, message, ConfigProvider, Typography, Button, Tooltip } from "antd"
 import { ArrowLeftOutlined } from "@ant-design/icons"
@@ -42,6 +42,7 @@ export default function Options() {
   }, [])
   const [batchQuickMockJob, setBatchQuickMockJob] =
     React.useState<BatchQuickMockJob | null>(null)
+  const hasActivatedBatchQuickMockModuleRef = useRef(false)
   const sourceTabId = useMemo(() => {
     const params = new URLSearchParams(window.location.search)
     const tabId = params.get("sourceTabId")
@@ -143,13 +144,23 @@ export default function Options() {
       return
     }
 
+    const targetModuleExists = config.modules.some(
+      (module) => module.id === batchQuickMockContext.moduleId
+    )
+    if (!targetModuleExists || hasActivatedBatchQuickMockModuleRef.current) {
+      return
+    }
+
     if (activeModuleId !== batchQuickMockContext.moduleId) {
       setActiveModuleId(batchQuickMockContext.moduleId)
     }
+
+    hasActivatedBatchQuickMockModuleRef.current = true
   }, [
     activeModuleId,
     batchQuickMockContext.enabled,
     batchQuickMockContext.moduleId,
+    config.modules,
     setActiveModuleId,
   ])
 
