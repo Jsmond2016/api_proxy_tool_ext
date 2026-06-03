@@ -1,351 +1,363 @@
 <div align="center">
 <img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128"/>
-<h1>API Proxy Tool - Chrome Extension</h1>
+<h1>API Proxy Tool</h1>
 
-<h3>Modern Browser Extension with React + Vite + TypeScript + TailwindCSS</h3>
+<h3>Chrome & Firefox Extension — Intercept & Redirect API Requests to Mock Servers</h3>
 
-<p>A powerful Chrome extension for intercepting and redirecting API requests to Mock servers, providing convenient interface proxy tools for frontend development.</p>
+<p>A powerful browser extension for frontend development, supporting API proxy, Mock management, Apifox integration, quick mock, archive, and permission point management.</p>
 
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF.svg)](https://vitejs.dev/)
-[![Ant Design](https://img.shields.io/badge/Ant%20Design-5.26.5-0170FE.svg)](https://ant.design/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-6.0.0-0170FE.svg)](https://ant.design/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.8-38B2AC.svg)](https://tailwindcss.com/)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-4285F4.svg)](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)
+[![Edge Add-ons](https://img.shields.io/badge/Edge-Addons-0078D7.svg)](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
 
 <p><strong>📖 中文文档: <a href="README_CN.md">README_CN.md</a></strong></p>
 
 </div>
 
+---
+
 ## 📋 Table of Contents
 
-- [Project Introduction](#project-introduction)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Quick Start](#quick-start)
-  - [Requirements](#requirements)
-  - [Install Dependencies](#install-dependencies)
-  - [Development Mode](#development-mode)
-  - [Production Build](#production-build)
-- [Install Extension](#install-extension)
-- [User Guide](#user-guide)
-- [Project Structure](#project-structure)
-- [Development Guide](#development-guide)
-- [Configuration Format](#configuration-format)
-- [Notes](#notes)
-- [License](#license)
-- [Contributing](#contributing)
+- [Features](#-features)
+- [Tech Stack](#-tech-stack)
+- [Screenshots](#-screenshots)
+- [Quick Start](#-quick-start)
+- [Install Extension](#-install-extension)
+- [User Guide](#-user-guide)
+- [Project Structure](#-project-structure)
+- [Configuration Format](#-configuration-format)
+- [Browser Stores](#-browser-stores)
+- [License](#-license)
 
-
-## 🚀 Project Introduction
-
-API Proxy Tool is a Chrome browser extension developed based on modern frontend technology stack, mainly used for API interface proxy and Mock data management during frontend development. This extension is built based on the [vite-web-extension](https://github.com/JohnBra/vite-web-extension) template, providing a complete Chrome extension development solution.
-
-### Core Values
-- **Improve Development Efficiency**: Quickly configure API proxy, switch Mock data without modifying code
-- **Modular Management**: Support multi-project, multi-module API configuration management
-- **Modern Interface**: Intuitive operation interface based on Ant Design
-- **Flexible Configuration**: Support multiple matching methods and custom responses
+---
 
 ## ✨ Features
 
-### 🎯 Core Features
-- **API Request Interception**: Automatically intercept API requests in pages and redirect to specified Mock URLs
-- **Modular Management**: Support creating multiple modules to categorize different API configurations
-- **Flexible Matching**: Support multiple URL matching methods (contains, exact, regex)
-- **Delay Control**: Configurable API response delay time to simulate real network environment
-- **Mock Response**: Support direct Mock data return without external server
+### 🎯 Core Proxy Features
 
-### 🔧 Management Features
-- **Interface Management**: Add, edit, delete, clone API configurations
-- **Batch Operations**: Support module-level batch switch and reset
-- **Import/Export**: Support JSON format configuration import/export
-- **Global Control**: One-click enable/disable all proxy functions
-- **Real-time Search**: Support quick search by interface name and address
+- **API Request Interception** — Intercept page API requests via `declarativeNetRequest` and redirect to Mock URLs
+- **Multiple Match Modes** — Supports `contains`, `exact`, and `regex` URL matching
+- **Multi-Level Toggle** — Global on/off, module-level batch toggle, individual API on/off with visual feedback
+- **Global Mock** — One-click enable/disable all proxy rules, with icon switch indicator
 
-### 🎨 User Interface
-- **Full-screen Configuration**: Click extension icon to open configuration interface in new tab
-- **Modern UI**: Modern interface design based on Ant Design
-- **Responsive Layout**: Adapt to different screen sizes
-- **Intuitive Operations**: Drag-and-drop sorting, one-click copy and other convenient operations
-- **Real-time Preview**: Configuration changes take effect immediately
+### 📦 Module Management
+
+- **Multi-Module Tabs** — Create, rename, reorder modules via tab interface
+- **Module-Specific Configuration** — Each module supports `apiDocUrl`, `dataWrapper`, `pageDomain`, `requestHeaders`
+- **Default Module** — Auto-creates a default module with example API on first run
+
+### 🔍 Search & Navigation
+
+- **Real-Time Search** — Filter APIs by name, URL, redirect URL, and page route with persistent keyword
+- **API Highlighting** — Auto-scroll and highlight matched APIs when navigating from batch operations or external links
+
+### 🔄 Apifox Integration
+
+- **Sync OpenAPI Data** — Parse Apifox export URLs (OpenAPI/Swagger format) to auto-import API definitions
+- **Tag-Based Filtering** — Select specific tags from Apifox to import only relevant APIs
+- **Tag History** — Remembers the last 10 tag selections
+- **Apifox URL Cache** — Persists Apifox URL across sessions
+- **Smart Auto-Fill** — Automatically fills Apifox fields (group name, API type, run-in-Apifox link) when adding/editing APIs
+- **Swagger Data Caching** — Caches parsed Swagger data for offline access
+
+### ⚡ Quick Mock (Rapid Debugging)
+
+- **Preset Responses** — Predefine reusable JSON mock responses and assign them to APIs
+- **Custom Per-API Mock** — On-the-fly custom response for individual APIs
+- **Batch Quick Mock** — Cross-extension batch Quick Mock via extension external messaging
+- **Job Tracking** — Batch operations create jobs with status tracking and detailed results
+
+### 📋 Iteration & Document Management
+
+- **Tag-Based Iteration Info** — Attach requirement docs, technical docs, prototype links, test cases, and schedule docs to Apifox tags
+- **Visual Info Bar** — Displays iteration docs and API tags in a collapsible alert bar
+- **Copy Iteration Info** — One-click copy iteration info with CR release date selector
+
+### 🗃️ Archive & Snapshot
+
+- **Archive by Tag** — Save module snapshots by Apifox tag into IndexedDB
+- **Archive List** — Browse, view, and restore previous archive records
+- **Iteration Snapshot** — Includes Quick Mock configs and Apifox config snapshots
+
+### 🔐 Permission Point Management
+
+- **Copy Permission Points** — Extract permission points from API routes with CMS menu path format
+- **Batch Permission Copy** — Generate permission data for all APIs across all modules
+- **Group Name Validation** — Validates module label format (e.g., `a.b.c`) before permission copy
+
+### 🛠️ API Operations
+
+- **Add / Edit / Clone / Delete** — Full CRUD with form validation
+- **Batch Delete** — Select multiple APIs and delete in bulk
+- **Migrate Between Modules** — Move APIs from one module to another
+- **Test Mock** — Test redirect URL with mock toggle status check
+- **Clone with Options** — Clone within same module or across modules
+- **Copy URL & Mock URL** — One-click copy API URL or Mock redirect URL
+- **Pagination** — Configurable page size with persistent selection state
+
+### 🔧 Configuration Management
+
+- **Import / Export** — JSON format config import and export
+- **Conflict Detection** — When syncing from Apifox, detects tag label conflicts and offers merge strategies (overwrite / merge)
+- **Module Reset** — Reset individual module or all modules
+- **Popup Back Navigation** — When opened from popup, shows a back button to return to source tab
+
+---
 
 ## 🛠 Tech Stack
 
-### Frontend Framework
-- **React 18.3.1** - Modern user interface library
-- **TypeScript 5.8.3** - Type-safe JavaScript superset
-- **Ant Design 5.26.5** - Enterprise-level UI design language and component library
+### Frontend
 
-### Build Tools
-- **Vite 6.3.5** - Fast build tool and development server
-- **@crxjs/vite-plugin** - Chrome extension Vite plugin
-- **TailwindCSS 4.1.8** - Utility-first CSS framework
+- **React 18.3.1** — UI library
+- **TypeScript 5.8.3** — Type-safe JavaScript
+- **Ant Design 6.0.0** — Component library
+- **TailwindCSS 4.1.8** — Utility-first CSS
 
-### Development Tools
-- **ESLint** - Code quality checking tool
-- **Nodemon** - File change monitoring and auto-restart
-- **pnpm** - Efficient package manager
+### State & Data
+
+- **Zustand** — Lightweight state management with Chrome Storage persistence
+- **IndexedDB** — Archive record storage
+- **Chrome Storage API** — Config persistence
+
+### Build & Development
+
+- **Vite 6.3.5** — Build tool
+- **@crxjs/vite-plugin** — Chrome extension Vite plugin
+- **pnpm 10.5.2** — Package manager
+- **ESLint + Prettier** — Code quality
 
 ### Extension APIs
-- **Chrome Extension Manifest V3** - Latest extension manifest format
-- **declarativeNetRequest** - Declarative network request interception
-- **Chrome Storage API** - Data persistence storage
+
+- **Manifest V3** — Latest extension spec
+- **declarativeNetRequest** — Declarative network request interception
+- **Chrome Storage API** — Data persistence
+- **externally_connectable** — Cross-extension messaging
+
+---
 
 ## 🚀 Quick Start
 
 ### Requirements
 
-- **Node.js**: >= 16.0.0
-- **pnpm**: >= 8.0.0 (Recommended to use pnpm)
-- **Chrome**: >= 88.0.0 (Supports Manifest V3)
+- **Node.js** >= 16.0.0
+- **pnpm** >= 8.0.0
+- **Chrome** >= 88 / **Firefox** >= 109
 
-### Install Dependencies
+### Install & Run
 
 ```bash
-# Clone project
-git clone <repository-url>
-cd vite-web-extension
-
 # Install dependencies
 pnpm install
+
+# Start Chrome dev mode with hot reload
+pnpm dev
+
+# Build for production
+pnpm build        # Chrome
+pnpm build:chrome # Chrome (explicit)
+pnpm build:firefox # Firefox
 ```
 
-### Development Mode
+### Load Extension
 
-```bash
-# Start Chrome extension development mode (hot reload)
-pnpm run dev
+**Chrome:**
 
-# Or specify browser
-pnpm run dev:chrome
-pnpm run dev:firefox
-```
+1. Go to `chrome://extensions/`
+2. Enable "Developer mode"
+3. Click "Load unpacked"
+4. Select the `dist_chrome/` directory
 
-Development mode will:
-- Automatically monitor file changes
-- Real-time rebuild extension
-- Generate development version in `dist_chrome` directory
+**Firefox:**
 
-### Production Build
+1. Go to `about:debugging#/runtime/this-firefox`
+2. Click "Load temporary Add-on"
+3. Select `manifest.json` from `dist_firefox/`
 
-```bash
-# Build Chrome extension
-pnpm run build
-
-# Or specify browser
-pnpm run build:chrome
-pnpm run build:firefox
-```
-
-Production build will:
-- Optimize code and resources
-- Generate compressed version
-- Generate production version in `dist_chrome` directory
-
-## 📦 Install Extension
-
-### Chrome Browser
-
-1. Open Chrome browser
-2. Visit `chrome://extensions/`
-3. Enable "Developer mode" in the top right corner
-4. Click "Load unpacked extension"
-5. Select the project's `dist_chrome` directory
-6. Extension will appear in toolbar after installation
-
-### Firefox Browser
-
-1. Open Firefox browser
-2. Visit `about:debugging#/runtime/this-firefox`
-3. Click "Load temporary Add-on"
-4. Select any file in `dist_firefox` directory (e.g., `manifest.json`)
+---
 
 ## 📖 User Guide
 
-### 1. Open Configuration Interface
-- Click the extension icon in Chrome toolbar
-- System will automatically open configuration interface in new tab
-- Default will have a "Default Module" example
+### 1. Open Configuration Page
 
-### 2. Create Module
-- Click the "+" button on the right side of module tabs
-- Enter module name (e.g., order.management)
-- Module will automatically switch to new module after creation
+- Click the extension icon in the browser toolbar
+- The options page opens in a new tab
 
-### 3. Add API Configuration
-Click "Add" button in the module and fill in the following information:
+### 2. Module Management
 
-- **Interface Address**: Original API address (supports relative paths and complete URLs)
-- **Redirect Address**: Mock server address
-- **Interface Name**: Easy-to-identify name
-- **Request Method**: GET, POST, PUT, DELETE, PATCH
-- **Matching Method**: contains (contains), exact (exact), regex (regex)
-- **Delay Time**: Response delay (milliseconds)
-- **Mock Method**: redirect (redirect) or mockResponse (direct data return)
+- **Add Module**: Click "+" in the tab bar, enter a name (e.g., `order.api`)
+- **Switch Module**: Click any tab to view its APIs
+- **Edit Module**: Right-click or use module edit to set `apiDocUrl`, `dataWrapper`, `pageDomain`
+- **Import APIs**: Use "Sync from Apifox" to auto-import API definitions by tag
 
-### 4. Manage API
-- **Switch Control**: Click switch button to enable/disable individual API
-- **Edit**: Click "Edit" button to modify API configuration
-- **Clone**: Click "Clone" button to quickly copy API configuration
-- **Delete**: Click "Delete" button to remove API configuration
+### 3. Add & Configure an API
 
-### 5. Global Control
-- **Global Switch**: Top switch controls all proxy functions
-- **Module Switch**: Can individually control proxy for a specific module
-- **Reset Function**: Support module reset and global reset
+Click "Add" and fill in:
 
-### 6. Import/Export
-- **Export**: Click "Export" button to download current configuration as JSON file
-- **Import**: Click "Import" button to upload JSON configuration file
+- **API URL** — Original request URL (supports relative paths or full URLs)
+- **Redirect URL** — Mock server URL
+- **Name** — Display name
+- **Method** — GET, POST, PUT, DELETE, PATCH
+- **Match Mode** — `contains`, `exact`, or `regex`
+- **Mock Way** — `redirect` or `mock`
+
+### 4. Quick Mock (Rapid Debugging)
+
+- **Global Setting**: Click the gear icon to configure preset JSON mock responses
+- **Per-API Toggle**: On each API, enable Quick Mock and select a preset or custom response
+- **Batch Quick Mock**: External extensions can send API URLs via `chrome.runtime.sendMessage` to batch-create Quick Mock configurations
+
+### 5. Sync from Apifox
+
+1. Click "Sync from Apifox" button in the top bar
+2. Enter your Apifox OpenAPI export URL
+3. Select the tags you want to import
+4. Choose merge strategy (overwrite / merge) when conflicts exist
+5. APIs are auto-created with redirect URLs based on your Mock prefix
+
+### 6. Archive Snapshots
+
+1. Configure Apifox and select iteration tags
+2. Click "Archive" → "Archive" to save current module state
+3. Browse archives via "View Archives"
+4. Restore a previous archive when needed
+
+### 7. Permission Management
+
+- Click "Copy Permission Points" to extract CMS permission data from your APIs
+- Module labels must follow `a.b.c` format for valid permission group names
+
+### 8. Test Mock
+
+- Click the lightning icon on any API row
+- The test calls the Mock URL and displays the response (status, headers, body)
+
+---
 
 ## 📁 Project Structure
 
 ```
-vite-web-extension/
-├── public/                     # Static resources
-│   ├── icon-128.png           # Extension icon
-│   └── icon-32.png
-├── src/                       # Source code
-│   ├── assets/                # Resource files
-│   │   ├── img/              # Image resources
-│   │   └── styles/           # Style files
-│   ├── locales/              # Internationalization files
-│   ├── pages/                # Extension pages
-│   │   ├── background/       # Background Script
-│   │   ├── options/          # Configuration page
-│   │   │   ├── components/   # Configuration page components
-│   │   │   ├── index.html    # Configuration page HTML
-│   │   │   └── index.tsx     # Configuration page entry
-│   │   └── popup/            # Popup page (deprecated)
-│   ├── types/                # TypeScript type definitions
-│   ├── utils/                # Utility functions
-│   └── global.d.ts           # Global type declarations
-├── dist_chrome/              # Chrome extension build output
-├── dist_firefox/             # Firefox extension build output
-├── manifest.json             # Extension manifest file
-├── vite.config.base.ts       # Vite base configuration
-├── vite.config.chrome.ts     # Chrome build configuration
-├── vite.config.firefox.ts    # Firefox build configuration
-├── tailwind.config.js        # TailwindCSS configuration
-├── tsconfig.json             # TypeScript configuration
-└── package.json              # Project dependency configuration
+api_proxy_tool_ext/
+├── public/                         # Static assets (icons)
+├── scripts/
+│   └── generate-changelog.mjs     # Changelog generator
+├── src/
+│   ├── assets/
+│   │   ├── img/
+│   │   └── styles/                # Global CSS
+│   ├── constant/
+│   │   ├── apifoxFields.ts        # Apifox custom field names
+│   │   ├── constant.ts            # Default config, log/error messages
+│   │   └── model.ts               # Model action constants (CRUD)
+│   ├── locales/en/                # i18n messages
+│   ├── pages/
+│   │   ├── background/            # Service Worker
+│   │   │   └── index.ts           # Rule management, messaging, icon control
+│   │   ├── options/               # Main options page
+│   │   │   ├── components/
+│   │   │   │   ├── listTable/     # API table with actions (clone, migrate, test, delete)
+│   │   │   │   ├── navButtons/    # Top bar buttons (sync, archive, permissions, reset)
+│   │   │   │   ├── operateButtons/# Per-module buttons (add, batch delete, permissions, reset)
+│   │   │   │   ├── ModuleInfoBar.tsx    # Tag & iteration info bar
+│   │   │   │   ├── ModuleTabs.tsx       # Module tab interface
+│   │   │   │   ├── SearchSelect.tsx     # Real-time search
+│   │   │   │   └── BatchQuickMockBanner.tsx # Batch import result banner
+│   │   │   └── Options.tsx        # Main layout
+│   │   └── popup/                 # Popup page (opens options in new tab)
+│   ├── store/                     # Zustand stores
+│   ├── types/                     # TypeScript definitions
+│   └── utils/
+│       ├── archiveUtil.ts         # IndexedDB archive operations
+│       ├── batchQuickMock.ts      # Cross-extension batch Quick Mock
+│       ├── chromeApi.ts           # Chrome API wrapper
+│       ├── configUtil.tsx         # Config save/load helpers
+│       ├── dataProcessor.ts       # Data processing utilities
+│       ├── docUtils.ts            # Document link parsing
+│       ├── logger.ts              # Console logger
+│       └── permissionUtils.ts     # Permission point extraction
+├── manifest.json                  # Extension manifest
+├── package.json
+├── vite.config.chrome.ts
+├── vite.config.firefox.ts
+└── README.md
 ```
 
-## 🔧 Development Guide
-
-### Main Features
-1. **Extension Behavior**: Click icon to open configuration interface in new tab instead of popup
-2. **Default Module**: Automatically create default module with example API on startup
-3. **Full-screen Layout**: Configuration interface uses full-screen layout for better operation experience
-4. **Hot Reload**: Support automatic rebuild on file changes in development mode
-
-### Adding New Features
-1. Define types in `src/types/index.ts`
-2. Add utility functions in `src/utils/`
-3. Create components in `src/pages/options/components/`
-4. Update main interface to integrate new features
-
-### Debugging Tips
-- Use Chrome DevTools to view Background Script logs
-- Use React DevTools in configuration page
-- Check Network panel to view request interception effects
-- Use `console.log` to debug in Background Script
-
-### Custom Configuration
-- Modify `manifest.json` to adjust extension permissions and configuration
-- Update `vite.config.*.ts` to customize build behavior
-- Edit `tailwind.config.js` to customize style theme
+---
 
 ## 📄 Configuration Format
 
-### Import Format Example
-
-- Reference project file: `example-config.json` for import example file;
-- Example json:
+### Import/Export JSON Example
 
 ```json
 [
   {
     "apiDocKey": "order.management",
     "label": "Order Management",
+    "apiDocUrl": "https://docs.example.com/order",
+    "dataWrapper": "data",
+    "pageDomain": "https://admin.example.com",
+    "requestHeaders": "X-Custom-Header: value",
     "apiArr": [
       {
         "apiKey": "/api/orders",
         "apiName": "Get Order List",
-        "apiUrl": "http://localhost:3000/api/orders",
-        "redirectURL": "http://127.0.0.1:4523/mock/api/orders",
+        "apiUrl": "https://api.example.com/orders",
+        "redirectURL": "http://127.0.0.1:4523/mock/orders",
         "method": "get",
         "filterType": "contains",
         "delay": 0,
         "isOpen": true,
         "mockWay": "redirect",
-        "statusCode": 200
+        "statusCode": 200,
+        "authPointKey": "order.queryList",
+        "pageRoute": "/order/list"
       }
     ]
   }
 ]
 ```
 
-### Configuration Field Description
-- `apiDocKey`: Module unique identifier
-- `label`: Module display name
-- `apiKey`: API unique identifier
-- `apiName`: API display name
-- `apiUrl`: Original API address
-- `redirectURL`: Redirect target address
-- `method`: HTTP request method
-- `filterType`: URL matching method
-- `delay`: Response delay time (milliseconds)
-- `isOpen`: Whether enabled
-- `mockWay`: Mock method (redirect/mockResponse)
+### Field Descriptions
 
-## ⚠️ Notes
+| Field            | Description                                |
+| ---------------- | ------------------------------------------ |
+| `apiDocKey`      | Module unique identifier                   |
+| `label`          | Module display name                        |
+| `apiDocUrl`      | Module documentation URL                   |
+| `dataWrapper`    | Response data wrapper path                 |
+| `pageDomain`     | Page domain for route matching             |
+| `requestHeaders` | Custom request headers                     |
+| `apiKey`         | API unique identifier                      |
+| `apiName`        | API display name                           |
+| `apiUrl`         | Original API URL                           |
+| `redirectURL`    | Mock redirect target                       |
+| `method`         | HTTP method (get/post/put/delete/patch)    |
+| `filterType`     | URL matching method (contains/exact/regex) |
+| `delay`          | Response delay in ms                       |
+| `isOpen`         | Whether enabled                            |
+| `mockWay`        | Mock mode (redirect/mockResponse)          |
+| `authPointKey`   | Permission point key                       |
+| `pageRoute`      | Page route identifier                      |
 
-### Permission Requirements
-- Extension needs access to all websites to intercept API requests
-- Requires `declarativeNetRequest` permission for network request interception
-- Requires `storage` permission to save configuration data
+---
 
-### Usage Limitations
-- Some HTTPS websites may limit extension functionality
-- Large number of API interceptions may affect page performance
-- Do not use sensitive data Mock configuration in production environment
+## 🏪 Browser Stores
 
-### Browser Compatibility
-- Chrome >= 88.0.0 (Supports Manifest V3)
-- Firefox >= 109.0.0 (Supports Manifest V3)
-- Other Chromium-based browsers
+- **[Chrome Web Store](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)** — Install from Chrome Web Store
+- **[Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)** — Install from Edge Add-ons
 
-### Development Recommendations
-- Use `pnpm` as package manager for better performance
-- Use `pnpm run dev` to start hot reload during development
-- Regularly backup important configuration data
-- Test with different websites to verify functionality
+---
 
 ## 📄 License
 
 MIT License
 
-## 🤝 Contributing
-
-Welcome to submit Issues and Pull Requests to improve this project!
-
-### Contributing Guide
-1. Fork this repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
-### Development Environment Setup
-1. Clone repository
-2. Run `pnpm install`
-3. Run `pnpm run dev`
-4. Load extension in Chrome for testing
-
 ---
 
 <div align="center">
 <p>If this project helps you, please give it a ⭐️ Star!</p>
-<p>Made with ❤️ by the development team</p>
+<p>Made with ❤️ by Jsmond2016</p>
 </div>

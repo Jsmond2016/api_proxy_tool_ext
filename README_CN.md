@@ -1,348 +1,360 @@
 <div align="center">
 <img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128"/>
-<h1>API Proxy Tool - Chrome 扩展</h1>
+<h1>API Proxy Tool</h1>
 
-<h3>基于 React + Vite + TypeScript + TailwindCSS 的现代化浏览器扩展</h3>
+<h3>Chrome & Firefox 扩展 — 拦截并重定向 API 请求到 Mock 服务器</h3>
 
-<p>一个功能强大的Chrome扩展，用于拦截和重定向API请求到Mock服务器，为前端开发提供便捷的接口代理工具。</p>
+<p>一款功能强大的前端开发浏览器扩展，支持 API 代理、Mock 管理、Apifox 集成、快速联调、存档归档和权限点管理。</p>
 
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF.svg)](https://vitejs.dev/)
-[![Ant Design](https://img.shields.io/badge/Ant%20Design-5.26.5-0170FE.svg)](https://ant.design/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-6.0.0-0170FE.svg)](https://ant.design/)
 [![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.8-38B2AC.svg)](https://tailwindcss.com/)
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-4285F4.svg)](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)
+[![Edge Add-ons](https://img.shields.io/badge/Edge-Addons-0078D7.svg)](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
 
 </div>
 
+---
+
 ## 📋 目录
 
-- [项目介绍](#项目介绍)
-- [功能特性](#功能特性)
-- [技术栈](#技术栈)
-- [快速开始](#快速开始)
-  - [环境要求](#环境要求)
-  - [安装依赖](#安装依赖)
-  - [开发模式](#开发模式)
-  - [构建生产版本](#构建生产版本)
-- [安装扩展](#安装扩展)
-- [使用指南](#使用指南)
-- [项目结构](#项目结构)
-- [开发说明](#开发说明)
-- [配置格式](#配置格式)
-- [注意事项](#注意事项)
-- [许可证](#许可证)
-- [贡献](#贡献)
+- [功能特性](#-功能特性)
+- [技术栈](#-技术栈)
+- [快速开始](#-快速开始)
+- [安装扩展](#-安装扩展)
+- [使用指南](#-使用指南)
+- [项目结构](#-项目结构)
+- [配置格式](#-配置格式)
+- [应用商店](#-应用商店)
+- [许可证](#-许可证)
 
-## 🚀 项目介绍
-
-API Proxy Tool 是一个基于现代前端技术栈开发的Chrome浏览器扩展，主要用于前端开发过程中的API接口代理和Mock数据管理。该扩展基于 [vite-web-extension](https://github.com/JohnBra/vite-web-extension) 模板构建，提供了完整的Chrome扩展开发解决方案。
-
-### 核心价值
-- **提升开发效率**: 快速配置API代理，无需修改代码即可切换Mock数据
-- **模块化管理**: 支持多项目、多模块的API配置管理
-- **现代化界面**: 基于Ant Design的直观操作界面
-- **灵活配置**: 支持多种匹配方式和自定义响应
+---
 
 ## ✨ 功能特性
 
-### 🎯 核心功能
-- **API请求拦截**: 自动拦截页面中的API请求并重定向到指定的Mock URL
-- **模块化管理**: 支持创建多个模块来分类管理不同的API配置
-- **灵活匹配**: 支持多种URL匹配方式（contains、exact、regex）
-- **延迟控制**: 可配置API响应延迟时间，模拟真实网络环境
-- **Mock响应**: 支持直接返回Mock数据，无需外部服务器
+### 🎯 核心代理功能
 
-### 🔧 管理功能
-- **接口管理**: 添加、编辑、删除、克隆API配置
-- **批量操作**: 支持模块级别的批量开关和重置
-- **导入导出**: 支持JSON格式的配置导入导出
-- **全局控制**: 一键开启/关闭所有代理功能
-- **实时搜索**: 支持按接口名称和地址快速搜索
+- **API 请求拦截** — 通过 `declarativeNetRequest` 拦截页面 API 请求，重定向到 Mock 地址
+- **多种匹配模式** — 支持 `contains`（包含）、`exact`（精确）、`regex`（正则）三种 URL 匹配方式
+- **多层级开关** — 全局开关、模块级批量开关、单 API 开关，切换时图标联动
+- **全局 Mock** — 一键开启/关闭所有代理规则，图标状态指示
 
-### 🎨 用户界面
-- **全屏配置**: 点击扩展图标在新标签页打开配置界面
-- **现代化UI**: 基于Ant Design的现代化界面设计
-- **响应式布局**: 适配不同屏幕尺寸
-- **直观操作**: 拖拽排序、一键复制等便捷操作
-- **实时预览**: 配置修改后立即生效
+### 📦 模块管理
+
+- **多模块标签页** — 通过标签页界面创建、重命名、排序模块
+- **模块级配置** — 每个模块支持独立配置 `apiDocUrl`、`dataWrapper`、`pageDomain`、`requestHeaders`
+- **默认模块** — 首次运行时自动创建包含示例接口的默认模块
+
+### 🔍 搜索与导航
+
+- **实时搜索** — 按接口名称、URL、重定向地址、页面路由实时过滤
+- **接口高亮** — 从批量操作或外部链接跳转时自动滚动并高亮目标接口
+
+### 🔄 Apifox 集成
+
+- **同步 OpenAPI 数据** — 解析 Apifox 导出链接（OpenAPI/Swagger 格式），自动导入接口定义
+- **按标签过滤** — 选择特定 Apifox tag 仅导入相关接口
+- **标签历史** — 记录最近 10 次标签选择
+- **地址缓存** — 跨会话持久化 Apifox URL
+- **智能自动填充** — 添加/编辑接口时自动填充 Apifox 分组名、接口类型、运行链接等字段
+- **Swagger 数据缓存** — 缓存解析后的 Swagger 数据，支持离线访问
+
+### ⚡ 快速联调
+
+- **预设响应** — 预定义可复用的 JSON Mock 响应，分配给指定接口
+- **自定义响应** — 为单个接口临时设置自定义响应数据
+- **批量快速联调** — 通过扩展外部消息通信支持跨插件批量创建 Quick Mock
+- **任务追踪** — 批量操作创建任务，包含状态追踪和详细结果
+
+### 📋 迭代与文档管理
+
+- **Tag 迭代信息** — 为 Apifox tag 绑定需求文档、技术文档、原型链接、测试用例、排期文档
+- **信息栏展示** — 在可折叠的提示栏中展示迭代文档和接口标签
+- **复制迭代信息** — 一键复制迭代信息，支持选择 CR 上线时间
+
+### 🗃️ 存档归档
+
+- **按 Tag 归档** — 按 Apifox tag 保存模块快照到 IndexedDB
+- **存档列表** — 浏览、查看、恢复历史存档记录
+- **迭代快照** — 包含 Quick Mock 配置和 Apifox 配置快照
+
+### 🔐 权限点管理
+
+- **复制权限点** — 从接口路由中提取 CMS 权限点，格式化为菜单路径格式
+- **批量复制** — 一键生成所有模块所有接口的权限点数据
+- **分组名校验** — 复制前校验模块标签格式（如 `a.b.c`）
+
+### 🛠️ 接口操作
+
+- **增删改查** — 完整的接口 CRUD，含表单校验
+- **批量删除** — 多选接口后批量删除
+- **跨模块迁移** — 将接口从一个模块迁移到另一个模块
+- **Mock 测试** — 测试 Mock 地址连通性，显示响应状态、头部和体
+- **克隆** — 克隆接口到当前模块或其它模块
+- **复制 URL** — 一键复制接口地址或 Mock 地址
+- **分页** — 可配置每页条数，持久化选中状态
+
+### 🔧 配置管理
+
+- **导入 / 导出** — JSON 格式配置导入导出
+- **冲突检测** — 从 Apifox 同步时检测标签冲突，提供覆盖/合并策略
+- **模块重置** — 支持单个模块重置和全部模块重置
+- **Popup 返回导航** — 从弹窗打开配置页时显示返回按钮
+
+---
 
 ## 🛠 技术栈
 
-### 前端框架
-- **React 18.3.1** - 现代化的用户界面库
-- **TypeScript 5.8.3** - 类型安全的JavaScript超集
-- **Ant Design 5.26.5** - 企业级UI设计语言和组件库
+### 前端
 
-### 构建工具
-- **Vite 6.3.5** - 快速的构建工具和开发服务器
-- **@crxjs/vite-plugin** - Chrome扩展Vite插件
-- **TailwindCSS 4.1.8** - 实用优先的CSS框架
+- **React 18.3.1** — 用户界面库
+- **TypeScript 5.8.3** — 类型安全的 JavaScript
+- **Ant Design 6.0.0** — 组件库
+- **TailwindCSS 4.1.8** — 工具类 CSS 框架
 
-### 开发工具
-- **ESLint** - 代码质量检查工具
-- **Nodemon** - 文件变化监听和自动重启
-- **pnpm** - 高效的包管理器
+### 状态与数据
 
-### 扩展API
-- **Chrome Extension Manifest V3** - 最新的扩展清单格式
-- **declarativeNetRequest** - 声明式网络请求拦截
-- **Chrome Storage API** - 数据持久化存储
+- **Zustand** — 轻量状态管理，Chrome Storage 持久化
+- **IndexedDB** — 存档记录存储
+- **Chrome Storage API** — 配置持久化
+
+### 构建与开发
+
+- **Vite 6.3.5** — 构建工具
+- **@crxjs/vite-plugin** — Chrome 扩展 Vite 插件
+- **pnpm 10.5.2** — 包管理器
+- **ESLint + Prettier** — 代码质量
+
+### 扩展 API
+
+- **Manifest V3** — 最新扩展规范
+- **declarativeNetRequest** — 声明式网络请求拦截
+- **Chrome Storage API** — 数据持久化
+- **externally_connectable** — 跨扩展消息通信
+
+---
 
 ## 🚀 快速开始
 
 ### 环境要求
 
-- **Node.js**: >= 16.0.0
-- **pnpm**: >= 8.0.0 (推荐使用pnpm)
-- **Chrome**: >= 88.0.0 (支持Manifest V3)
+- **Node.js** >= 16.0.0
+- **pnpm** >= 8.0.0
+- **Chrome** >= 88 / **Firefox** >= 109
 
-### 安装依赖
+### 安装与运行
 
 ```bash
-# 克隆项目
-git clone <repository-url>
-cd vite-web-extension
-
 # 安装依赖
 pnpm install
+
+# 启动 Chrome 开发模式（热重载）
+pnpm dev
+
+# 构建生产版本
+pnpm build        # Chrome
+pnpm build:chrome # Chrome（显式）
+pnpm build:firefox # Firefox
 ```
 
-### 开发模式
+### 加载扩展
 
-```bash
-# 启动Chrome扩展开发模式（热重载）
-pnpm run dev
+**Chrome：**
 
-# 或者指定浏览器
-pnpm run dev:chrome
-pnpm run dev:firefox
-```
+1. 打开 `chrome://extensions/`
+2. 开启"开发者模式"
+3. 点击"加载已解压的扩展程序"
+4. 选择 `dist_chrome/` 目录
 
-开发模式会：
-- 自动监听文件变化
-- 实时重新构建扩展
-- 在 `dist_chrome` 目录生成开发版本
+**Firefox：**
 
-### 构建生产版本
+1. 打开 `about:debugging#/runtime/this-firefox`
+2. 点击"临时载入附加组件"
+3. 选择 `dist_firefox/` 目录中的 `manifest.json`
 
-```bash
-# 构建Chrome扩展
-pnpm run build
-
-# 或者指定浏览器
-pnpm run build:chrome
-pnpm run build:firefox
-```
-
-生产构建会：
-- 优化代码和资源
-- 生成压缩版本
-- 在 `dist_chrome` 目录生成生产版本
-
-## 📦 安装扩展
-
-### Chrome浏览器
-
-1. 打开Chrome浏览器
-2. 访问 `chrome://extensions/`
-3. 开启右上角的"开发者模式"
-4. 点击"加载已解压的扩展程序"
-5. 选择项目的 `dist_chrome` 目录
-6. 扩展安装完成后会出现在工具栏
-
-### Firefox浏览器
-
-1. 打开Firefox浏览器
-2. 访问 `about:debugging#/runtime/this-firefox`
-3. 点击"临时载入附加组件"
-4. 选择 `dist_firefox` 目录中的任意文件（如 `manifest.json`）
+---
 
 ## 📖 使用指南
 
-### 1. 打开配置界面
-- 点击Chrome工具栏中的扩展图标
-- 系统会自动在新标签页打开配置界面
-- 默认会有一个"默认模块"示例
+### 1. 打开配置页面
 
-### 2. 创建模块
-- 点击模块标签页右侧的"+"按钮
-- 输入模块名称（如：order.management）
-- 模块创建后会自动切换到新模块
+- 点击浏览器工具栏中的扩展图标
+- 配置页面将在新标签页中打开
 
-### 3. 添加API配置
-在模块中点击"添加"按钮，填写以下信息：
+### 2. 模块管理
 
-- **接口地址**: 原始API地址（支持相对路径和完整URL）
-- **重定向地址**: Mock服务器地址
-- **接口名称**: 便于识别的名称
-- **请求方式**: GET、POST、PUT、DELETE、PATCH
-- **匹配方式**: contains（包含）、exact（精确）、regex（正则）
-- **延迟时间**: 响应延迟（毫秒）
-- **Mock方式**: redirect（重定向）或 mockResponse（直接返回数据）
+- **添加模块**：点击标签栏 "+" 号，输入名称（如 `order.api`）
+- **切换模块**：点击标签页查看对应接口列表
+- **编辑模块**：右键或使用模块编辑功能设置 `apiDocUrl`、`dataWrapper`、`pageDomain`
+- **导入接口**：使用"从 Apifox 同步"按 tag 自动导入接口定义
 
-### 4. 管理API
-- **开关控制**: 点击开关按钮启用/禁用单个API
-- **编辑**: 点击"编辑"按钮修改API配置
-- **克隆**: 点击"克隆"按钮快速复制API配置
-- **删除**: 点击"删除"按钮移除API配置
+### 3. 添加与配置接口
 
-### 5. 全局控制
-- **全局开关**: 顶部开关控制所有代理功能
-- **模块开关**: 可单独控制某个模块的代理
-- **重置功能**: 支持模块重置和全局重置
+点击"添加"按钮，填写以下信息：
 
-### 6. 导入导出
-- **导出**: 点击"导出"按钮下载当前配置为JSON文件
-- **导入**: 点击"导入"按钮上传JSON配置文件
+- **接口地址** — 原始请求 URL（支持相对路径或完整 URL）
+- **重定向地址** — Mock 服务器地址
+- **接口名称** — 显示名称
+- **请求方式** — GET、POST、PUT、DELETE、PATCH
+- **匹配方式** — `contains`（包含）、`exact`（精确）或 `regex`（正则）
+- **Mock 方式** — `redirect`（重定向）或 `mock`（直接返回）
+
+### 4. 快速联调
+
+- **全局设置**：点击齿轮图标配置预设 JSON Mock 响应
+- **单接口启用**：在接口行中开启快速联调开关，选择预设或自定义响应
+- **批量快速联调**：外部扩展可通过 `chrome.runtime.sendMessage` 发送接口地址列表，批量创建快速联调配置
+
+### 5. 从 Apifox 同步
+
+1. 点击顶部导航栏的"从 Apifox 同步"按钮
+2. 输入 Apifox OpenAPI 导出链接
+3. 选择需要导入的标签
+4. 冲突时选择合并策略（覆盖/合并）
+5. 系统根据 Mock 前缀自动生成重定向地址
+
+### 6. 存档归档
+
+1. 配置 Apifox 并选择迭代 tag
+2. 点击"存档" → "存档"保存当前模块状态
+3. 通过"查看存档"浏览历史记录
+4. 需要时可恢复之前的存档
+
+### 7. 权限点管理
+
+- 点击"复制权限点"从接口路由中提取 CMS 权限数据
+- 模块标签需遵循 `a.b.c` 格式才能生成有效权限点
+
+### 8. 测试 Mock
+
+- 点击接口行的闪电图标
+- 测试请求会调用 Mock 地址并展示响应信息（状态码、头部、体）
+
+---
 
 ## 📁 项目结构
 
 ```
-vite-web-extension/
-├── public/                     # 静态资源
-│   ├── icon-128.png           # 扩展图标
-│   └── icon-32.png
-├── src/                       # 源代码
-│   ├── assets/                # 资源文件
-│   │   ├── img/              # 图片资源
-│   │   └── styles/           # 样式文件
-│   ├── locales/              # 国际化文件
-│   ├── pages/                # 扩展页面
-│   │   ├── background/       # Background Script
-│   │   ├── options/          # 配置页面
-│   │   │   ├── components/   # 配置页面组件
-│   │   │   ├── index.html    # 配置页面HTML
-│   │   │   └── index.tsx     # 配置页面入口
-│   │   └── popup/            # 弹窗页面（已废弃）
-│   ├── types/                # TypeScript类型定义
-│   ├── utils/                # 工具函数
-│   └── global.d.ts           # 全局类型声明
-├── dist_chrome/              # Chrome扩展构建输出
-├── dist_firefox/             # Firefox扩展构建输出
-├── manifest.json             # 扩展清单文件
-├── vite.config.base.ts       # Vite基础配置
-├── vite.config.chrome.ts     # Chrome构建配置
-├── vite.config.firefox.ts    # Firefox构建配置
-├── tailwind.config.js        # TailwindCSS配置
-├── tsconfig.json             # TypeScript配置
-└── package.json              # 项目依赖配置
+api_proxy_tool_ext/
+├── public/                         # 静态资源（图标）
+├── scripts/
+│   └── generate-changelog.mjs     # CHANGELOG 生成脚本
+├── src/
+│   ├── assets/
+│   │   ├── img/
+│   │   └── styles/                # 全局样式
+│   ├── constant/
+│   │   ├── apifoxFields.ts        # Apifox 自定义字段名
+│   │   ├── constant.ts            # 默认配置、日志/错误消息
+│   │   └── model.ts               # 模型操作常量（CRUD）
+│   ├── locales/en/                # 国际化消息
+│   ├── pages/
+│   │   ├── background/            # Service Worker
+│   │   │   └── index.ts           # 规则管理、消息处理、图标控制
+│   │   ├── options/               # 选项配置页
+│   │   │   ├── components/
+│   │   │   │   ├── listTable/     # API 表格（克隆、迁移、测试、删除）
+│   │   │   │   ├── navButtons/    # 顶栏按钮（同步、存档、权限、重置）
+│   │   │   │   ├── operateButtons/# 操作栏按钮（添加、批量删除、权限、重置）
+│   │   │   │   ├── ModuleInfoBar.tsx    # 标签与迭代信息栏
+│   │   │   │   ├── ModuleTabs.tsx       # 模块标签页
+│   │   │   │   ├── SearchSelect.tsx     # 实时搜索
+│   │   │   │   └── BatchQuickMockBanner.tsx # 批量导入结果横幅
+│   │   │   └── Options.tsx        # 主布局
+│   │   └── popup/                 # 弹窗页（跳转到配置页）
+│   ├── store/                     # Zustand 状态管理
+│   ├── types/                     # TypeScript 类型定义
+│   └── utils/
+│       ├── archiveUtil.ts         # IndexedDB 存档操作
+│       ├── batchQuickMock.ts      # 跨扩展批量快速联调
+│       ├── chromeApi.ts           # Chrome API 封装
+│       ├── configUtil.tsx         # 配置保存/加载辅助
+│       ├── dataProcessor.ts       # 数据处理工具
+│       ├── docUtils.ts            # 文档链接解析
+│       ├── logger.ts              # 控制台日志
+│       └── permissionUtils.ts     # 权限点提取
+├── manifest.json                  # 扩展清单
+├── package.json
+├── vite.config.chrome.ts
+├── vite.config.firefox.ts
+└── README.md
 ```
 
-## 🔧 开发说明
-
-### 主要特性
-1. **扩展行为**: 点击图标在新标签页打开配置界面，而不是弹窗
-2. **默认模块**: 启动时自动创建包含示例API的默认模块
-3. **全屏布局**: 配置界面采用全屏布局，提供更好的操作体验
-4. **热重载**: 开发模式下支持文件变化自动重新构建
-
-### 添加新功能
-1. 在 `src/types/index.ts` 中定义类型
-2. 在 `src/utils/` 中添加工具函数
-3. 在 `src/pages/options/components/` 中创建组件
-4. 更新主界面集成新功能
-
-### 调试技巧
-- 使用Chrome DevTools查看Background Script日志
-- 在配置页面使用React DevTools
-- 检查Network面板查看请求拦截效果
-- 使用 `console.log` 在Background Script中调试
-
-### 自定义配置
-- 修改 `manifest.json` 调整扩展权限和配置
-- 更新 `vite.config.*.ts` 自定义构建行为
-- 编辑 `tailwind.config.js` 自定义样式主题
+---
 
 ## 📄 配置格式
 
-### 导入格式示例
-
-- 可参考项目文件：`example-config.json` 导入示例文件；
-- 示例 json:
+### 导入/导出 JSON 示例
 
 ```json
 [
   {
     "apiDocKey": "order.management",
     "label": "订单管理",
+    "apiDocUrl": "https://docs.example.com/order",
+    "dataWrapper": "data",
+    "pageDomain": "https://admin.example.com",
+    "requestHeaders": "X-Custom-Header: value",
     "apiArr": [
       {
         "apiKey": "/api/orders",
         "apiName": "获取订单列表",
-        "apiUrl": "http://localhost:3000/api/orders",
-        "redirectURL": "http://127.0.0.1:4523/mock/api/orders",
+        "apiUrl": "https://api.example.com/orders",
+        "redirectURL": "http://127.0.0.1:4523/mock/orders",
         "method": "get",
         "filterType": "contains",
         "delay": 0,
         "isOpen": true,
         "mockWay": "redirect",
-        "statusCode": 200
+        "statusCode": 200,
+        "authPointKey": "order.queryList",
+        "pageRoute": "/order/list"
       }
     ]
   }
 ]
 ```
 
-### 配置字段说明
-- `apiDocKey`: 模块唯一标识
-- `label`: 模块显示名称
-- `apiKey`: API唯一标识
-- `apiName`: API显示名称
-- `apiUrl`: 原始API地址
-- `redirectURL`: 重定向目标地址
-- `method`: HTTP请求方法
-- `filterType`: URL匹配方式
-- `delay`: 响应延迟时间（毫秒）
-- `isOpen`: 是否启用
-- `mockWay`: Mock方式（redirect/mockResponse）
+### 字段说明
 
-## ⚠️ 注意事项
+| 字段             | 说明                                       |
+| ---------------- | ------------------------------------------ |
+| `apiDocKey`      | 模块唯一标识                               |
+| `label`          | 模块显示名称                               |
+| `apiDocUrl`      | 模块文档链接                               |
+| `dataWrapper`    | 响应数据包装路径                           |
+| `pageDomain`     | 页面域名                                   |
+| `requestHeaders` | 自定义请求头                               |
+| `apiKey`         | 接口唯一标识                               |
+| `apiName`        | 接口显示名称                               |
+| `apiUrl`         | 原始接口地址                               |
+| `redirectURL`    | Mock 重定向地址                            |
+| `method`         | HTTP 请求方法（get/post/put/delete/patch） |
+| `filterType`     | URL 匹配方式（contains/exact/regex）       |
+| `delay`          | 响应延迟（毫秒）                           |
+| `isOpen`         | 是否启用                                   |
+| `mockWay`        | Mock 方式（redirect/mockResponse）         |
+| `authPointKey`   | 权限点标识                                 |
+| `pageRoute`      | 页面路由                                   |
 
-### 权限要求
-- 扩展需要访问所有网站权限来拦截API请求
-- 需要 `declarativeNetRequest` 权限进行网络请求拦截
-- 需要 `storage` 权限保存配置数据
+---
 
-### 使用限制
-- 某些HTTPS网站可能限制扩展功能
-- 大量API拦截可能影响页面性能
-- 请勿在生产环境使用敏感数据的Mock配置
+## 🏪 应用商店
 
-### 浏览器兼容性
-- Chrome >= 88.0.0 (支持Manifest V3)
-- Firefox >= 109.0.0 (支持Manifest V3)
-- 其他基于Chromium的浏览器
+- **[Chrome Web Store](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)** — 从 Chrome 应用商店安装
+- **[Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)** — 从 Edge 加载项安装
 
-### 开发建议
-- 使用 `pnpm` 作为包管理器以获得更好的性能
-- 开发时使用 `pnpm run dev` 启动热重载
-- 定期备份重要的配置数据
-- 测试时使用不同的网站验证功能
+---
 
 ## 📄 许可证
 
 MIT License
 
-## 🤝 贡献
-
-欢迎提交Issue和Pull Request来改进这个项目！
-
-### 贡献指南
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 打开 Pull Request
-
-### 开发环境设置
-1. 克隆仓库
-2. 运行 `pnpm install`
-3. 运行 `pnpm run dev`
-4. 在Chrome中加载扩展进行测试
-
 ---
 
 <div align="center">
 <p>如果这个项目对你有帮助，请给个 ⭐️ Star 支持一下！</p>
-<p>Made with ❤️ by the development team</p>
+<p>Made with ❤️ by Jsmond2016</p>
 </div>
