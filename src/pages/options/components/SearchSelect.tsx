@@ -89,7 +89,9 @@ const SearchSelect = () => {
       }}
       notFoundContent="未找到匹配的接口"
       options={getAllApis().map((api) => ({
-        value: api.apiUrl,
+        // 使用唯一前缀 ID 作为 value，避免用户输入的文本精确匹配 apiUrl 时触发 AutoComplete
+        // 的"选中状态"渲染，将多行的 label 注入到输入框导致高度撑开
+        value: `__search_option_${api.id}`,
         label: (
           <div className="py-2">
             <div className="font-medium text-sm">{api.apiName}</div>
