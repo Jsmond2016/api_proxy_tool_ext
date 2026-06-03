@@ -4,7 +4,7 @@
 
 <h3>Chrome & Firefox Extension — Intercept & Redirect API Requests to Mock Servers</h3>
 
-<p>A powerful browser extension for frontend development, supporting API proxy, Mock management, Apifox integration, quick mock, archive, and permission point management.</p>
+<p>A powerful browser extension for frontend development, supporting API proxy, Mock management, Apifox integration, cross-extension batch quick mock, archive, and permission point management.</p>
 
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
@@ -64,12 +64,12 @@
 - **Smart Auto-Fill** — Automatically fills Apifox fields (group name, API type, run-in-Apifox link) when adding/editing APIs
 - **Swagger Data Caching** — Caches parsed Swagger data for offline access
 
-### ⚡ Quick Mock (Rapid Debugging)
+### ⚡ Cross-Extension Batch Quick Mock
 
-- **Preset Responses** — Predefine reusable JSON mock responses and assign them to APIs
-- **Custom Per-API Mock** — On-the-fly custom response for individual APIs
-- **Batch Quick Mock** — Cross-extension batch Quick Mock via extension external messaging
-- **Job Tracking** — Batch operations create jobs with status tracking and detailed results
+- **External Extension Integration** — Other extensions can send API URL lists via `chrome.runtime.sendMessage` to batch-create mock configurations
+- **Automatic Module Creation** — Creates a dedicated module with all APIs auto-configured with mock URLs
+- **Apifox Data Enhancement** — Enriches imported APIs with Apifox metadata (tags, links) when Apifox is configured
+- **Result Banner** — Displays batch import results with success/failure counts and API highlights
 
 ### 📋 Iteration & Document Management
 
@@ -101,7 +101,6 @@
 
 ### 🔧 Configuration Management
 
-- **Import / Export** — JSON format config import and export
 - **Conflict Detection** — When syncing from Apifox, detects tag label conflicts and offers merge strategies (overwrite / merge)
 - **Module Reset** — Reset individual module or all modules
 - **Popup Back Navigation** — When opened from popup, shows a back button to return to source tab
@@ -204,11 +203,12 @@ Click "Add" and fill in:
 - **Match Mode** — `contains`, `exact`, or `regex`
 - **Mock Way** — `redirect` or `mock`
 
-### 4. Quick Mock (Rapid Debugging)
+### 4. Batch Quick Mock (Cross-Extension)
 
-- **Global Setting**: Click the gear icon to configure preset JSON mock responses
-- **Per-API Toggle**: On each API, enable Quick Mock and select a preset or custom response
-- **Batch Quick Mock**: External extensions can send API URLs via `chrome.runtime.sendMessage` to batch-create Quick Mock configurations
+- External extensions send API URL lists via `chrome.runtime.sendMessage` (`type: "BATCH_QUICK_MOCK"`)
+- The extension auto-creates a dedicated module with all APIs configured
+- A result banner shows import status with API highlights for quick navigation
+- Supports deduplication and Apifox data enrichment when configured
 
 ### 5. Sync from Apifox
 
@@ -289,7 +289,7 @@ api_proxy_tool_ext/
 
 ## 📄 Configuration Format
 
-### Import/Export JSON Example
+### Configuration JSON Example
 
 ```json
 [
