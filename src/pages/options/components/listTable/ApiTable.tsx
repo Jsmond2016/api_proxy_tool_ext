@@ -50,7 +50,7 @@ export default function ApiTable() {
   const [pageSize, setPageSize] = useState(20)
 
   const activeModule = config.modules.find(
-    (module) => module.id === activeModuleId
+    (module) => module.id === activeModuleId,
   )
   const apis = activeModule?.apiArr || []
   // 过滤API数据
@@ -112,7 +112,7 @@ export default function ApiTable() {
     // 4. 延迟滚动
     const timer = setTimeout(() => {
       const element = document.querySelector(
-        `[data-api-id="${highlightApiId}"]`
+        `[data-api-id="${highlightApiId}"]`,
       )
       if (element) {
         element.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -137,7 +137,7 @@ export default function ApiTable() {
         modules: currentConfig.modules.map((module) => ({
           ...module,
           apiArr: module.apiArr.map((api) =>
-            api.id === apiId ? { ...api, isOpen: enabled } : api
+            api.id === apiId ? { ...api, isOpen: enabled } : api,
           ),
         })),
       }
@@ -170,7 +170,7 @@ export default function ApiTable() {
                   isOpen: enabled,
                 })),
               }
-            : module
+            : module,
         ),
       }
 
@@ -267,7 +267,7 @@ export default function ApiTable() {
                 className="cursor-pointer !text-blue-600 hover:!text-blue-800 text-xs mt-1"
                 onClick={(e) => {
                   e.stopPropagation()
-                  copyText(record.apiUrl)
+                  copyText(record.apiUrl.replace(/^\/api\/saas/, ""))
                 }}
               />
               <Paragraph type="secondary" className="mb-0 text-sm">
