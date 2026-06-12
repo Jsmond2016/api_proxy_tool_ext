@@ -9,6 +9,8 @@ import {
   Modal,
   Form,
   DatePicker,
+  Input,
+  Divider,
 } from "antd"
 import { CopyOutlined, DownOutlined } from "@ant-design/icons"
 import { ModuleConfig, GlobalConfig } from "@src/types"
@@ -52,7 +54,12 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     Record<string, IterationInfo>
   >({})
   const [isCRModalOpen, setIsCRModalOpen] = useState(false)
+  const [isIterationModalOpen, setIsIterationModalOpen] = useState(false)
   const [crForm] = Form.useForm()
+
+  // 实时监听 CR 表单字段变化，用于预览
+  const crReleaseDate = Form.useWatch("releaseDate", crForm)
+  const crMrLink = Form.useWatch("mrLink", crForm)
 
   // 加载迭代信息
   const loadIterationInfo = useCallback(() => {
@@ -222,18 +229,26 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   // 判断是否需要显示信息栏
   const hasInfo = interfaceTags.length > 0 || hasIterationInfo
 
-  if (!hasInfo || descriptionParts.length === 0) {
-    return null
-  }
-
+  // 提前计算 copyText 和 crPreviewText（必须在 early return 之前，遵守 hooks 规则）
   const copyText = interfaceTags
     .map((tag) => buildIterationCopyText(tag, iterationInfoMap[tag]))
     .join("\n\n")
 
-  const handleCopyIteration = async () => {
+  const crPreviewText = useMemo(() => {
+    const date = crReleaseDate ? crReleaseDate.format("YYYY-MM-DD") : ""
+    const mr = crMrLink || ""
+    return `上线日期：${date}\nMR 链接：${mr}\n\n${copyText}`
+  }, [crReleaseDate, crMrLink, copyText])
+
+  if (!hasInfo || descriptionParts.length === 0) {
+    return null
+  }
+
+  const handleIterationCopy = async () => {
     const success = await copyToClipboard(copyText)
     if (success) {
       message.success("迭代信息已复制")
+      setIsIterationModalOpen(false)
     } else {
       message.error("复制失败，请重试")
     }
@@ -241,7 +256,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
 
   const handleCopyMenuClick = ({ key }: { key: string }) => {
     if (key === "iteration") {
-      handleCopyIteration()
+      setIsIterationModalOpen(true)
     } else if (key === "cr") {
       setIsCRModalOpen(true)
     }
@@ -251,7 +266,8 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
     try {
       const values = await crForm.validateFields()
       const releaseDate = values.releaseDate.format("YYYY-MM-DD")
-      const text = `上线日期：${releaseDate}\n\n${copyText}`
+      const mrLink = values.mrLink
+      const text = `上线日期：${releaseDate}\nMR 链接：${mrLink}\n\n${copyText}`
       const success = await copyToClipboard(text)
       if (success) {
         message.success("CR信息已复制")
@@ -298,15 +314,40 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
         showIcon
       />
       <Modal
+        title="复制迭代信息"
+        open={isIterationModalOpen}
+        onOk={handleIterationCopy}
+        onCancel={() => {
+          setIsIterationModalOpen(false)
+        }}
+        okText="确认复制"
+        cancelText="取消"
+      >
+        <div className="mb-2 text-gray-500">以下内容将复制到剪贴板：</div>
+        <div
+          className="rounded border border-solid border-gray-300 bg-gray-50 p-3 text-sm whitespace-pre-wrap break-all"
+          style={{
+            fontFamily: "monospace",
+            lineHeight: 1.6,
+            maxHeight: 320,
+            overflow: "auto",
+          }}
+        >
+          {copyText}
+        </div>
+      </Modal>
+      <Modal
         title="复制CR信息"
         open={isCRModalOpen}
+        destroyOnHidden={false}
         onOk={handleCRCopy}
         onCancel={() => {
           setIsCRModalOpen(false)
           crForm.resetFields()
         }}
-        okText="确认"
+        okText="确认复制"
         cancelText="取消"
+        width={600}
       >
         <Form form={crForm} layout="vertical">
           <Form.Item
@@ -320,7 +361,29 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
               style={{ width: "100%" }}
             />
           </Form.Item>
+          <Form.Item
+            label="MR 链接"
+            name="mrLink"
+            rules={[{ required: true, message: "请输入 MR 链接" }]}
+          >
+            <Input.TextArea rows={3} placeholder="请输入 MR 链接" />
+          </Form.Item>
         </Form>
+        <Divider />
+        <div className="mb-2 text-gray-500">
+          预览待复制内容（修改表单后自动更新）：
+        </div>
+        <div
+          className="rounded border border-solid border-gray-300 bg-gray-50 p-3 text-sm whitespace-pre-wrap break-all"
+          style={{
+            fontFamily: "monospace",
+            lineHeight: 1.6,
+            maxHeight: 320,
+            overflow: "auto",
+          }}
+        >
+          {crPreviewText}
+        </div>
       </Modal>
     </div>
   )

@@ -18,6 +18,7 @@ import {
 import OperateButtons from "./components/operateButtons/OperateButtons"
 import SearchSelect from "./components/SearchSelect"
 import zhCN from "antd/locale/zh_CN"
+import "dayjs/locale/zh-cn"
 import packageJson from "../../../package.json"
 import BatchQuickMockBanner from "./components/BatchQuickMockBanner"
 import { BatchQuickMockJob, ModuleConfig } from "@src/types"
