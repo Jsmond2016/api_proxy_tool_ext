@@ -237,7 +237,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
   const crPreviewText = useMemo(() => {
     const date = crReleaseDate ? crReleaseDate.format("YYYY-MM-DD") : ""
     const mr = crMrLink || ""
-    return `上线日期：${date}\nMR 链接：${mr}\n\n${copyText}`
+    return `- 上线日期：${date}\n- MR 链接：${mr}\n\n${copyText}`
   }, [crReleaseDate, crMrLink, copyText])
 
   if (!hasInfo || descriptionParts.length === 0) {
@@ -267,7 +267,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
       const values = await crForm.validateFields()
       const releaseDate = values.releaseDate.format("YYYY-MM-DD")
       const mrLink = values.mrLink
-      const text = `上线日期：${releaseDate}\nMR 链接：${mrLink}\n\n${copyText}`
+      const text = `- 上线日期：${releaseDate}\n- MR 链接：${mrLink}\n\n${copyText}`
       const success = await copyToClipboard(text)
       if (success) {
         message.success("CR信息已复制")
@@ -315,6 +315,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
       />
       <Modal
         title="复制迭代信息"
+        maskClosable={false}
         open={isIterationModalOpen}
         onOk={handleIterationCopy}
         onCancel={() => {
@@ -339,7 +340,7 @@ const ModuleInfoBar: React.FC<ModuleInfoBarProps> = ({
       <Modal
         title="复制CR信息"
         open={isCRModalOpen}
-        destroyOnHidden={false}
+        maskClosable={false}
         onOk={handleCRCopy}
         onCancel={() => {
           setIsCRModalOpen(false)

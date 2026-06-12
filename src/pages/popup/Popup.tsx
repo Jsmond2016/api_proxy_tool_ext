@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react"
-import { Button, ConfigProvider, Switch, Typography, message } from "antd"
+import { Button, Switch, Typography, message } from "antd"
 import { ApiOutlined, SettingOutlined } from "@ant-design/icons"
-import zhCN from "antd/locale/zh_CN"
-import "dayjs/locale/zh-cn"
 import { ChromeApiService } from "@src/utils/chromeApi"
 import { GlobalConfig } from "@src/types"
 import "antd/dist/reset.css"
@@ -108,65 +106,63 @@ export default function Popup() {
     ) ?? 0
 
   return (
-    <ConfigProvider locale={zhCN}>
-      <div className="w-[280px] bg-white p-3 text-slate-900">
-        <div className="rounded-xl border border-slate-200 bg-white">
-          <div className="flex items-center gap-3 px-3 py-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_8px_20px_rgba(16,185,129,0.24)]">
-              <ApiOutlined className="text-base" />
-            </div>
-            <div className="min-w-0">
-              <Title level={5} className="!mb-0 !text-sm">
-                API Proxy Tool
-              </Title>
-              <Text type="secondary" className="text-xs">
-                快速切换全局 Mock 状态
-              </Text>
-            </div>
+    <div className="w-[280px] bg-white p-3 text-slate-900">
+      <div className="rounded-xl border border-slate-200 bg-white">
+        <div className="flex items-center gap-3 px-3 py-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-[0_8px_20px_rgba(16,185,129,0.24)]">
+            <ApiOutlined className="text-base" />
           </div>
-
-          <div className="border-t border-slate-200" />
-
-          <div className="flex items-center justify-between px-3 py-3">
-            <div className="text-sm font-semibold text-slate-900">
-              全局 Mock 开关
-            </div>
-            <Switch
-              checked={config?.isGlobalEnabled ?? false}
-              loading={loading || toggling}
-              disabled={loading || toggling || !config}
-              onChange={handleToggleGlobal}
-              checkedChildren="开启"
-              unCheckedChildren="关闭"
-            />
-          </div>
-
-          <div className="border-t border-slate-200 px-3 py-2">
+          <div className="min-w-0">
+            <Title level={5} className="!mb-0 !text-sm">
+              API Proxy Tool
+            </Title>
             <Text type="secondary" className="text-xs">
-              <span className="font-semibold text-slate-900">
-                {config?.modules.length ?? 0}
-              </span>{" "}
-              个模块，
-              <span className="font-semibold text-slate-900">
-                {enabledApiCount}
-              </span>{" "}
-              个接口已配置
+              快速切换全局 Mock 状态
             </Text>
           </div>
+        </div>
 
-          <div className="border-t border-slate-200 p-2">
-            <Button
-              type="text"
-              block
-              className="!h-9 !justify-start !px-2 !text-blue-600 hover:!text-blue-700"
-              icon={<SettingOutlined className="!text-blue-600" />}
-              onClick={handleOpenOptions}
-            >
-              打开配置页
-            </Button>
+        <div className="border-t border-slate-200" />
+
+        <div className="flex items-center justify-between px-3 py-3">
+          <div className="text-sm font-semibold text-slate-900">
+            全局 Mock 开关
           </div>
+          <Switch
+            checked={config?.isGlobalEnabled ?? false}
+            loading={loading || toggling}
+            disabled={loading || toggling || !config}
+            onChange={handleToggleGlobal}
+            checkedChildren="开启"
+            unCheckedChildren="关闭"
+          />
+        </div>
+
+        <div className="border-t border-slate-200 px-3 py-2">
+          <Text type="secondary" className="text-xs">
+            <span className="font-semibold text-slate-900">
+              {config?.modules.length ?? 0}
+            </span>{" "}
+            个模块，
+            <span className="font-semibold text-slate-900">
+              {enabledApiCount}
+            </span>{" "}
+            个接口已配置
+          </Text>
+        </div>
+
+        <div className="border-t border-slate-200 p-2">
+          <Button
+            type="text"
+            block
+            className="!h-9 !justify-start !px-2 !text-blue-600 hover:!text-blue-700"
+            icon={<SettingOutlined className="!text-blue-600" />}
+            onClick={handleOpenOptions}
+          >
+            打开配置页
+          </Button>
         </div>
       </div>
-    </ConfigProvider>
+    </div>
   )
 }
