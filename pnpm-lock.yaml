@@ -23,6 +23,9 @@ importers:
       change-case:
         specifier: ^5.4.4
         version: 5.4.4
+      dayjs:
+        specifier: ^1.11.11
+        version: 1.11.13
       ramda:
         specifier: ^0.31.3
         version: 0.31.3
