@@ -267,7 +267,7 @@ export default function ApiTable() {
                 className="cursor-pointer !text-blue-600 hover:!text-blue-800 text-xs mt-1"
                 onClick={(e) => {
                   e.stopPropagation()
-                  copyText(record.apiUrl.replace(/^\/api\/saas/, ""))
+                  copyText(record.apiUrl.replace(/^\/api\/saas\/v1/, ""))
                 }}
               />
               <Paragraph type="secondary" className="mb-0 text-sm">
