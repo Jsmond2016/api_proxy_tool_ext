@@ -3,6 +3,7 @@ import { Button, Switch, Typography, message } from "antd"
 import { ApiOutlined, SettingOutlined } from "@ant-design/icons"
 import { ChromeApiService } from "@src/utils/chromeApi"
 import { GlobalConfig } from "@src/types"
+import { ALL_APIS_TAB_ID } from "@src/constant/constant"
 import "antd/dist/reset.css"
 import "@src/assets/styles/tailwind.css"
 
@@ -87,6 +88,7 @@ export default function Popup() {
       if (activeTab?.id !== undefined) {
         optionsUrl.searchParams.set("sourceTabId", String(activeTab.id))
       }
+      optionsUrl.searchParams.set("defaultTab", ALL_APIS_TAB_ID)
 
       await chrome.tabs.create({
         url: optionsUrl.toString(),

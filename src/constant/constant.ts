@@ -1,4 +1,6 @@
-import { GlobalConfig, ModuleConfig, ApiConfig } from "../types"
+import { GlobalConfig, ModuleConfig } from "../types"
+
+export const ALL_APIS_TAB_ID = "__all_apis__"
 
 export const DefaultMockApiModule: ModuleConfig[] = [
   {

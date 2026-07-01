@@ -23,6 +23,7 @@ import packageJson from "../../../package.json"
 import BatchQuickMockBanner from "./components/BatchQuickMockBanner"
 import { BatchQuickMockJob, ModuleConfig } from "@src/types"
 import { BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX } from "@src/utils/batchQuickMock"
+import { ALL_APIS_TAB_ID } from "@src/constant/constant"
 
 const { Content, Footer } = Layout
 const { Text } = Typography
@@ -58,8 +59,8 @@ export default function Options() {
     async () => {
       const configData = await ChromeApiService.getConfig()
       setConfig(configData)
-      if (configData.modules.length > 0 && !activeModuleId) {
-        setActiveModuleId(configData.modules[0].id)
+      if (!activeModuleId) {
+        setActiveModuleId(ALL_APIS_TAB_ID)
       }
       return configData
     },
@@ -74,6 +75,10 @@ export default function Options() {
 
   useMount(() => {
     loadConfig()
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("defaultTab") === ALL_APIS_TAB_ID) {
+      setActiveModuleId(ALL_APIS_TAB_ID)
+    }
   })
 
   useEffect(() => {
@@ -120,6 +125,7 @@ export default function Options() {
       setConfig(latestConfig)
 
       if (
+        activeModuleId !== ALL_APIS_TAB_ID &&
         latestConfig.modules.length > 0 &&
         !latestConfig.modules.some(
           (module: ModuleConfig) => module.id === activeModuleId

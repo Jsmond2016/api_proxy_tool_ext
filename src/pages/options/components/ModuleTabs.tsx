@@ -8,6 +8,7 @@ import "../../../assets/styles/tailwind.css"
 import { generateId } from "@src/utils/chromeApi"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
+import { ALL_APIS_TAB_ID } from "@src/constant/constant"
 
 interface ModuleTabsProps {
   modules: ModuleConfig[]
@@ -67,24 +68,34 @@ export default function ModuleTabs({
     })
   }
 
-  const items = modules.map((module) => ({
-    key: module.id,
-    label: (
-      <div className="flex items-center space-x-1">
-        <span>{module.label}</span>
-        <EditOutlined
-          className="text-gray-400 hover:text-blue-500 cursor-pointer text-xs ml-1"
-          onClick={() =>
-            editModuleModalRef.current?.open({
-              moduleName: module.label,
-              moduleId: module.id,
-            })
-          }
-        />
-      </div>
-    ),
+  const allApisTabItem = {
+    key: ALL_APIS_TAB_ID,
+    closable: false,
+    label: <span className="font-medium">全部接口</span>,
     children: null,
-  }))
+  }
+
+  const items = [
+    allApisTabItem,
+    ...modules.map((module) => ({
+      key: module.id,
+      label: (
+        <div className="flex items-center space-x-1">
+          <span>{module.label}</span>
+          <EditOutlined
+            className="text-gray-400 hover:text-blue-500 cursor-pointer text-xs ml-1"
+            onClick={() =>
+              editModuleModalRef.current?.open({
+                moduleName: module.label,
+                moduleId: module.id,
+              })
+            }
+          />
+        </div>
+      ),
+      children: null,
+    })),
+  ]
 
   return (
     <>
@@ -97,6 +108,7 @@ export default function ModuleTabs({
           if (action === "add") {
             handleAddModule()
           } else if (action === "remove") {
+            if (targetKey === ALL_APIS_TAB_ID) return
             // 当只有1个tab时，不允许删除
             if (modules.length <= 1) {
               return

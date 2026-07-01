@@ -30,6 +30,7 @@ import {
 import { saveConfig } from "@src/utils/configUtil"
 import { TableColumnsX } from "../../../../types/util.type"
 import { ColumnsType } from "antd/es/table"
+import { ALL_APIS_TAB_ID } from "@src/constant/constant"
 
 const { Paragraph } = Typography
 
@@ -49,12 +50,35 @@ export default function ApiTable() {
   const [current, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(20)
 
+  const isAllApisTab = activeModuleId === ALL_APIS_TAB_ID
+
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId,
   )
-  const apis = activeModule?.apiArr || []
+
+  // 全部接口 tab 下：所有模块已开启的接口 + 接口所属模块名 map
+  const apiModuleMap = useMemo<Map<string, string>>(() => {
+    if (!isAllApisTab) return new Map()
+    const map = new Map<string, string>()
+    config.modules.forEach((module) => {
+      module.apiArr.forEach((api) => {
+        map.set(api.id, module.label)
+      })
+    })
+    return map
+  }, [isAllApisTab, config.modules])
+
+  const baseApis = useMemo(() => {
+    if (isAllApisTab) {
+      const all = config.modules.flatMap((module) => module.apiArr)
+      // 开启的接口排前面，关闭的排后面
+      return [...all].sort((a, b) => Number(b.isOpen) - Number(a.isOpen))
+    }
+    return activeModule?.apiArr || []
+  }, [isAllApisTab, config.modules, activeModule])
+
   // 过滤API数据
-  const filteredApis = apis.filter((api) => {
+  const filteredApis = baseApis.filter((api) => {
     if (!searchKeyword) return true
     const keyword = searchKeyword.toLowerCase()
     return (
@@ -154,29 +178,41 @@ export default function ApiTable() {
 
   // 切换所有API开关
   const handleToggleAllApis = async (enabled: boolean) => {
-    if (!activeModule) return
-
     try {
-      // 使用 getState() 获取最新配置
       const currentConfig = useConfigStore.getState().config
-      const newConfig = {
-        ...currentConfig,
-        modules: currentConfig.modules.map((module) =>
-          module.id === activeModule.id
-            ? {
-                ...module,
-                apiArr: module.apiArr.map((api) => ({
-                  ...api,
-                  isOpen: enabled,
-                })),
-              }
-            : module,
-        ),
+
+      let newConfig
+      if (isAllApisTab) {
+        // 全部接口 tab：对当前展示的所有接口跨模块批量切换
+        const shownApiIds = new Set(filteredApis.map((api) => api.id))
+        newConfig = {
+          ...currentConfig,
+          modules: currentConfig.modules.map((module) => ({
+            ...module,
+            apiArr: module.apiArr.map((api) =>
+              shownApiIds.has(api.id) ? { ...api, isOpen: enabled } : api,
+            ),
+          })),
+        }
+      } else {
+        if (!activeModule) return
+        newConfig = {
+          ...currentConfig,
+          modules: currentConfig.modules.map((module) =>
+            module.id === activeModule.id
+              ? {
+                  ...module,
+                  apiArr: module.apiArr.map((api) => ({
+                    ...api,
+                    isOpen: enabled,
+                  })),
+                }
+              : module,
+          ),
+        }
       }
 
-      // 更新本地状态
       setConfig(newConfig)
-      // 持久化配置到 background
       await saveConfig(newConfig)
     } catch (error) {
       message.error("操作失败")
@@ -293,6 +329,17 @@ export default function ApiTable() {
         )
       },
     },
+    ...(isAllApisTab
+      ? [
+          {
+            title: "所属模块",
+            dataIndex: "id" as keyof ApiConfig,
+            width: 120,
+            render: (_: unknown, record: ApiConfig) =>
+              apiModuleMap.get(record.id) || "-",
+          },
+        ]
+      : []),
     {
       title: "权限点",
       dataIndex: "authPointKey",
@@ -408,18 +455,18 @@ export default function ApiTable() {
   const pagination: PaginationProps = {
     total: filteredApis.length,
     showTotal: (total: number) => `共计 ${total} 个`,
-    defaultPageSize: 20,
-    defaultCurrent: 1,
     current,
     pageSize,
-    onChange: (page, pageSize) => {
+    pageSizeOptions: [10, 20, 30, 50, 100],
+    showSizeChanger: true,
+    onChange: (page, size) => {
       setCurrent(page)
-      setPageSize(pageSize)
+      setPageSize(size)
     },
   }
 
   return (
-    <>
+    <div className="px-4">
       <Table
         dataSource={filteredApis}
         columns={columns as ColumnsType<ApiConfig>}
@@ -439,7 +486,7 @@ export default function ApiTable() {
           }) as React.HTMLAttributes<HTMLTableRowElement>
         }
       />
-    </>
+    </div>
   )
 }
 
