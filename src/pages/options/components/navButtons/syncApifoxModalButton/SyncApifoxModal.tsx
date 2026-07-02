@@ -193,6 +193,13 @@ export default function SyncApifoxModal({
     if (cached?.formValues) {
       // 有缓存的表单值，直接恢复（用户之前填写的）
       form.setFieldsValue(cached.formValues)
+      // 强制校正 mockPrefix，避免缓存中混入另一模式的值
+      form.setFieldValue(
+        "mockPrefix",
+        value === "online"
+          ? cached.formValues.mockPrefix || getOnlineMockPrefix(form.getFieldValue("projectId") || "")
+          : MOCK_PREFIX_LOCAL
+      )
     } else if (value === "local") {
       // 无缓存：本地模式 mockPrefix 固定为本地地址，不读 config.mockPrefix（可能混入云端值）
       const localUrl =
@@ -321,11 +328,12 @@ export default function SyncApifoxModal({
       syncMode === "online"
         ? form.getFieldValue("projectId")
         : form.getFieldValue("apifoxUrl")
+    // 根据当前模式确定 mockPrefix，本地模式固定为本地地址，云端模式由 projectId 推导
+    const formMockPrefix = form.getFieldValue("mockPrefix")
     const mockPrefix =
-      form.getFieldValue("mockPrefix") ||
-      (syncMode === "online"
-        ? getOnlineMockPrefix(apifoxUrl)
-        : MOCK_PREFIX_LOCAL)
+      syncMode === "online"
+        ? formMockPrefix || getOnlineMockPrefix(apifoxUrl)
+        : MOCK_PREFIX_LOCAL
     const apifoxToken = form.getFieldValue("apifoxToken")
     const apifoxMockToken = form.getFieldValue("apifoxMockToken")
 
