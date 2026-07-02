@@ -289,7 +289,7 @@ export default function ApiTable() {
     },
     {
       title: (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-between w-full">
           <Switch
             checked={allApisEnabled}
             value={someApisEnabled && !allApisEnabled}
@@ -298,7 +298,7 @@ export default function ApiTable() {
             unCheckedChildren="关闭"
           />
           <span
-            className={`inline-flex items-center cursor-pointer text-xs leading-none px-0.5 rounded select-none hover:bg-gray-200 transition-colors ${
+            className={`inline-flex items-center cursor-pointer text-xs leading-none px-1 py-0.5 rounded select-none hover:bg-gray-200 transition-colors ml-1 ${
               switchSortOrder ? "text-blue-600" : "text-gray-400"
             }`}
             onClick={(e) => {
