@@ -248,7 +248,7 @@ export default function ApiTable() {
       ),
       dataIndex: "isOpen",
       width: 100,
-      align: "center" as const,
+      align: "left" as const,
       sorter: (a: ApiConfig, b: ApiConfig) =>
         Number(b.isOpen) - Number(a.isOpen),
       render: (_, record: ApiConfig) => (
