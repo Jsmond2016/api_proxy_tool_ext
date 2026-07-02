@@ -8,6 +8,7 @@ import {
 } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
 import {
+  fetchApifoxSwaggerData,
   ParsedApi,
   SwaggerData,
   parseSwaggerData,
@@ -106,15 +107,11 @@ export const fetchApifoxApiMap = async (config: GlobalConfig) => {
     return new Map<string, ParsedApi>()
   }
 
-  const response = await fetch(apifoxUrl)
-  if (!response.ok) {
-    throw new Error(`Apifox 请求失败: HTTP ${response.status}`)
-  }
-
-  const data = (await response.json()) as SwaggerData
-  if (!data.openapi && !data.swagger) {
-    throw new Error("Apifox 数据格式无效")
-  }
+  const data = (await fetchApifoxSwaggerData({
+    mode: config.apifoxConfig?.mode || "local",
+    urlOrProjectId: apifoxUrl,
+    apifoxToken: config.apifoxConfig?.apifoxToken,
+  })) as SwaggerData
 
   const parsedApis = parseSwaggerData(data, [])
   return parsedApis.reduce((map, api) => {

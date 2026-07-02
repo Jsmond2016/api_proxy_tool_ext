@@ -4,6 +4,10 @@
 
 const STORAGE_KEYS = {
   APIFOX_URL: "apifox-cached-url",
+  APIFOX_LOCAL_URL: "apifox-cached-local-url",
+  APIFOX_ONLINE_PROJECT_ID: "apifox-cached-online-project-id",
+  APIFOX_ONLINE_TOKEN: "apifox-cached-online-token",
+  APIFOX_MOCK_TOKEN: "apifox-cached-mock-token",
   TAG_HISTORY: "apifox-tag-history",
   ITERATION_INFO: "apifox-iteration-info",
 } as const
@@ -38,7 +42,7 @@ export interface IterationInfoMap {
 }
 
 /**
- * 获取缓存的 Apifox 地址
+ * 获取缓存的 Apifox 地址（兼容旧版单一缓存）
  */
 export const getCachedApifoxUrl = async (): Promise<string | null> => {
   try {
@@ -51,13 +55,109 @@ export const getCachedApifoxUrl = async (): Promise<string | null> => {
 }
 
 /**
- * 保存 Apifox 地址到缓存
+ * 保存 Apifox 地址到缓存（兼容旧版单一缓存）
  */
 export const saveCachedApifoxUrl = async (url: string): Promise<void> => {
   try {
     await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_URL]: url })
   } catch (error) {
     console.error("Failed to save cached Apifox URL:", error)
+  }
+}
+
+/**
+ * 获取缓存的本地模式 Apifox 地址
+ */
+export const getCachedApifoxLocalUrl = async (): Promise<string | null> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.APIFOX_LOCAL_URL])
+    return result[STORAGE_KEYS.APIFOX_LOCAL_URL] || null
+  } catch (error) {
+    console.error("Failed to get cached Apifox local URL:", error)
+    return null
+  }
+}
+
+/**
+ * 保存本地模式 Apifox 地址到缓存
+ */
+export const saveCachedApifoxLocalUrl = async (url: string): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_LOCAL_URL]: url })
+  } catch (error) {
+    console.error("Failed to save cached Apifox local URL:", error)
+  }
+}
+
+/**
+ * 获取缓存的在线模式项目编号
+ */
+export const getCachedApifoxProjectId = async (): Promise<string | null> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.APIFOX_ONLINE_PROJECT_ID])
+    return result[STORAGE_KEYS.APIFOX_ONLINE_PROJECT_ID] || null
+  } catch (error) {
+    console.error("Failed to get cached Apifox project ID:", error)
+    return null
+  }
+}
+
+/**
+ * 保存在线模式项目编号到缓存
+ */
+export const saveCachedApifoxProjectId = async (projectId: string): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_ONLINE_PROJECT_ID]: projectId })
+  } catch (error) {
+    console.error("Failed to save cached Apifox project ID:", error)
+  }
+}
+
+/**
+ * 获取缓存的在线模式授权令牌
+ */
+export const getCachedApifoxToken = async (): Promise<string | null> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.APIFOX_ONLINE_TOKEN])
+    return result[STORAGE_KEYS.APIFOX_ONLINE_TOKEN] || null
+  } catch (error) {
+    console.error("Failed to get cached Apifox token:", error)
+    return null
+  }
+}
+
+/**
+ * 保存在线模式授权令牌到缓存
+ */
+export const saveCachedApifoxToken = async (token: string): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_ONLINE_TOKEN]: token })
+  } catch (error) {
+    console.error("Failed to save cached Apifox token:", error)
+  }
+}
+
+/**
+ * 获取缓存的在线模式 Mock 令牌
+ */
+export const getCachedApifoxMockToken = async (): Promise<string | null> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.APIFOX_MOCK_TOKEN])
+    return result[STORAGE_KEYS.APIFOX_MOCK_TOKEN] || null
+  } catch (error) {
+    console.error("Failed to get cached Apifox mock token:", error)
+    return null
+  }
+}
+
+/**
+ * 保存在线模式 Mock 令牌到缓存
+ */
+export const saveCachedApifoxMockToken = async (token: string): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_MOCK_TOKEN]: token })
+  } catch (error) {
+    console.error("Failed to save cached Apifox mock token:", error)
   }
 }
 

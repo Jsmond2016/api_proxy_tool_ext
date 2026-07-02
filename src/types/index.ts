@@ -49,8 +49,15 @@ export interface ModuleConfig {
 
 // Apifox 配置类型
 export interface ApifoxConfig {
+  /** 同步模式：local=本地Apifox客户端导出, online=Apifox云端API, 缺省为local */
+  mode?: "local" | "online"
+  /** 本地模式：完整导出URL；在线模式：项目编号（纯数字） */
   apifoxUrl: string
   mockPrefix: string
+  /** 在线模式的授权令牌（个人访问令牌 Access Token），仅用于导出接口数据 */
+  apifoxToken?: string
+  /** 在线模式的 Mock 令牌，用于访问云端 Mock 接口 */
+  apifoxMockToken?: string
   selectedTags?: string[]
 }
 

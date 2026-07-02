@@ -9,10 +9,12 @@ import {
   PaginationProps,
   Dropdown,
   MenuProps,
+  Input,
 } from "antd"
 import { DownOutlined, CopyOutlined } from "@ant-design/icons"
 
 import { ApiConfig } from "@src/types"
+import { getApifoxProjectId } from "../navButtons/syncApifoxModalButton/apifoxUtils"
 import "antd/dist/reset.css"
 import "@src/assets/styles/tailwind.css"
 import EditFormButton from "../operateButtons/editFormButton/EditFormButton"
@@ -49,8 +51,14 @@ export default function ApiTable() {
 
   const [current, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(20)
+  const [localSearchKeyword, setLocalSearchKeyword] = useState("")
 
   const isAllApisTab = activeModuleId === ALL_APIS_TAB_ID
+
+  // 切换离开全部接口 tab 时清空本地搜索
+  useEffect(() => {
+    if (!isAllApisTab) setLocalSearchKeyword("")
+  }, [isAllApisTab])
 
   const activeModule = config.modules.find(
     (module) => module.id === activeModuleId,
@@ -77,10 +85,13 @@ export default function ApiTable() {
     return activeModule?.apiArr || []
   }, [isAllApisTab, config.modules, activeModule])
 
+  // 全部接口 tab 用本地搜索关键词，其他 tab 用全局关键词
+  const activeKeyword = isAllApisTab ? localSearchKeyword : searchKeyword
+
   // 过滤API数据
   const filteredApis = baseApis.filter((api) => {
-    if (!searchKeyword) return true
-    const keyword = searchKeyword.toLowerCase()
+    if (!activeKeyword) return true
+    const keyword = activeKeyword.toLowerCase()
     return (
       api.apiName.toLowerCase().includes(keyword) ||
       api.apiUrl.toLowerCase().includes(keyword) ||
@@ -95,14 +106,8 @@ export default function ApiTable() {
   const someApisEnabled = filteredApis.some((api) => api.isOpen)
 
   const projectId = useMemo(() => {
-    const url = config.apifoxConfig?.apifoxUrl
-    if (!url) return null
-    const match = url.match(/[?&]projectId=([^&]+)/)
-    if (match) return match[1]
-    const matchPath = url.match(/\/project\/(\d+)/)
-    if (matchPath) return matchPath[1]
-    return null
-  }, [config.apifoxConfig?.apifoxUrl])
+    return getApifoxProjectId(config.apifoxConfig)
+  }, [config.apifoxConfig])
 
   // 行选择配置
   const rowSelection = {
@@ -274,7 +279,7 @@ export default function ApiTable() {
         const isApifoxId = /^\d+$/.test(record.id)
         const fallbackLink =
           projectId && isApifoxId
-            ? `https://app.apifox.com/link/project/${projectId}/apis/api-${record.id}`
+            ? `https://app.apifox.com/project/${projectId}/apis/api-${record.id}`
             : ""
         const apiLink = directLink || fallbackLink
 
@@ -467,6 +472,24 @@ export default function ApiTable() {
 
   return (
     <div className="px-4">
+      {isAllApisTab && (
+        <div className="mb-3">
+          <Input.Search
+            allowClear
+            placeholder="搜索接口名称、URL、Mock 地址"
+            value={localSearchKeyword}
+            onChange={(e) => {
+              setLocalSearchKeyword(e.target.value)
+              setCurrent(1)
+            }}
+            onSearch={(val) => {
+              setLocalSearchKeyword(val)
+              setCurrent(1)
+            }}
+            style={{ maxWidth: 400 }}
+          />
+        </div>
+      )}
       <Table
         dataSource={filteredApis}
         columns={columns as ColumnsType<ApiConfig>}

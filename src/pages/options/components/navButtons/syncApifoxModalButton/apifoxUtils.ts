@@ -1,4 +1,4 @@
-import { ModuleConfig } from "@src/types"
+import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
 import {
   ModelApiActionType,
@@ -12,6 +12,135 @@ import {
   APIFOX_FIELD_API_TYPE,
 } from "../../../../../constant/apifoxFields"
 import { camelCase } from "change-case"
+
+// ==================== 在线 API 常量 ====================
+
+/** Apifox 在线 API 地址 */
+export const APIFOX_ONLINE_API_URL = "https://api.apifox.com/v1/projects"
+
+/** Apifox API 版本号 */
+const APIFOX_API_VERSION = "2024-03-28"
+
+// ==================== 在线 API 工具函数 ====================
+
+/**
+ * 构建 Apifox 在线 API POST 请求体
+ */
+const buildApifoxOnlineExportBody = (): string =>
+  JSON.stringify({
+    scope: { type: "ALL" },
+    options: { includeApifoxExtensionProperties: true },
+    oasVersion: "3.1",
+    exportFormat: "JSON",
+  })
+
+/**
+ * 统一入口：获取 Apifox Swagger 数据
+ * - 本地模式：GET 请求全量 URL
+ * - 在线模式：POST 请求 Apifox 云端 API（Bearer Token 鉴权）
+ */
+export const fetchApifoxSwaggerData = async (params: {
+  mode?: "local" | "online"
+  urlOrProjectId: string
+  apifoxToken?: string
+}): Promise<SwaggerData> => {
+  const { mode = "local", urlOrProjectId, apifoxToken } = params
+
+  if (!urlOrProjectId) {
+    throw new Error("项目信息为空，请填写必要信息")
+  }
+
+  let response: Response
+
+  if (mode === "online") {
+    // 在线模式：校验 token
+    if (!apifoxToken) {
+      throw new Error("未配置 Apifox 授权令牌，请在设置中填写。")
+    }
+
+    const apiUrl = `${APIFOX_ONLINE_API_URL}/${urlOrProjectId}/export-openapi?locale=zh-CN`
+
+    try {
+      response = await fetch(apiUrl, {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "X-Apifox-Api-Version": APIFOX_API_VERSION,
+          Authorization: `Bearer ${apifoxToken}`,
+          "Content-Type": "application/json",
+        },
+        body: buildApifoxOnlineExportBody(),
+      })
+    } catch {
+      throw new Error(
+        "无法连接 Apifox 在线服务，请检查网络或授权令牌是否正确。"
+      )
+    }
+  } else {
+    // 本地模式：直接用 URL 发 GET 请求
+    try {
+      response = await fetch(urlOrProjectId)
+    } catch {
+      throw new Error(
+        "无法连接本地 Apifox 导出地址，请确认 Apifox 已打开并开启本地导出"
+      )
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(
+      mode === "online"
+        ? `Apifox 在线导出请求失败：HTTP ${response.status}`
+        : `HTTP ${response.status}`
+    )
+  }
+
+  const data = await response.json()
+
+  // 验证是否为有效的 Swagger/OpenAPI 数据
+  if (!data.openapi && !data.swagger) {
+    throw new Error("不是有效的OpenAPI/Swagger数据")
+  }
+
+  return data as SwaggerData
+}
+
+/**
+ * 从 ApifoxConfig 中提取项目 ID
+ * - 在线模式：apifoxUrl 即为 projectId
+ * - 本地模式：从 URL 中正则提取
+ */
+export const getApifoxProjectId = (
+  apifoxConfig?: ApifoxConfig
+): string | null => {
+  if (!apifoxConfig) return null
+
+  const { mode, apifoxUrl } = apifoxConfig
+
+  // 在线模式：apifoxUrl 直接就是 projectId
+  if (mode === "online") {
+    return apifoxUrl?.trim() || null
+  }
+
+  // 本地模式：从 URL 中提取
+  if (!apifoxUrl) return null
+
+  // 尝试从 query params 提取 ?projectId=xxx
+  const match = apifoxUrl.match(/[?&]projectId=([^&]+)/)
+  if (match) return match[1]
+
+  // 尝试从路径提取 /project/xxx
+  const matchPath = apifoxUrl.match(/\/project\/(\d+)/)
+  if (matchPath) return matchPath[1]
+
+  return null
+}
+
+/**
+ * 在线模式下，根据 projectId 生成默认云端 mock 前缀
+ */
+export const getOnlineMockPrefix = (projectId: string): string =>
+  `https://m1.apifoxmock.com/m1/${projectId}-0-default`
 
 /**
  * 解析后的 API 类型
@@ -58,7 +187,9 @@ export interface SwaggerData {
 export const normalizeApifoxLink = (link?: string) => {
   if (!link) return ""
 
-  return link.replace(/-(?:run|link)(?=\/?$|[?#])/i, "")
+  return link
+    .replace(/-(?:run|link)(?=\/?$|[?#])/i, "")
+    .replace(/\/web\/(?=project\/)/i, "/")
 }
 
 /**
@@ -94,8 +225,16 @@ export const extractApifoxFolderNames = (swaggerData: SwaggerData): Set<string> 
  */
 export const convertParsedApisToModules = (
   parsedApis: ParsedApi[],
-  apifoxConfig: { apifoxUrl: string; mockPrefix: string }
+  apifoxConfig: {
+    apifoxUrl: string
+    mockPrefix: string
+    mode?: "local" | "online"
+    apifoxToken?: string
+    apifoxMockToken?: string
+  }
 ): ModuleConfig[] => {
+  const { mode, apifoxMockToken } = apifoxConfig
+  const isOnlineMode = mode === "online"
   // 按分组名分组 APIs
   const groupedApis = parsedApis.reduce(
     (groups, api) => {
@@ -135,7 +274,9 @@ export const convertParsedApisToModules = (
         apiName: api.summary,
         link: api.link,
         apiUrl: api.path,
-        redirectURL: `${apifoxConfig.mockPrefix}${api.path}`,
+        redirectURL: isOnlineMode
+            ? `${apifoxConfig.mockPrefix}${api.path}?apifoxToken=${apifoxMockToken}`
+            : `${apifoxConfig.mockPrefix}${api.path}`,
         method,
         filterType: "contains" as const,
         delay: 0,
@@ -267,26 +408,19 @@ export function generateAuthPointKey({
 }
 
 /**
- * 验证 Apifox 地址
+ * 验证 Apifox 地址（兼容本地和在线模式）
+ * @param url - 本地模式为完整导出URL，在线模式为项目编号
+ * @param mode - 同步模式，缺省为 local
+ * @param apifoxToken - 在线模式的授权令牌
  */
 export const validateApifoxUrl = async (
-  url: string
+  url: string,
+  mode: "local" | "online" = "local",
+  apifoxToken?: string
 ): Promise<SwaggerData | null> => {
-  // eslint-disable-next-line no-useless-catch
-  try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
-    const data = await response.json()
-
-    // 验证是否为有效的Swagger/OpenAPI数据
-    if (!data.openapi && !data.swagger) {
-      throw new Error("不是有效的OpenAPI/Swagger数据")
-    }
-
-    return data as SwaggerData
-  } catch (error) {
-    throw error
-  }
+  return fetchApifoxSwaggerData({
+    mode,
+    urlOrProjectId: url,
+    apifoxToken,
+  })
 }

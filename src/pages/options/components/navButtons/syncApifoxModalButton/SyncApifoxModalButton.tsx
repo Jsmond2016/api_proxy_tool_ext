@@ -191,7 +191,11 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       const apifoxUrl = apifoxConfig.apifoxUrl
 
       // 验证并获取 Swagger 数据
-      const swaggerData = await validateApifoxUrl(apifoxUrl)
+      const swaggerData = await validateApifoxUrl(
+        apifoxUrl,
+        apifoxConfig.mode || "local",
+        apifoxConfig.apifoxToken
+      )
       if (!swaggerData) {
         message.error("无法获取 Apifox 数据，请检查配置")
         return
@@ -418,8 +422,13 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     mergeStrategy?: "replace" | "merge",
   ) => {
     try {
-      const apifoxUrl = config.apifoxConfig?.apifoxUrl
-      const oldApifoxModules = getApifoxModulesByUrl(config.modules, apifoxUrl)
+      // 使用 useConfigStore.getState() 获取最新 config，避免闭包中 config 未更新导致模块匹配错误
+      const latestConfig = useConfigStore.getState().config
+      const apifoxUrl = latestConfig.apifoxConfig?.apifoxUrl
+      const oldApifoxModules = getApifoxModulesByUrl(
+        latestConfig.modules,
+        apifoxUrl
+      )
 
       // 判断是否为首次设置（没有旧模块）
       const isFirstSetup = oldApifoxModules.length === 0

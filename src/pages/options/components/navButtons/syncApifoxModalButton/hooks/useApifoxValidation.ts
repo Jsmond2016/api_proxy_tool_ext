@@ -1,12 +1,17 @@
 import { useState, useCallback } from "react"
 import { message } from "antd"
 import {
+  fetchApifoxSwaggerData,
   parseSwaggerData as parseSwaggerDataUtil,
   extractApifoxFolderNames,
   type SwaggerData,
   type ParsedApi,
 } from "../apifoxUtils"
-import { saveCachedApifoxUrl } from "../apifoxCache"
+import {
+  saveCachedApifoxLocalUrl,
+  saveCachedApifoxProjectId,
+  saveCachedApifoxToken,
+} from "../apifoxCache"
 
 export const useApifoxValidation = () => {
   const [validating, setValidating] = useState(false)
@@ -16,10 +21,14 @@ export const useApifoxValidation = () => {
   const validateApifoxUrl = useCallback(
     async (
       url: string,
-      selectedTags: string[]
+      selectedTags: string[],
+      mode: "local" | "online" = "local",
+      apifoxToken?: string
     ): Promise<{
       success: boolean
       parsedApis?: ParsedApi[]
+      swaggerData?: SwaggerData
+      availableTags?: string[]
     }> => {
       if (!url) {
         return { success: false }
@@ -27,16 +36,13 @@ export const useApifoxValidation = () => {
 
       try {
         setValidating(true)
-        const response = await fetch(url)
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        const data = await response.json()
 
-        // 验证是否为有效的Swagger/OpenAPI数据
-        if (!data.openapi && !data.swagger) {
-          throw new Error("不是有效的OpenAPI/Swagger数据")
-        }
+        // 使用统一入口获取 Swagger 数据
+        const data = await fetchApifoxSwaggerData({
+          mode,
+          urlOrProjectId: url,
+          apifoxToken,
+        })
 
         const swaggerDataResult = data as SwaggerData
         setSwaggerData(swaggerDataResult)
@@ -55,13 +61,29 @@ export const useApifoxValidation = () => {
           currentSelectedTags
         )
 
-        // 验证成功后，保存地址到缓存
-        saveCachedApifoxUrl(url).catch((error) => {
-          console.error("Failed to save cached URL:", error)
-        })
+        // 验证成功后，保存地址到缓存（按模式分开存储）
+        if (mode === "online") {
+          saveCachedApifoxProjectId(url).catch((error) => {
+            console.error("Failed to save cached project ID:", error)
+          })
+          if (apifoxToken) {
+            saveCachedApifoxToken(apifoxToken).catch((error) => {
+              console.error("Failed to save cached token:", error)
+            })
+          }
+        } else {
+          saveCachedApifoxLocalUrl(url).catch((error) => {
+            console.error("Failed to save cached local URL:", error)
+          })
+        }
 
         message.success("Apifox地址验证成功")
-        return { success: true, parsedApis: apis }
+        return {
+          success: true,
+          parsedApis: apis,
+          swaggerData: swaggerDataResult,
+          availableTags: tags,
+        }
       } catch (error) {
         message.error(
           `验证失败: ${error instanceof Error ? error.message : "未知错误"}`
@@ -90,6 +112,15 @@ export const useApifoxValidation = () => {
     setValidating(false)
   }, [])
 
+  /** 恢复已缓存的验证数据（切换模式时使用，避免重复请求） */
+  const restoreValidationData = useCallback(
+    (data: { swaggerData: SwaggerData | null; availableTags: string[] }) => {
+      setSwaggerData(data.swaggerData)
+      setAvailableTags(data.availableTags)
+    },
+    []
+  )
+
   return {
     validating,
     swaggerData,
@@ -97,5 +128,6 @@ export const useApifoxValidation = () => {
     validateApifoxUrl,
     parseSwaggerData,
     resetValidation,
+    restoreValidationData,
   }
 }

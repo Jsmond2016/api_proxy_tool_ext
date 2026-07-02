@@ -163,7 +163,11 @@ export default function ApiFormDrawer({
         // 只在添加模式且配置了 Apifox 地址时加载
         setIsLoadingSwagger(true)
         try {
-          const swaggerData = await validateApifoxUrl(apifoxConfig.apifoxUrl)
+          const swaggerData = await validateApifoxUrl(
+            apifoxConfig.apifoxUrl,
+            apifoxConfig.mode || "local",
+            apifoxConfig.apifoxToken
+          )
           setSwaggerCache(swaggerData)
         } catch (error) {
           console.warn("Failed to load Apifox swagger data:", error)

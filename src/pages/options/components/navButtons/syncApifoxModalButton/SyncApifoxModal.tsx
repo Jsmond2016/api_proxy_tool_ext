@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from "react"
-import { Modal, Form, Input, Select, message } from "antd"
+import React, { useState, useEffect, useRef } from "react"
+import { Modal, Form, Input, Select, Segmented, message } from "antd"
 import { GlobalConfig, ModuleConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
+  getOnlineMockPrefix,
   type ParsedApi,
+  type SwaggerData,
 } from "./apifoxUtils"
-import { getCachedApifoxUrl, saveCachedApifoxUrl } from "./apifoxCache"
+import {
+  getCachedApifoxLocalUrl,
+  getCachedApifoxMockToken,
+  getCachedApifoxProjectId,
+  getCachedApifoxToken,
+  saveCachedApifoxLocalUrl,
+  saveCachedApifoxMockToken,
+  saveCachedApifoxProjectId,
+  saveCachedApifoxToken,
+} from "./apifoxCache"
 import { useApifoxValidation } from "./hooks/useApifoxValidation"
 import { useTagHistory } from "./hooks/useTagHistory"
 import { useConflictDetection } from "./hooks/useConflictDetection"
@@ -32,7 +43,11 @@ interface SyncApifoxModalProps {
   config: GlobalConfig
 }
 
-const MOCK_PREFIX = "http://127.0.0.1:4523/m1/3155205-1504204-default"
+const MOCK_PREFIX_LOCAL =
+  "http://127.0.0.1:4523/m1/3155205-1504204-default"
+
+const MOCK_PREFIX_ONLINE =
+  "https://m1.apifoxmock.com/m1/项目编号-0-default"
 
 const APIFOX_URL =
   "http://127.0.0.1:4523/export/openapi?projectId=项目编号&specialPurpose=openapi-generator"
@@ -48,6 +63,17 @@ export default function SyncApifoxModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
+  const [syncMode, setSyncMode] = useState<"local" | "online">("local")
+
+  // 按模式缓存已加载的数据，切换模式时避免重复请求
+  const modeCacheRef = useRef<{
+    [key in "local" | "online"]?: {
+      selectedTags: string[]
+      parsedApis: ParsedApi[]
+      swaggerData: SwaggerData | null
+      availableTags: string[]
+    }
+  }>({})
 
   // 使用自定义 hooks
   const {
@@ -57,18 +83,28 @@ export default function SyncApifoxModal({
     validateApifoxUrl,
     parseSwaggerData,
     resetValidation,
+    restoreValidationData,
   } = useApifoxValidation()
 
   const { tagHistory, saveTagHistory, deleteTagHistory } = useTagHistory()
 
   const { duplicateTags } = useConflictDetection(selectedTags, config)
 
-  // 更新解析的 APIs
+  // 更新解析的 APIs，同时更新当前模式的缓存
   const updateParsedApis = (tags: string[]) => {
     try {
       const apis = parseSwaggerData(tags)
       if (apis) {
         setParsedApis(apis)
+        // 更新当前模式的缓存
+        if (swaggerData) {
+          modeCacheRef.current[syncMode] = {
+            selectedTags: tags,
+            parsedApis: apis,
+            swaggerData,
+            availableTags,
+          }
+        }
       }
     } catch (error) {
       setParsedApis([])
@@ -85,6 +121,97 @@ export default function SyncApifoxModal({
     setSelectedTags([])
     setParsedApis([])
     setMergeStrategy("merge")
+    setSyncMode("local")
+  }
+
+  // 处理模式切换
+  const handleModeChange = (value: "local" | "online") => {
+    // 如果切换到当前模式，不做任何操作
+    if (value === syncMode) return
+
+    // 将当前模式的状态保存到缓存
+    modeCacheRef.current[syncMode] = {
+      selectedTags,
+      parsedApis,
+      swaggerData,
+      availableTags,
+    }
+
+    setSyncMode(value)
+
+    // 检查目标模式是否有缓存数据，有则直接恢复，无需重新请求
+    const cached = modeCacheRef.current[value]
+    if (cached && cached.swaggerData) {
+      setSelectedTags(cached.selectedTags)
+      setParsedApis(cached.parsedApis)
+      restoreValidationData({
+        swaggerData: cached.swaggerData,
+        availableTags: cached.availableTags,
+      })
+    } else {
+      resetValidation()
+      setSelectedTags([])
+      setParsedApis([])
+    }
+
+    // 重置对应模式的表单字段，避免跨模式读取错值（local 与 online 共享 apifoxUrl 字段）
+    if (value === "local") {
+      // 仅当上次保存的配置也是 local 模式时，才使用 config.apifoxUrl
+      const localUrl =
+        config.apifoxConfig?.mode === "local"
+          ? config.apifoxConfig.apifoxUrl
+          : ""
+      form.setFieldsValue({
+        projectId: undefined,
+        apifoxToken: undefined,
+        apifoxUrl: localUrl,
+        mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX_LOCAL,
+      })
+    } else {
+      // 仅当上次保存的配置也是 online 模式时，才使用 config.apifoxUrl 作为 projectId
+      const isOnlineConfig = config.apifoxConfig?.mode === "online"
+      const projectId = isOnlineConfig ? config.apifoxConfig.apifoxUrl : ""
+      const apifoxToken = isOnlineConfig
+        ? config.apifoxConfig.apifoxToken || ""
+        : ""
+      const apifoxMockToken = isOnlineConfig
+        ? config.apifoxConfig.apifoxMockToken || ""
+        : ""
+      form.setFieldsValue({
+        apifoxUrl: undefined,
+        projectId,
+        apifoxToken,
+        apifoxMockToken,
+        mockPrefix: projectId
+          ? getOnlineMockPrefix(projectId)
+          : MOCK_PREFIX_LOCAL,
+      })
+    }
+  }
+
+  // 处理在线模式项目ID变化
+  const handleProjectIdChange = () => {
+    const projectId = form.getFieldValue("projectId")
+    if (projectId) {
+      // 自动填充 mockPrefix
+      form.setFieldValue("mockPrefix", getOnlineMockPrefix(projectId))
+      // 触发验证
+      const token = form.getFieldValue("apifoxToken")
+      validateApifoxUrl(projectId, selectedTags, "online", token).then(
+        (result) => {
+          if (result.success && result.parsedApis && result.swaggerData) {
+            setParsedApis(result.parsedApis)
+            // 更新在线模式缓存
+            modeCacheRef.current["online"] = {
+              selectedTags,
+              parsedApis: result.parsedApis,
+              swaggerData: result.swaggerData,
+              availableTags: result.availableTags || [],
+            }
+          }
+        }
+      )
+    }
   }
 
   // 处理标签变化
@@ -98,8 +225,15 @@ export default function SyncApifoxModal({
     const url = form.getFieldValue("apifoxUrl")
     if (url) {
       const result = await validateApifoxUrl(url, selectedTags)
-      if (result.success && result.parsedApis) {
+      if (result.success && result.parsedApis && result.swaggerData) {
         setParsedApis(result.parsedApis)
+        // 更新本地模式缓存
+        modeCacheRef.current["local"] = {
+          selectedTags,
+          parsedApis: result.parsedApis,
+          swaggerData: result.swaggerData,
+          availableTags: result.availableTags || [],
+        }
       }
     }
   }
@@ -111,29 +245,62 @@ export default function SyncApifoxModal({
       return
     }
 
+    if (selectedTags.length === 0) {
+      message.warning("请先选择标签")
+      return
+    }
+
     // 如果有冲突的 tags，必须选择合并策略
     if (duplicateTags.length > 0 && !mergeStrategy) {
       message.warning("请选择合并策略")
       return
     }
 
-    const apifoxUrl = form.getFieldValue("apifoxUrl")
-    const mockPrefix = form.getFieldValue("mockPrefix") || MOCK_PREFIX
+    const apifoxUrl =
+      syncMode === "online"
+        ? form.getFieldValue("projectId")
+        : form.getFieldValue("apifoxUrl")
+    const mockPrefix =
+      form.getFieldValue("mockPrefix") ||
+      (syncMode === "online"
+        ? getOnlineMockPrefix(apifoxUrl)
+        : MOCK_PREFIX_LOCAL)
+    const apifoxToken = form.getFieldValue("apifoxToken")
+    const apifoxMockToken = form.getFieldValue("apifoxMockToken")
 
     // 保存配置
     if (onSaveConfig) {
       onSaveConfig({
+        mode: syncMode,
         apifoxUrl,
         mockPrefix,
+        apifoxToken: syncMode === "online" ? apifoxToken : undefined,
+        apifoxMockToken: syncMode === "online" ? apifoxMockToken : undefined,
         selectedTags: selectedTags.length > 0 ? selectedTags : undefined,
       })
     }
 
-    // 保存地址到缓存
+    // 保存地址到缓存（按模式分开存储，避免跨模式覆盖）
     if (apifoxUrl) {
-      saveCachedApifoxUrl(apifoxUrl).catch((error) => {
-        console.error("Failed to save cached URL:", error)
-      })
+      if (syncMode === "online") {
+        saveCachedApifoxProjectId(apifoxUrl).catch((error) => {
+          console.error("Failed to save cached project ID:", error)
+        })
+        if (apifoxToken) {
+          saveCachedApifoxToken(apifoxToken).catch((error) => {
+            console.error("Failed to save cached token:", error)
+          })
+        }
+        if (apifoxMockToken) {
+          saveCachedApifoxMockToken(apifoxMockToken).catch((error) => {
+            console.error("Failed to save cached mock token:", error)
+          })
+        }
+      } else {
+        saveCachedApifoxLocalUrl(apifoxUrl).catch((error) => {
+          console.error("Failed to save cached local URL:", error)
+        })
+      }
     }
 
     // 保存标签选择到历史记录
@@ -145,6 +312,9 @@ export default function SyncApifoxModal({
     const newModules = convertParsedApisToModules(parsedApis, {
       apifoxUrl,
       mockPrefix,
+      mode: syncMode,
+      apifoxToken,
+      apifoxMockToken,
     })
 
     // 传递合并策略信息给父组件
@@ -172,37 +342,114 @@ export default function SyncApifoxModal({
   // 监听弹框显示状态，加载已保存的配置
   useEffect(() => {
     if (visible) {
-      // 加载缓存的地址
-      getCachedApifoxUrl().then((cachedUrl) => {
-        // 如果有已保存的配置，优先使用配置中的地址
-        const urlToUse = config.apifoxConfig?.apifoxUrl || cachedUrl
+      const savedMode = config.apifoxConfig?.mode || "local"
+      setSyncMode(savedMode)
 
-        if (urlToUse) {
-          const savedTags = config.apifoxConfig?.selectedTags || []
+      const savedTags = config.apifoxConfig?.selectedTags || []
+      const savedMockPrefix =
+        config.apifoxConfig?.mockPrefix || MOCK_PREFIX_LOCAL
 
-          form.setFieldsValue({
-            apifoxUrl: urlToUse,
-            mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX,
-          })
-          setSelectedTags(savedTags)
+      if (savedMode === "online") {
+        // 加载缓存的在线模式配置（优先从 config 读取，其次从独立缓存读取）
+        const projectId =
+          config.apifoxConfig?.mode === "online"
+            ? config.apifoxConfig.apifoxUrl
+            : ""
+        const apifoxToken =
+          config.apifoxConfig?.mode === "online"
+            ? config.apifoxConfig.apifoxToken || ""
+            : ""
 
-          // 自动验证并加载数据
-          validateApifoxUrl(urlToUse, savedTags)
-            .then((result) => {
-              if (result.success && result.parsedApis) {
-                setParsedApis(result.parsedApis)
-              }
+        const mockToken =
+          config.apifoxConfig?.mode === "online"
+            ? config.apifoxConfig.apifoxMockToken || ""
+            : ""
+
+        Promise.all([
+          projectId ? Promise.resolve(projectId) : getCachedApifoxProjectId(),
+          apifoxToken
+            ? Promise.resolve(apifoxToken)
+            : getCachedApifoxToken(),
+          mockToken
+            ? Promise.resolve(mockToken)
+            : getCachedApifoxMockToken(),
+        ]).then(([cachedProjectId, cachedToken, cachedMockToken]) => {
+          const finalProjectId =
+            config.apifoxConfig?.apifoxUrl || cachedProjectId || ""
+          const finalToken = apifoxToken || cachedToken || ""
+          const finalMockToken = mockToken || cachedMockToken || ""
+
+          if (finalProjectId) {
+            form.setFieldsValue({
+              projectId: finalProjectId,
+              apifoxToken: finalToken,
+              apifoxMockToken: finalMockToken,
+              mockPrefix:
+                config.apifoxConfig?.mockPrefix ||
+                getOnlineMockPrefix(finalProjectId),
             })
-            .catch((error) => {
-              console.error("Failed to validate Apifox URL:", error)
+            setSelectedTags(savedTags)
+
+            // 自动验证并加载数据
+            validateApifoxUrl(
+              finalProjectId,
+              savedTags,
+              "online",
+              finalToken
+            )
+              .then((result) => {
+                if (result.success && result.parsedApis) {
+                  setParsedApis(result.parsedApis)
+                }
+              })
+              .catch((error) => {
+                console.error("Failed to validate Apifox URL:", error)
+              })
+          } else {
+            form.setFieldsValue({
+              projectId: "",
+              apifoxToken: "",
+              mockPrefix: MOCK_PREFIX_LOCAL,
             })
-        } else {
-          // 使用默认值
-          form.setFieldsValue({
-            mockPrefix: MOCK_PREFIX,
-          })
-        }
-      })
+          }
+        })
+      } else {
+        // 加载缓存的本地模式配置（优先从 config 读取，其次从独立缓存读取）
+        const localUrl =
+          config.apifoxConfig?.mode === "local"
+            ? config.apifoxConfig.apifoxUrl
+            : ""
+
+        ;(localUrl
+          ? Promise.resolve(localUrl)
+          : getCachedApifoxLocalUrl()
+        ).then((cachedLocalUrl) => {
+          const finalUrl = localUrl || cachedLocalUrl || ""
+
+          if (finalUrl) {
+            form.setFieldsValue({
+              apifoxUrl: finalUrl,
+              mockPrefix: savedMockPrefix,
+            })
+            setSelectedTags(savedTags)
+
+            // 自动验证并加载数据
+            validateApifoxUrl(finalUrl, savedTags, "local")
+              .then((result) => {
+                if (result.success && result.parsedApis) {
+                  setParsedApis(result.parsedApis)
+                }
+              })
+              .catch((error) => {
+                console.error("Failed to validate Apifox URL:", error)
+              })
+          } else {
+            form.setFieldsValue({
+              mockPrefix: MOCK_PREFIX_LOCAL,
+            })
+          }
+        })
+      }
     } else {
       resetForm()
     }
@@ -221,6 +468,7 @@ export default function SyncApifoxModal({
       okButtonProps={{
         disabled:
           parsedApis.length === 0 ||
+          selectedTags.length === 0 ||
           (duplicateTags.length > 0 && !mergeStrategy),
       }}
     >
@@ -228,20 +476,73 @@ export default function SyncApifoxModal({
         form={form}
         layout="vertical"
         initialValues={{
-          mockPrefix: MOCK_PREFIX,
+          mockPrefix: MOCK_PREFIX_LOCAL,
         }}
       >
-        <Form.Item
-          label="Apifox 本地地址"
-          name="apifoxUrl"
-          rules={[
-            { required: true, message: "请输入Apifox地址" },
-            { type: "url", message: "请输入有效的URL" },
-          ]}
-          extra={APIFOX_URL}
-        >
-          <TextArea rows={2} onBlur={handleApifoxUrlChange} />
+        <Form.Item label="同步模式">
+          <Segmented
+            options={[
+              { label: "本地模式", value: "local" },
+              { label: "在线模式", value: "online" },
+            ]}
+            value={syncMode}
+            onChange={(value) =>
+              handleModeChange(value as "local" | "online")
+            }
+            block
+          />
         </Form.Item>
+
+        {syncMode === "local" ? (
+          <>
+            <Form.Item
+              label="Apifox 本地地址"
+              name="apifoxUrl"
+              rules={[
+                { required: true, message: "请输入Apifox地址" },
+                { type: "url", message: "请输入有效的URL" },
+              ]}
+              extra={APIFOX_URL}
+            >
+              <TextArea rows={2} onBlur={handleApifoxUrlChange} />
+            </Form.Item>
+          </>
+        ) : (
+          <>
+            <Form.Item
+              label="项目编号"
+              name="projectId"
+              rules={[{ required: true, message: "请输入Apifox项目编号" }]}
+              extra="填写 Apifox 项目的数字 ID"
+            >
+              <Input onBlur={handleProjectIdChange} />
+            </Form.Item>
+
+            <Form.Item
+              label="Apifox 授权令牌"
+              name="apifoxToken"
+              rules={[{ required: true, message: "请输入Apifox授权令牌" }]}
+              extra="Apifox 个人访问令牌（Access Token），可在 Apifox 个人设置中创建"
+            >
+              <Input.Password
+                placeholder="请输入授权令牌"
+                onBlur={handleProjectIdChange}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label="Apifox Mock 令牌"
+              name="apifoxMockToken"
+              rules={[{ required: true, message: "请输入Apifox Mock令牌" }]}
+              tooltip="点击任意一个云端接口，获取其后缀的 apifox token 填入即可"
+            >
+              <Input.Password
+                placeholder="请输入 Mock 令牌"
+                onBlur={handleProjectIdChange}
+              />
+            </Form.Item>
+          </>
+        )}
 
         <UrlValidationStatus validating={validating} />
 
@@ -277,7 +578,11 @@ export default function SyncApifoxModal({
               label="Mock地址前缀"
               name="mockPrefix"
               rules={[{ required: true, message: "请输入Mock地址前缀" }]}
-              extra={MOCK_PREFIX}
+              extra={
+                syncMode === "online"
+                  ? MOCK_PREFIX_ONLINE
+                  : MOCK_PREFIX_LOCAL
+              }
             >
               <Input />
             </Form.Item>
