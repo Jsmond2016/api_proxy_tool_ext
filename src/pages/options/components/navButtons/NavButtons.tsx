@@ -1,16 +1,20 @@
-import React from "react"
-import { message, Space, Switch, Tooltip } from "antd"
+import React, { useState } from "react"
+import { message, Space, Switch, Tooltip, Button } from "antd"
+import { FileTextOutlined } from "@ant-design/icons"
 
 import { ChromeApiService } from "@src/utils/chromeApi"
 import { useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 import SyncApifoxModalButton from "./syncApifoxModalButton/SyncApifoxModalButton"
+import SetIterationInfoModal from "./syncApifoxModalButton/SetIterationInfoModal"
 import ResetButton from "./resetButton/ResetButton"
 import CopyAllPermissionButton from "./copyAllPermissionButton/CopyAllPermissionButton"
 import ArchiveButton from "./archiveButton/ArchiveButton"
 
 const NavButtons: React.FC = () => {
   const { config, setConfig } = useConfigStore()
+  const [setIterationInfoModalVisible, setSetIterationInfoModalVisible] =
+    useState(false)
 
   // 切换全局开关
   const handleToggleGlobal = async (enabled: boolean) => {
@@ -35,6 +39,16 @@ const NavButtons: React.FC = () => {
     }
   }
 
+  // 处理打开设置迭代信息弹窗
+  const handleOpenSetIterationInfo = () => {
+    const selectedTags = config.apifoxConfig?.selectedTags || []
+    if (selectedTags.length === 0) {
+      message.warning("请先配置接口 tag")
+      return
+    }
+    setSetIterationInfoModalVisible(true)
+  }
+
   return (
     <Space orientation="horizontal">
       <Tooltip title="全局Mock开关, 开启后所有接口都会被代理">
@@ -48,8 +62,25 @@ const NavButtons: React.FC = () => {
       </Tooltip>
       <SyncApifoxModalButton />
       <ArchiveButton />
+      <Tooltip title="设置迭代信息">
+        <Button
+          icon={<FileTextOutlined />}
+          disabled={
+            !config.apifoxConfig?.selectedTags ||
+            config.apifoxConfig.selectedTags.length === 0
+          }
+          onClick={handleOpenSetIterationInfo}
+        >
+          设置迭代信息
+        </Button>
+      </Tooltip>
       <CopyAllPermissionButton />
       <ResetButton />
+      <SetIterationInfoModal
+        visible={setIterationInfoModalVisible}
+        onCancel={() => setSetIterationInfoModalVisible(false)}
+        config={config}
+      />
     </Space>
   )
 }

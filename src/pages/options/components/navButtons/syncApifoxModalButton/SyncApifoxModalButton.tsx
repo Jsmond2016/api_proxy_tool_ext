@@ -1,21 +1,13 @@
 import React, { useState } from "react"
 
-import { Dropdown, Button, message, Modal, Space } from "antd"
-import { InfoCircleOutlined } from "@ant-design/icons"
-import type { MenuProps } from "antd"
+import { Button, message, Modal, Space, Tooltip } from "antd"
+import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons"
 
 import SyncApifoxModal from "./SyncApifoxModal"
-import SetIterationInfoModal from "./SetIterationInfoModal"
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { useOnlyHaveDefaultMockConfig } from "@src/hooks"
-import {
-  SyncOutlined,
-  ReloadOutlined,
-  SettingOutlined,
-  FileTextOutlined,
-} from "@ant-design/icons"
 import {
   convertParsedApisToModules,
   parseSwaggerData,
@@ -43,8 +35,6 @@ const MOCK_DATA_WARNING = {
 
 const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
   const [syncApifoxModalVisible, setSyncApifoxModalVisible] = useState(false)
-  const [setIterationInfoModalVisible, setSetIterationInfoModalVisible] =
-    useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
   const config = useConfigStore((state) => state.config)
@@ -454,64 +444,27 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
     }
   }
 
-  // 处理打开设置迭代信息弹窗
-  const handleOpenSetIterationInfo = () => {
-    const selectedTags = config.apifoxConfig?.selectedTags || []
-    if (selectedTags.length === 0) {
-      message.warning("请先配置接口 tag")
-      return
-    }
-    setSetIterationInfoModalVisible(true)
-  }
-
-  // 下拉菜单项
-  const menuItems: MenuProps["items"] = [
-    {
-      key: "settings",
-      label: "设置 Apifox 配置",
-      icon: <SettingOutlined />,
-      onClick: handleOpenSettings,
-    },
-    {
-      key: "refresh",
-      label: "刷新 Apifox 接口",
-      icon: <ReloadOutlined />,
-      onClick: handleRefreshApifox,
-      disabled: refreshing || !config.apifoxConfig?.apifoxUrl,
-    },
-    {
-      key: "iteration",
-      label: "设置迭代信息",
-      icon: <FileTextOutlined />,
-      onClick: handleOpenSetIterationInfo,
-      disabled:
-        !config.apifoxConfig?.selectedTags ||
-        config.apifoxConfig.selectedTags.length === 0,
-    },
-  ]
-
   return (
     <>
-      <Dropdown.Button
-        type="primary"
-        menu={{ items: menuItems }}
-        onClick={handleOpenSettings}
-        icon={<SyncOutlined />}
-        loading={refreshing}
-        trigger={["click"]}
-      >
-        设置 Apifox 配置
-      </Dropdown.Button>
+      <Space.Compact>
+        <Button type="primary" onClick={handleOpenSettings}>
+          设置 Apifox 配置
+        </Button>
+        <Tooltip title="刷新 Apifox 接口">
+          <Button
+            type="primary"
+            icon={<ReloadOutlined />}
+            loading={refreshing}
+            disabled={!config.apifoxConfig?.apifoxUrl}
+            onClick={handleRefreshApifox}
+          />
+        </Tooltip>
+      </Space.Compact>
       <SyncApifoxModal
         visible={syncApifoxModalVisible}
         onCancel={() => setSyncApifoxModalVisible(false)}
         onOk={handleSyncApifox}
         onSaveConfig={handleSaveConfig}
-        config={config}
-      />
-      <SetIterationInfoModal
-        visible={setIterationInfoModalVisible}
-        onCancel={() => setSetIterationInfoModalVisible(false)}
         config={config}
       />
     </>
