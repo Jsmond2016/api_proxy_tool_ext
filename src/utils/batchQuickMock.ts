@@ -13,6 +13,7 @@ import {
   SwaggerData,
   parseSwaggerData,
 } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxUtils"
+import { appendApifoxMockToken } from "@src/utils/mockUtils"
 
 export const BATCH_QUICK_MOCK_MODULE_KEY = "quick.mock.external"
 export const BATCH_QUICK_MOCK_MODULE_LABEL = "quick.mock.external"
@@ -125,11 +126,13 @@ export const buildBatchQuickMockApi = ({
   existingApi,
   parsedApi,
   mockPrefix,
+  apifoxMockToken,
 }: {
   normalizedUrl: string
   existingApi?: ApiConfig
   parsedApi?: ParsedApi
   mockPrefix: string
+  apifoxMockToken?: string
 }): ApiConfig => {
   const method = normalizeMethod(existingApi?.method || parsedApi?.method)
 
@@ -140,7 +143,8 @@ export const buildBatchQuickMockApi = ({
     link: existingApi?.link || parsedApi?.link || "",
     apiUrl: normalizedUrl,
     redirectURL:
-      existingApi?.redirectURL || buildRedirectUrl(mockPrefix, normalizedUrl),
+      existingApi?.redirectURL ||
+      appendApifoxMockToken(buildRedirectUrl(mockPrefix, normalizedUrl), apifoxMockToken),
     method,
     filterType: existingApi?.filterType || "contains",
     delay: existingApi?.delay ?? 0,

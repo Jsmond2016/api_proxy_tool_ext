@@ -4,6 +4,7 @@ import { ThunderboltOutlined, CloseCircleOutlined, CheckCircleOutlined } from "@
 import { ApiConfig } from "@src/types"
 import { useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
+import { appendApifoxMockToken } from "@src/utils/mockUtils"
 
 interface TestButtonProps {
   apiConfig: ApiConfig
@@ -38,7 +39,10 @@ const TestButton: React.FC<TestButtonProps> = ({
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // 使用 redirectURL 进行测试（会被代理拦截的 URL）
-      const testUrl = apiConfig.redirectURL
+      let testUrl = apiConfig.redirectURL
+
+      // 如果配置了 Apifox Mock Token 但 URL 中未携带，自动补充
+      testUrl = appendApifoxMockToken(testUrl, config.apifoxConfig?.apifoxMockToken)
 
       const response = await fetch(testUrl, {
         method: apiConfig.method,

@@ -1,5 +1,6 @@
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { generateId } from "@src/utils/chromeApi"
+import { appendApifoxMockToken } from "@src/utils/mockUtils"
 import {
   ModelApiActionType,
   ModelNamesMap,
@@ -233,8 +234,7 @@ export const convertParsedApisToModules = (
     apifoxMockToken?: string
   }
 ): ModuleConfig[] => {
-  const { mode, apifoxMockToken } = apifoxConfig
-  const isOnlineMode = mode === "online"
+  const { apifoxMockToken } = apifoxConfig
   // 按分组名分组 APIs
   const groupedApis = parsedApis.reduce(
     (groups, api) => {
@@ -274,9 +274,10 @@ export const convertParsedApisToModules = (
         apiName: api.summary,
         link: api.link,
         apiUrl: api.path,
-        redirectURL: isOnlineMode
-            ? `${apifoxConfig.mockPrefix}${api.path}?apifoxToken=${apifoxMockToken}`
-            : `${apifoxConfig.mockPrefix}${api.path}`,
+        redirectURL: appendApifoxMockToken(
+            `${apifoxConfig.mockPrefix}${api.path}`,
+            apifoxMockToken
+          ),
         method,
         filterType: "contains" as const,
         delay: 0,

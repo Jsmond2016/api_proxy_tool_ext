@@ -10,6 +10,7 @@ import {
   isApiUrlDuplicate,
   isApiKeyDuplicate,
 } from "../../../../../utils/chromeApi"
+import { appendApifoxMockToken } from "../../../../../utils/mockUtils"
 import {
   validateApifoxUrl,
   SwaggerData,
@@ -320,7 +321,10 @@ export default function ApiFormDrawer({
       if (matchCount === 1 && apiInfo) {
         // 精确匹配到一个接口，用匹配到的完整 path 自动填充
         const fullPath = apiInfo.path
-        const redirectURL = `${apifoxConfig.mockPrefix}${fullPath}`
+        const redirectURL = appendApifoxMockToken(
+          `${apifoxConfig.mockPrefix}${fullPath}`,
+          apifoxConfig.apifoxMockToken
+        )
         form.setFieldsValue({
           apiUrl: fullPath, // 更新为完整的接口地址
           redirectURL, // 使用完整 path 构建重定向 URL

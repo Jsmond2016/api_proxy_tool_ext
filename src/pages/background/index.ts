@@ -16,6 +16,7 @@ import {
 } from "../../constant/constant"
 import { Logger } from "../../utils/logger"
 import { generateId } from "../../utils/chromeApi"
+import { appendApifoxMockToken } from "../../utils/mockUtils"
 import {
   BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX,
   buildBatchQuickMockApi,
@@ -177,7 +178,10 @@ async function updateDeclarativeRules(): Promise<void> {
           // 如果启用了快速联调，需要特殊处理
           // 注意：由于 Manifest V3 的限制，declarativeNetRequest 无法直接返回自定义响应
           // 这里我们暂时保持原有的重定向逻辑，快速联调的拦截逻辑需要后续优化
-          let redirectUrl = apiConfig.redirectURL
+          let redirectUrl = appendApifoxMockToken(
+            apiConfig.redirectURL,
+            globalConfig.apifoxConfig?.apifoxMockToken
+          )
           // TODO: 实现快速联调的拦截逻辑
           // 可能的方案：
           // 1. 使用 chrome.webRequest API（需要 webRequest 权限，但 Manifest V3 已废弃）
@@ -331,6 +335,7 @@ async function handleExternalBatchQuickMock(
         existingApi: localMatch?.api,
         parsedApi,
         mockPrefix: globalConfig.apifoxConfig?.mockPrefix || "",
+        apifoxMockToken: globalConfig.apifoxConfig?.apifoxMockToken,
       })
 
       batchApis.push(batchApi)
