@@ -483,7 +483,7 @@ export default function SyncApifoxModal({
           <Segmented
             options={[
               { label: "本地模式", value: "local" },
-              { label: "在线模式", value: "online" },
+              { label: "云端模式", value: "online" },
             ]}
             value={syncMode}
             onChange={(value) =>

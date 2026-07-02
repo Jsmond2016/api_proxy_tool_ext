@@ -51,6 +51,22 @@ const NavButtons: React.FC = () => {
 
   return (
     <Space orientation="horizontal">
+      {config.apifoxConfig?.mode && (
+        <Tooltip title={`当前为 ${config.apifoxConfig.mode === "online" ? "云端" : "本地"}模式`}>
+          <Space size={4} className="text-sm" style={{ marginLeft: 32 }}>
+            <span
+              className="inline-block h-2 w-2 rounded-full"
+              style={{
+                backgroundColor:
+                  config.apifoxConfig.mode === "online" ? "#52c41a" : "#8c8c8c",
+              }}
+            />
+            <span className="text-gray-600">
+              {config.apifoxConfig.mode === "online" ? "云端模式" : "本地模式"}
+            </span>
+          </Space>
+        </Tooltip>
+      )}
       <Tooltip title="全局Mock开关, 开启后所有接口都会被代理">
         <Switch
           checked={config.isGlobalEnabled}
@@ -61,22 +77,6 @@ const NavButtons: React.FC = () => {
         />
       </Tooltip>
       <SyncApifoxModalButton />
-      {config.apifoxConfig?.mode && (
-        <Tooltip title={`当前为 ${config.apifoxConfig.mode === "online" ? "在线" : "本地"}模式`}>
-          <Space size={4} className="text-sm">
-            <span
-              className="inline-block h-2 w-2 rounded-full"
-              style={{
-                backgroundColor:
-                  config.apifoxConfig.mode === "online" ? "#52c41a" : "#8c8c8c",
-              }}
-            />
-            <span className="text-gray-600">
-              {config.apifoxConfig.mode === "online" ? "在线模式" : "本地模式"}
-            </span>
-          </Space>
-        </Tooltip>
-      )}
       <ArchiveButton />
       <Tooltip title="设置迭代信息">
         <Button

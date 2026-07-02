@@ -156,7 +156,7 @@ export default function Popup() {
                 />{" "}
                 <span className="align-middle">
                   {config.apifoxConfig.mode === "online"
-                    ? "在线模式"
+                    ? "云端模式"
                     : "本地模式"}
                 </span>
               </>

@@ -15,7 +15,7 @@ const CloneButton = ({
   const { config, setConfig } = useConfigStore()
   const activeModuleId = useActiveModuleIdStore((conf) => conf.activeModuleId)
 
-  // 克隆API
+  // 复制API
   const handleCloneApi = () => {
     const api = config.modules
       .flatMap((module) => module.apiArr)
@@ -49,7 +49,7 @@ const CloneButton = ({
         className="flex items-center gap-2 w-full h-full"
       >
         <CopyOutlined />
-        <span>克隆</span>
+        <span>复制</span>
       </div>
     )
   }
@@ -61,7 +61,7 @@ const CloneButton = ({
       icon={<CopyOutlined />}
       onClick={handleCloneApi}
     >
-      克隆
+      复制
     </Button>
   )
 }
