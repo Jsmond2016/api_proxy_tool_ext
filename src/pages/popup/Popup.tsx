@@ -140,6 +140,32 @@ export default function Popup() {
           />
         </div>
 
+        <div className="border-t border-slate-200 px-3 py-1.5">
+          <Text type="secondary" className="text-xs">
+            当前模式：
+            {config?.apifoxConfig?.mode ? (
+              <>
+                <span
+                  className="inline-block h-1.5 w-1.5 rounded-full align-middle"
+                  style={{
+                    backgroundColor:
+                      config.apifoxConfig.mode === "online"
+                        ? "#52c41a"
+                        : "#8c8c8c",
+                  }}
+                />{" "}
+                <span className="align-middle">
+                  {config.apifoxConfig.mode === "online"
+                    ? "在线模式"
+                    : "本地模式"}
+                </span>
+              </>
+            ) : (
+              <span className="text-gray-400">未配置</span>
+            )}
+          </Text>
+        </div>
+
         <div className="border-t border-slate-200 px-3 py-2">
           <Text type="secondary" className="text-xs">
             <span className="font-semibold text-slate-900">
