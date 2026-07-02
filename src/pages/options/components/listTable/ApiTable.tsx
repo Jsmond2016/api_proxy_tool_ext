@@ -53,6 +53,7 @@ export default function ApiTable() {
   const [current, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [localSearchKeyword, setLocalSearchKeyword] = useState("")
+  const [switchSortOrder, setSwitchSortOrder] = useState<"ascend" | "descend" | null>(null)
 
   // 请求方式连续点击计数（3 次触发仅单个调试）
   const methodClickCountRef = useRef<Record<string, number>>({})
@@ -141,6 +142,16 @@ export default function ApiTable() {
     )
   })
 
+  // 按开关状态手动排序
+  const sortedApis = useMemo(() => {
+    if (!switchSortOrder) return filteredApis
+    return [...filteredApis].sort((a, b) =>
+      switchSortOrder === "descend"
+        ? Number(b.isOpen) - Number(a.isOpen)
+        : Number(a.isOpen) - Number(b.isOpen)
+    )
+  }, [filteredApis, switchSortOrder])
+
   // 检查是否所有API都已开启
   const allApisEnabled =
     filteredApis.length > 0 && filteredApis.every((api) => api.isOpen)
@@ -165,8 +176,8 @@ export default function ApiTable() {
   useEffect(() => {
     if (!highlightApiId) return
 
-    // 1. 检查目标 API 是否在当前列表（filteredApis）中
-    const index = filteredApis.findIndex((api) => api.id === highlightApiId)
+    // 1. 检查目标 API 是否在当前列表（sortedApis）中
+    const index = sortedApis.findIndex((api) => api.id === highlightApiId)
     if (index === -1) {
       return
     }
@@ -194,7 +205,7 @@ export default function ApiTable() {
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [highlightApiId, filteredApis, pageSize, current, setHighlightApiId])
+  }, [highlightApiId, sortedApis, pageSize, current, setHighlightApiId])
 
   // 切换API开关
   const handleToggleApi = async (apiId: string, enabled: boolean) => {
@@ -286,13 +297,29 @@ export default function ApiTable() {
             checkedChildren="开启"
             unCheckedChildren="关闭"
           />
+          <span
+            className={`inline-flex items-center cursor-pointer text-xs leading-none px-0.5 rounded select-none hover:bg-gray-200 transition-colors ${
+              switchSortOrder ? "text-blue-600" : "text-gray-400"
+            }`}
+            onClick={(e) => {
+              e.stopPropagation()
+              setSwitchSortOrder(
+                switchSortOrder === "ascend"
+                  ? "descend"
+                  : switchSortOrder === "descend"
+                  ? null
+                  : "ascend"
+              )
+            }}
+            title="按开关状态排序"
+          >
+            {switchSortOrder === "ascend" ? "▲" : switchSortOrder === "descend" ? "▼" : "⇅"}
+          </span>
         </div>
       ),
       dataIndex: "isOpen",
-      width: 100,
+      width: 110,
       align: "left" as const,
-      sorter: (a: ApiConfig, b: ApiConfig) =>
-        Number(b.isOpen) - Number(a.isOpen),
       render: (_, record: ApiConfig) => (
         <Switch
           checked={record.isOpen}
@@ -509,7 +536,7 @@ export default function ApiTable() {
   ]
 
   const pagination: PaginationProps = {
-    total: filteredApis.length,
+    total: sortedApis.length,
     showTotal: (total: number) => `共计 ${total} 个`,
     current,
     pageSize,
@@ -542,7 +569,7 @@ export default function ApiTable() {
         </div>
       )}
       <Table
-        dataSource={filteredApis}
+        dataSource={sortedApis}
         columns={columns as ColumnsType<ApiConfig>}
         rowKey="id"
         pagination={pagination}
