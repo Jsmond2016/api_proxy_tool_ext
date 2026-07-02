@@ -205,6 +205,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
 
       // 智能同步
       syncApifoxModules(newModules)
+      // 刷新后清空全局搜索关键词，避免旧搜索词过滤新接口
+      useSearchKeywordStore.getState().setSearchKeyword("")
     } catch (error) {
       console.error("刷新失败:", error)
       message.error(
