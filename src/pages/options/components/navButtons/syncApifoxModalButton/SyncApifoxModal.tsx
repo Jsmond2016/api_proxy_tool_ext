@@ -221,7 +221,8 @@ export default function SyncApifoxModal({
         savedApifoxToken ? Promise.resolve(savedApifoxToken) : getCachedApifoxToken(),
         savedMockToken ? Promise.resolve(savedMockToken) : getCachedApifoxMockToken(),
       ]).then(([cachedProjectId, cachedToken, cachedMockToken]) => {
-        const finalProjectId = config.apifoxConfig?.apifoxUrl || cachedProjectId || ""
+        // 只读取当前为 online 模式时的 config 值，避免本地模式的 URL 被当作项目编号填入
+        const finalProjectId = projectId || cachedProjectId || ""
         const finalToken = savedApifoxToken || cachedToken || ""
         const finalMockToken = savedMockToken || cachedMockToken || ""
 
@@ -230,9 +231,7 @@ export default function SyncApifoxModal({
             projectId: finalProjectId,
             apifoxToken: finalToken,
             apifoxMockToken: finalMockToken,
-            mockPrefix:
-              config.apifoxConfig?.mockPrefix ||
-              getOnlineMockPrefix(finalProjectId),
+            mockPrefix: getOnlineMockPrefix(finalProjectId),
           })
           setSelectedTags(savedTags)
 
