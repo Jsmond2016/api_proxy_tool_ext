@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react"
+import React, { useState, useMemo, useEffect, useRef, useCallback } from "react"
 import {
   Table,
   Switch,
@@ -52,6 +52,47 @@ export default function ApiTable() {
   const [current, setCurrent] = useState(1)
   const [pageSize, setPageSize] = useState(20)
   const [localSearchKeyword, setLocalSearchKeyword] = useState("")
+
+  // 请求方式连续点击计数（3 次触发仅单个调试）
+  const methodClickCountRef = useRef<Record<string, number>>({})
+  const methodClickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleMethodTripleClick = useCallback(
+    (apiId: string) => {
+      // 清除上次的定时器
+      if (methodClickTimerRef.current) {
+        clearTimeout(methodClickTimerRef.current)
+      }
+
+      const count = (methodClickCountRef.current[apiId] || 0) + 1
+      methodClickCountRef.current[apiId] = count
+
+      if (count >= 3) {
+        // 达到 3 次，触发仅单个调试
+        methodClickCountRef.current = {}
+        const newConfig = {
+          ...config,
+          isGlobalEnabled: true,
+          modules: config.modules.map((module) => ({
+            ...module,
+            apiArr: module.apiArr.map((api) => ({
+              ...api,
+              isOpen: api.id === apiId,
+            })),
+          })),
+        }
+        setConfig(newConfig)
+        saveConfig(newConfig)
+        message.success("单个调试设置成功，已关闭其他接口 Mock 开关")
+      } else {
+        // 1 秒内无点击则重置计数
+        methodClickTimerRef.current = setTimeout(() => {
+          methodClickCountRef.current = {}
+        }, 1000)
+      }
+    },
+    [config, setConfig]
+  )
 
   const isAllApisTab = activeModuleId === ALL_APIS_TAB_ID
 
@@ -266,7 +307,11 @@ export default function ApiTable() {
       width: 120,
       render: (_, record: ApiConfig) => (
         <Space>
-          <Tag color={getMethodColor(record.method)}>
+          <Tag
+            color={getMethodColor(record.method)}
+            className="cursor-pointer"
+            onClick={() => handleMethodTripleClick(record.id)}
+          >
             {record.method.toUpperCase()}
           </Tag>
           <TestButton apiConfig={record} getMethodColor={getMethodColor} />
