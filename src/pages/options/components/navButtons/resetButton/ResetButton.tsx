@@ -1,7 +1,7 @@
 import React from "react"
 import { Button, Modal } from "antd"
 
-import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { useActiveModuleIdStore, useConfigStore, useSearchKeywordStore } from "@src/store"
 import { GlobalConfig } from "@src/types"
 import { saveConfig } from "@src/utils/configUtil"
 import { DefaultMockApiModule } from "@src/constant/constant"
@@ -30,6 +30,7 @@ const ResetButton: React.FC<ResetButtonProps> = () => {
         setConfig(newConfig as GlobalConfig)
         saveConfig(newConfig as GlobalConfig)
         setActiveModuleId("default-module")
+        useSearchKeywordStore.getState().setSearchKeyword("")
       },
     })
   }
