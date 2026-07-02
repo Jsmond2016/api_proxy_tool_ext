@@ -1,8 +1,9 @@
 import React, { useState } from "react"
 import { Button, Modal, Spin, Tag, message } from "antd"
-import { ThunderboltOutlined } from "@ant-design/icons"
+import { ThunderboltOutlined, CloseCircleOutlined, CheckCircleOutlined } from "@ant-design/icons"
 import { ApiConfig } from "@src/types"
 import { useConfigStore } from "@src/store"
+import { saveConfig } from "@src/utils/configUtil"
 
 interface TestButtonProps {
   apiConfig: ApiConfig
@@ -13,7 +14,7 @@ const TestButton: React.FC<TestButtonProps> = ({
   apiConfig,
   getMethodColor,
 }) => {
-  const { config } = useConfigStore()
+  const { config, setConfig } = useConfigStore()
   const [testModalVisible, setTestModalVisible] = useState(false)
   const [testLoading, setTestLoading] = useState(false)
   const [testResult, setTestResult] = useState<{
@@ -24,25 +25,10 @@ const TestButton: React.FC<TestButtonProps> = ({
     error?: string
   } | null>(null)
 
-  const handleTest = async () => {
-    // 检查 mock 开关状态
-    if (!config.isGlobalEnabled) {
-      message.warning("全局 Mock 开关未打开，请先打开全局 Mock 开关后再测试")
-      return
-    }
+  const [showGlobalOffWarning, setShowGlobalOffWarning] = useState(false)
 
-    if (!apiConfig.isOpen) {
-      message.warning(
-        "单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试"
-      )
-      return
-    }
-
-    if (!apiConfig.redirectURL) {
-      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
-      return
-    }
-
+  // 执行测试请求
+  const runTestRequest = async () => {
     setTestModalVisible(true)
     setTestLoading(true)
     setTestResult(null)
@@ -97,6 +83,59 @@ const TestButton: React.FC<TestButtonProps> = ({
     } finally {
       setTestLoading(false)
     }
+  }
+
+  // 仅调试单个接口：关闭其他所有接口，只保留当前接口
+  const handleDebugSingle = () => {
+    const newConfig = {
+      ...config,
+      isGlobalEnabled: true,
+      modules: config.modules.map((module) => ({
+        ...module,
+        apiArr: module.apiArr.map((api) => ({
+          ...api,
+          isOpen: api.id === apiConfig.id,
+        })),
+      })),
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    message.success("已关闭其他接口，仅保留当前接口的 Mock 开关")
+    setShowGlobalOffWarning(false)
+    runTestRequest()
+  }
+
+  // 开启全局开关
+  const handleEnableGlobal = () => {
+    const newConfig = {
+      ...config,
+      isGlobalEnabled: true,
+    }
+    setConfig(newConfig)
+    saveConfig(newConfig)
+    message.success("已开启全局 Mock 开关")
+    setShowGlobalOffWarning(false)
+    runTestRequest()
+  }
+
+  // 测试按钮点击入口
+  const handleTest = () => {
+    if (!config.isGlobalEnabled) {
+      setShowGlobalOffWarning(true)
+      return
+    }
+
+    if (!apiConfig.isOpen) {
+      message.warning("单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试")
+      return
+    }
+
+    if (!apiConfig.redirectURL) {
+      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
+      return
+    }
+
+    runTestRequest()
   }
 
   return (
@@ -214,6 +253,51 @@ const TestButton: React.FC<TestButtonProps> = ({
             )}
           </div>
         ) : null}
+      </Modal>
+
+      {/* 全局 Mock 开关未打开时的提示弹框 */}
+      <Modal
+        title="全局 Mock 开关未打开"
+        open={showGlobalOffWarning}
+        onCancel={() => setShowGlobalOffWarning(false)}
+        closable
+        maskClosable
+        footer={null}
+        width={480}
+      >
+        <div className="py-4">
+          <div className="text-gray-600 mb-6">
+            全局 Mock 开关当前处于关闭状态，无法测试接口。请选择操作方式：
+          </div>
+          <div className="flex gap-3">
+            <Button
+              type="default"
+              icon={<CloseCircleOutlined />}
+              className="flex-1 h-auto whitespace-normal py-3"
+              onClick={handleDebugSingle}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-sm font-medium">仅调试单个接口</span>
+                <span className="text-xs text-gray-400 font-normal">
+                  关闭其他接口，只保留当前接口 Mock
+                </span>
+              </div>
+            </Button>
+            <Button
+              type="primary"
+              icon={<CheckCircleOutlined />}
+              className="flex-1 h-auto whitespace-normal py-3"
+              onClick={handleEnableGlobal}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-sm font-medium">开启全局开关</span>
+                <span className="text-xs text-white/70 font-normal">
+                  保持当前接口配置不变
+                </span>
+              </div>
+            </Button>
+          </div>
+        </div>
       </Modal>
     </>
   )
