@@ -65,13 +65,20 @@ export default function SyncApifoxModal({
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
   const [syncMode, setSyncMode] = useState<"local" | "online">("local")
 
-  // 按模式缓存已加载的数据，切换模式时避免重复请求
+  // 按模式缓存已加载的数据和表单值，切换模式时避免重复请求和清空表单
   const modeCacheRef = useRef<{
     [key in "local" | "online"]?: {
       selectedTags: string[]
       parsedApis: ParsedApi[]
       swaggerData: SwaggerData | null
       availableTags: string[]
+      formValues: {
+        apifoxUrl?: string
+        projectId?: string
+        apifoxToken?: string
+        apifoxMockToken?: string
+        mockPrefix?: string
+      }
     }
   }>({})
 
@@ -98,11 +105,25 @@ export default function SyncApifoxModal({
         setParsedApis(apis)
         // 更新当前模式的缓存
         if (swaggerData) {
+          const formValues = form.getFieldsValue([
+            "apifoxUrl",
+            "projectId",
+            "apifoxToken",
+            "apifoxMockToken",
+            "mockPrefix",
+          ])
           modeCacheRef.current[syncMode] = {
             selectedTags: tags,
             parsedApis: apis,
             swaggerData,
             availableTags,
+            formValues: formValues as {
+              apifoxUrl?: string
+              projectId?: string
+              apifoxToken?: string
+              apifoxMockToken?: string
+              mockPrefix?: string
+            },
           }
         }
       }
@@ -129,12 +150,26 @@ export default function SyncApifoxModal({
     // 如果切换到当前模式，不做任何操作
     if (value === syncMode) return
 
-    // 将当前模式的状态保存到缓存
+    // 将当前模式的状态和表单值保存到缓存
+    const currentFormValues = form.getFieldsValue([
+      "apifoxUrl",
+      "projectId",
+      "apifoxToken",
+      "apifoxMockToken",
+      "mockPrefix",
+    ])
     modeCacheRef.current[syncMode] = {
       selectedTags,
       parsedApis,
       swaggerData,
       availableTags,
+      formValues: currentFormValues as {
+        apifoxUrl?: string
+        projectId?: string
+        apifoxToken?: string
+        apifoxMockToken?: string
+        mockPrefix?: string
+      },
     }
 
     setSyncMode(value)
@@ -154,9 +189,12 @@ export default function SyncApifoxModal({
       setParsedApis([])
     }
 
-    // 重置对应模式的表单字段，避免跨模式读取错值（local 与 online 共享 apifoxUrl 字段）
-    if (value === "local") {
-      // 仅当上次保存的配置也是 local 模式时，才使用 config.apifoxUrl
+    // 恢复目标模式的表单值（优先用缓存中的用户填写值，回退到已保存的 config）
+    if (cached?.formValues) {
+      // 有缓存的表单值，直接恢复（用户之前填写的）
+      form.setFieldsValue(cached.formValues)
+    } else if (value === "local") {
+      // 无缓存，从已保存的 config 读取（仅当 config 也是 local 模式时）
       const localUrl =
         config.apifoxConfig?.mode === "local"
           ? config.apifoxConfig.apifoxUrl
@@ -164,24 +202,19 @@ export default function SyncApifoxModal({
       form.setFieldsValue({
         projectId: undefined,
         apifoxToken: undefined,
+        apifoxMockToken: undefined,
         apifoxUrl: localUrl,
         mockPrefix: config.apifoxConfig?.mockPrefix || MOCK_PREFIX_LOCAL,
       })
     } else {
-      // 仅当上次保存的配置也是 online 模式时，才使用 config.apifoxUrl 作为 projectId
+      // 无缓存，从已保存的 config 读取（仅当 config 也是 online 模式时）
       const isOnlineConfig = config.apifoxConfig?.mode === "online"
       const projectId = isOnlineConfig ? config.apifoxConfig.apifoxUrl : ""
-      const apifoxToken = isOnlineConfig
-        ? config.apifoxConfig.apifoxToken || ""
-        : ""
-      const apifoxMockToken = isOnlineConfig
-        ? config.apifoxConfig.apifoxMockToken || ""
-        : ""
       form.setFieldsValue({
         apifoxUrl: undefined,
         projectId,
-        apifoxToken,
-        apifoxMockToken,
+        apifoxToken: isOnlineConfig ? config.apifoxConfig.apifoxToken || "" : "",
+        apifoxMockToken: isOnlineConfig ? config.apifoxConfig.apifoxMockToken || "" : "",
         mockPrefix: projectId
           ? getOnlineMockPrefix(projectId)
           : MOCK_PREFIX_LOCAL,
@@ -201,12 +234,26 @@ export default function SyncApifoxModal({
         (result) => {
           if (result.success && result.parsedApis && result.swaggerData) {
             setParsedApis(result.parsedApis)
-            // 更新在线模式缓存
+            // 更新在线模式缓存（含表单值）
+            const formValues = form.getFieldsValue([
+              "apifoxUrl",
+              "projectId",
+              "apifoxToken",
+              "apifoxMockToken",
+              "mockPrefix",
+            ])
             modeCacheRef.current["online"] = {
               selectedTags,
               parsedApis: result.parsedApis,
               swaggerData: result.swaggerData,
               availableTags: result.availableTags || [],
+              formValues: formValues as {
+                apifoxUrl?: string
+                projectId?: string
+                apifoxToken?: string
+                apifoxMockToken?: string
+                mockPrefix?: string
+              },
             }
           }
         }
@@ -227,12 +274,26 @@ export default function SyncApifoxModal({
       const result = await validateApifoxUrl(url, selectedTags)
       if (result.success && result.parsedApis && result.swaggerData) {
         setParsedApis(result.parsedApis)
-        // 更新本地模式缓存
+        // 更新本地模式缓存（含表单值）
+        const formValues = form.getFieldsValue([
+          "apifoxUrl",
+          "projectId",
+          "apifoxToken",
+          "apifoxMockToken",
+          "mockPrefix",
+        ])
         modeCacheRef.current["local"] = {
           selectedTags,
           parsedApis: result.parsedApis,
           swaggerData: result.swaggerData,
           availableTags: result.availableTags || [],
+          formValues: formValues as {
+            apifoxUrl?: string
+            projectId?: string
+            apifoxToken?: string
+            apifoxMockToken?: string
+            mockPrefix?: string
+          },
         }
       }
     }
