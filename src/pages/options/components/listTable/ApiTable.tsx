@@ -78,9 +78,8 @@ export default function ApiTable() {
 
   const baseApis = useMemo(() => {
     if (isAllApisTab) {
-      const all = config.modules.flatMap((module) => module.apiArr)
-      // 开启的接口排前面，关闭的排后面
-      return [...all].sort((a, b) => Number(b.isOpen) - Number(a.isOpen))
+      // 全部接口 tab：不再按开关状态默认排序，避免开关切换时接口跳位导致用户困惑
+      return config.modules.flatMap((module) => module.apiArr)
     }
     return activeModule?.apiArr || []
   }, [isAllApisTab, config.modules, activeModule])
@@ -237,17 +236,21 @@ export default function ApiTable() {
     },
     {
       title: (
-        <Switch
-          checked={allApisEnabled}
-          value={someApisEnabled && !allApisEnabled}
-          onChange={handleToggleAllApis}
-          checkedChildren="开启"
-          unCheckedChildren="关闭"
-        />
+        <div className="flex items-center gap-1">
+          <Switch
+            checked={allApisEnabled}
+            value={someApisEnabled && !allApisEnabled}
+            onChange={handleToggleAllApis}
+            checkedChildren="开启"
+            unCheckedChildren="关闭"
+          />
+        </div>
       ),
       dataIndex: "isOpen",
-      width: 80,
+      width: 100,
       align: "center" as const,
+      sorter: (a: ApiConfig, b: ApiConfig) =>
+        Number(b.isOpen) - Number(a.isOpen),
       render: (_, record: ApiConfig) => (
         <Switch
           checked={record.isOpen}
