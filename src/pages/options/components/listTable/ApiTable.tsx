@@ -10,6 +10,7 @@ import {
   Dropdown,
   MenuProps,
   Input,
+  Tooltip,
 } from "antd"
 import { DownOutlined, CopyOutlined } from "@ant-design/icons"
 
@@ -307,13 +308,15 @@ export default function ApiTable() {
       width: 120,
       render: (_, record: ApiConfig) => (
         <Space>
-          <Tag
-            color={getMethodColor(record.method)}
-            className="cursor-pointer"
-            onClick={() => handleMethodTripleClick(record.id)}
-          >
-            {record.method.toUpperCase()}
-          </Tag>
+          <Tooltip title="连击 3 次开启仅单个调试">
+            <Tag
+              color={getMethodColor(record.method)}
+              className="cursor-pointer !px-3 !py-1 !min-w-[56px] !text-center !leading-none"
+              onClick={() => handleMethodTripleClick(record.id)}
+            >
+              {record.method.toUpperCase()}
+            </Tag>
+          </Tooltip>
           <TestButton apiConfig={record} getMethodColor={getMethodColor} />
         </Space>
       ),
