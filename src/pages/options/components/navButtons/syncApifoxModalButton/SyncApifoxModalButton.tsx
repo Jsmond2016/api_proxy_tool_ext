@@ -6,7 +6,7 @@ import { InfoCircleOutlined, ReloadOutlined } from "@ant-design/icons"
 import SyncApifoxModal from "./SyncApifoxModal"
 import { ModuleConfig, ApifoxConfig } from "@src/types"
 import { saveConfig, hasOnlyDefaultModule } from "@src/utils/configUtil"
-import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import { useActiveModuleIdStore, useConfigStore, useSearchKeywordStore } from "@src/store"
 import { useOnlyHaveDefaultMockConfig } from "@src/hooks"
 import {
   convertParsedApisToModules,
@@ -436,6 +436,8 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       }
 
       setSyncApifoxModalVisible(false)
+      // 同步后清空全局搜索关键词，避免旧搜索词过滤新导入的接口
+      useSearchKeywordStore.getState().setSearchKeyword("")
     } catch (error) {
       console.error("同步失败:", error)
       message.error(
