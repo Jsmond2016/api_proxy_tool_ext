@@ -263,40 +263,35 @@ const TestButton: React.FC<TestButtonProps> = ({
         closable
         maskClosable
         footer={null}
-        width={480}
+        width={420}
       >
-        <div className="py-4">
-          <div className="text-gray-600 mb-6">
-            全局 Mock 开关当前处于关闭状态，无法测试接口。请选择操作方式：
+        <div className="py-3 space-y-2 text-xs text-gray-500">
+          <div>
+            <span className="text-orange-600 font-medium">仅调试单个接口：</span>
+            关闭其他接口 Mock，打开全局开关，仅单个测试
           </div>
-          <div className="flex gap-3">
-            <Button
-              type="default"
-              icon={<CloseCircleOutlined />}
-              className="flex-1 h-auto whitespace-normal py-3"
-              onClick={handleDebugSingle}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-sm font-medium">仅调试单个接口</span>
-                <span className="text-xs text-gray-400 font-normal">
-                  关闭其他接口，只保留当前接口 Mock
-                </span>
-              </div>
-            </Button>
-            <Button
-              type="primary"
-              icon={<CheckCircleOutlined />}
-              className="flex-1 h-auto whitespace-normal py-3"
-              onClick={handleEnableGlobal}
-            >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-sm font-medium">开启全局开关</span>
-                <span className="text-xs text-white/70 font-normal">
-                  保持当前接口配置不变
-                </span>
-              </div>
-            </Button>
+          <div>
+            <span className="text-blue-600 font-medium">开启全局开关：</span>
+            打开全局开关并测试
           </div>
+        </div>
+        <div className="flex gap-3 pb-2">
+          <Button
+            icon={<CloseCircleOutlined />}
+            onClick={handleDebugSingle}
+            style={{ color: "#d4380d", borderColor: "#d4380d" }}
+            block
+          >
+            仅调试单个接口
+          </Button>
+          <Button
+            type="primary"
+            icon={<CheckCircleOutlined />}
+            onClick={handleEnableGlobal}
+            block
+          >
+            开启全局开关
+          </Button>
         </div>
       </Modal>
     </>
