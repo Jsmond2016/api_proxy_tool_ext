@@ -15,6 +15,14 @@ NEW_VERSION=$(npm version $VERSION_TYPE --no-git-tag-version)
 # 去掉 v 前缀
 VERSION_NUMBER=$(echo $NEW_VERSION | sed 's/^v//')
 
+# 写入发布日期用于页脚显示
+RELEASE_DATE=$(date +%Y.%m.%d)
+node -e "
+  const pkg = require('./package.json');
+  pkg.releaseDate = '$RELEASE_DATE';
+  require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+
 # 生成 changelog（确保版本号正确）
 # 使用 -r 1 只生成最新版本的 changelog，避免覆盖历史记录
 # 先备份当前 changelog 的历史部分（从第5行开始到末尾）

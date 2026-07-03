@@ -1,6 +1,7 @@
 {
   "name": "api_proxy_tool_ext",
   "version": "1.5.37",
+  "releaseDate": "",
   "description": "A simple chrome & firefox extension template with Vite, React, TypeScript and Tailwind CSS.",
   "license": "MIT",
   "repository": {

@@ -244,7 +244,7 @@ export default function Options() {
               </a>{" "}
               | current version:{" "}
               <a href="https://github.com/Jsmond2016/api_proxy_tool_ext/releases">
-                v{packageJson.version}
+                v{packageJson.version}{packageJson.releaseDate ? `_${packageJson.releaseDate}` : ""}
               </a>{" "}
               | Author: Jsmond2016
             </Text>

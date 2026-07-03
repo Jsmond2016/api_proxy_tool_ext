@@ -71,6 +71,14 @@ fi
 print_status "Updating package.json version..."
 npm version $VERSION --no-git-tag-version
 
+# 写入发布日期用于页脚显示
+RELEASE_DATE=$(date +%Y.%m.%d)
+node -e "
+  const pkg = require('./package.json');
+  pkg.releaseDate = '$RELEASE_DATE';
+  require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
+"
+
 # Build the project
 print_status "Building project..."
 pnpm run build:chrome
