@@ -65,10 +65,6 @@ const NavButtons: React.FC = () => {
       <Tooltip title="设置迭代信息">
         <Button
           icon={<FileTextOutlined />}
-          disabled={
-            !config.apifoxConfig?.selectedTags ||
-            config.apifoxConfig.selectedTags.length === 0
-          }
           onClick={handleOpenSetIterationInfo}
         >
           设置迭代信息

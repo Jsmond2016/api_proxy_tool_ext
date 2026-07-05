@@ -459,7 +459,6 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
             type="primary"
             icon={<ReloadOutlined />}
             loading={refreshing}
-            disabled={!config.apifoxConfig?.apifoxUrl}
             onClick={handleRefreshApifox}
           />
         </Tooltip>
