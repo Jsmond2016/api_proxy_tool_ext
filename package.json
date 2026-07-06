@@ -26,7 +26,10 @@
     "version:minor": "bash scripts/bump-version.sh minor",
     "version:major": "bash scripts/bump-version.sh major",
     "init": "node scripts/generate-docs.js && echo '🎉 AI 开发环境已初始化完成！'",
-    "init:ai": "node scripts/generate-docs.js && echo '📚 AI 提示词环境文档已生成'"
+    "init:ai": "node scripts/generate-docs.js && echo '📚 AI 提示词环境文档已生成'",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "config": {
     "commitizen": {
@@ -84,7 +87,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitepress": "^1.6.4"
   },
   "packageManager": "pnpm@10.5.2",
   "volta": {

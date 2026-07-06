@@ -391,6 +391,10 @@ $RECYCLE.BIN/
 #generated manifest
 public/manifest.json
 
+# VitePress documentation site
+docs/.vitepress/cache
+docs/.vitepress/dist
+
 # Vite build metadata
 **/.vite/
 

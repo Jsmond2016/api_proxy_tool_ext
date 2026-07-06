@@ -14,6 +14,8 @@
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-4285F4.svg)](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)
 [![Edge Add-ons](https://img.shields.io/badge/Edge-Addons-0078D7.svg)](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
 
+<p><strong>📚 完整文档站: <code>pnpm docs:dev</code> 本地启动，或访问 <a href="https://github.com/Jsmond2016/api_proxy_tool_ext/tree/main/docs">docs/</a></strong></p>
+
 </div>
 
 ---
