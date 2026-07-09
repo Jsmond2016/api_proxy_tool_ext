@@ -1,6 +1,6 @@
 import { PlusOutlined } from "@ant-design/icons"
 import { Button, Modal, Select } from "antd"
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import ApiFormDrawer from "./ApiFormDrawer"
 import { useBoolean } from "ahooks"
 import { ApiConfig } from "@src/types"
@@ -8,6 +8,9 @@ import { generateId } from "@src/utils/chromeApi"
 import { useActiveModuleIdStore, useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
 import { ALL_APIS_TAB_ID } from "@src/constant/constant"
+import {
+  fetchOrGetCachedSwaggerData,
+} from "../../navButtons/syncApifoxModalButton/apifoxCache"
 
 const AddFormButton = () => {
   const [apiFormVisible, apiFormVisibleOperate] = useBoolean(false)
@@ -15,6 +18,18 @@ const AddFormButton = () => {
   const [targetModuleId, setTargetModuleId] = useState<string>("")
   const { config, setConfig } = useConfigStore()
   const activeModuleId = useActiveModuleIdStore((conf) => conf.activeModuleId)
+
+  // 预加载 Apifox Swagger 数据到内存缓存（请求去重，弹窗打开时复用同一请求）
+  useEffect(() => {
+    const apifoxConfig = config.apifoxConfig
+    if (!apifoxConfig?.apifoxUrl) return
+
+    fetchOrGetCachedSwaggerData(
+      apifoxConfig.apifoxUrl,
+      apifoxConfig.mode || "local",
+      apifoxConfig.apifoxToken
+    )
+  }, [config.apifoxConfig])
 
   const isAllApisTab = activeModuleId === ALL_APIS_TAB_ID
 

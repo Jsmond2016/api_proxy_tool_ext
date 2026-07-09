@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react"
 import { message } from "antd"
 import {
-  fetchApifoxSwaggerData,
   parseSwaggerData as parseSwaggerDataUtil,
   extractApifoxFolderNames,
   type SwaggerData,
@@ -11,6 +10,7 @@ import {
   saveCachedApifoxLocalUrl,
   saveCachedApifoxProjectId,
   saveCachedApifoxToken,
+  fetchOrGetCachedSwaggerData,
 } from "../apifoxCache"
 
 export const useApifoxValidation = () => {
@@ -37,12 +37,12 @@ export const useApifoxValidation = () => {
       try {
         setValidating(true)
 
-        // 使用统一入口获取 Swagger 数据
-        const data = await fetchApifoxSwaggerData({
+        // 使用统一入口获取 Swagger 数据（共享缓存+请求去重）
+        const data = await fetchOrGetCachedSwaggerData(
+          url,
           mode,
-          urlOrProjectId: url,
-          apifoxToken,
-        })
+          apifoxToken
+        )
 
         const swaggerDataResult = data as SwaggerData
         setSwaggerData(swaggerDataResult)

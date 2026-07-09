@@ -12,11 +12,14 @@ import {
 } from "../../../../../utils/chromeApi"
 import { appendApifoxMockToken } from "../../../../../utils/mockUtils"
 import {
-  validateApifoxUrl,
   SwaggerData,
   ParsedApi,
   normalizeApifoxLink,
 } from "../../navButtons/syncApifoxModalButton/apifoxUtils"
+import {
+  getCachedSwaggerData,
+  fetchOrGetCachedSwaggerData,
+} from "../../navButtons/syncApifoxModalButton/apifoxCache"
 import {
   APIFOX_FIELD_RUN_IN_APIFOX,
   APIFOX_FIELD_GROUP_NAME,
@@ -156,26 +159,39 @@ export default function ApiFormDrawer({
   // const customMockResponses = (Form.useWatch("customMockResponses", form) ||
   //   []) as QuickMockConfig[]
 
-  // 加载 Swagger 数据缓存
+  // 加载 Swagger 数据缓存（使用共享请求，避免重复请求网络）
   useEffect(() => {
     const loadSwaggerCache = async () => {
       const apifoxConfig = config.apifoxConfig
-      if (apifoxConfig?.apifoxUrl && visible && !data) {
-        // 只在添加模式且配置了 Apifox 地址时加载
-        setIsLoadingSwagger(true)
-        try {
-          const swaggerData = await validateApifoxUrl(
-            apifoxConfig.apifoxUrl,
-            apifoxConfig.mode || "local",
-            apifoxConfig.apifoxToken
-          )
-          setSwaggerCache(swaggerData)
-        } catch (error) {
-          console.warn("Failed to load Apifox swagger data:", error)
-          setSwaggerCache(null)
-        } finally {
-          setIsLoadingSwagger(false)
-        }
+      if (!apifoxConfig?.apifoxUrl || !visible || data) {
+        return
+      }
+
+      // 先检查内存缓存（同步），有则直接返回
+      const cached = getCachedSwaggerData(
+        apifoxConfig.apifoxUrl,
+        apifoxConfig.mode || "local",
+        apifoxConfig.apifoxToken
+      )
+      if (cached) {
+        setSwaggerCache(cached)
+        return
+      }
+
+      // 缓存未命中，发起/复用共享请求
+      setIsLoadingSwagger(true)
+      try {
+        const swaggerData = await fetchOrGetCachedSwaggerData(
+          apifoxConfig.apifoxUrl,
+          apifoxConfig.mode || "local",
+          apifoxConfig.apifoxToken
+        )
+        setSwaggerCache(swaggerData)
+      } catch (error) {
+        console.warn("Failed to load Apifox swagger data:", error)
+        setSwaggerCache(null)
+      } finally {
+        setIsLoadingSwagger(false)
       }
     }
     loadSwaggerCache()

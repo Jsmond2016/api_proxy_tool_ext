@@ -2,6 +2,8 @@
  * Apifox 缓存管理工具
  */
 
+import { type SwaggerData, fetchApifoxSwaggerData } from "./apifoxUtils"
+
 const STORAGE_KEYS = {
   APIFOX_URL: "apifox-cached-url",
   APIFOX_LOCAL_URL: "apifox-cached-local-url",
@@ -292,4 +294,108 @@ export const getIterationInfoByTag = async (
     console.error("Failed to get iteration info by tag:", error)
     return null
   }
+}
+
+// ==================== Swagger 数据内存缓存 ====================
+
+interface SwaggerCacheEntry {
+  key: string
+  data: SwaggerData | null
+  timestamp: number
+}
+
+/** Swagger 数据内存缓存（避免每次打开添加弹窗都重新请求网络） */
+let swaggerDataMemoryCache: SwaggerCacheEntry | null = null
+
+/** 缓存有效期 10 分钟 */
+const SWAGGER_CACHE_TTL = 10 * 60 * 1000
+
+/** 正在请求中的 Swagger 数据 Promise（用于请求去重，相同参数复用同一请求） */
+let inflightSwaggerPromise: Promise<SwaggerData> | null = null
+let inflightSwaggerKey = ""
+
+/**
+ * 获取缓存的 Swagger 数据（内存缓存）
+ * @returns 匹配当前参数的缓存数据，不存在或已过期返回 null
+ */
+export const getCachedSwaggerData = (
+  url: string,
+  mode: string,
+  token?: string
+): SwaggerData | null => {
+  const key = `${mode}:${url}:${token || ""}`
+  if (
+    swaggerDataMemoryCache &&
+    swaggerDataMemoryCache.key === key &&
+    Date.now() - swaggerDataMemoryCache.timestamp < SWAGGER_CACHE_TTL
+  ) {
+    return swaggerDataMemoryCache.data
+  }
+  return null
+}
+
+/**
+ * 设置 Swagger 数据到内存缓存
+ */
+export const setCachedSwaggerData = (
+  url: string,
+  mode: string,
+  token: string | undefined,
+  data: SwaggerData | null
+): void => {
+  const key = `${mode}:${url}:${token || ""}`
+  swaggerDataMemoryCache = {
+    key,
+    data,
+    timestamp: Date.now(),
+  }
+}
+
+/**
+ * 清除 Swagger 数据内存缓存
+ */
+export const clearCachedSwaggerData = (): void => {
+  swaggerDataMemoryCache = null
+}
+
+/**
+ * 获取 Swagger 数据：优先读内存缓存，其次复用 in-flight 请求，最后发起新请求
+ *
+ * 无论从何调用（预加载 / 弹窗），相同参数的请求共享同一个 Promise，
+ * 避免重复请求浪费，也避免弹窗打开后「预加载还没完成」又发起一个新请求。
+ */
+export const fetchOrGetCachedSwaggerData = async (
+  url: string,
+  mode: "local" | "online",
+  token?: string
+): Promise<SwaggerData | null> => {
+  // 1. 有缓存直接返回
+  const cached = getCachedSwaggerData(url, mode, token)
+  if (cached) return cached
+
+  const key = `${mode}:${url}:${token || ""}`
+
+  // 2. 有相同参数的 in-flight 请求，复用
+  if (inflightSwaggerPromise && inflightSwaggerKey === key) {
+    return inflightSwaggerPromise
+  }
+
+  // 3. 发起新请求，同时存储 Promise 以便后续复用
+  const promise = fetchApifoxSwaggerData({
+    mode,
+    urlOrProjectId: url,
+    apifoxToken: token,
+  })
+    .then((data) => {
+      setCachedSwaggerData(url, mode, token, data)
+      return data
+    })
+    .finally(() => {
+      inflightSwaggerPromise = null
+      inflightSwaggerKey = ""
+    })
+
+  inflightSwaggerPromise = promise
+  inflightSwaggerKey = key
+  return promise
 }
