@@ -304,15 +304,23 @@ interface SwaggerCacheEntry {
   timestamp: number
 }
 
+interface InflightRequest {
+  promise: Promise<SwaggerData>
+  key: string
+}
+
 /** Swagger 数据内存缓存（避免每次打开添加弹窗都重新请求网络） */
 let swaggerDataMemoryCache: SwaggerCacheEntry | null = null
 
 /** 缓存有效期 10 分钟 */
 const SWAGGER_CACHE_TTL = 10 * 60 * 1000
 
-/** 正在请求中的 Swagger 数据 Promise（用于请求去重，相同参数复用同一请求） */
-let inflightSwaggerPromise: Promise<SwaggerData> | null = null
-let inflightSwaggerKey = ""
+/** 正在请求中的 Swagger 数据请求（用于请求去重，相同参数复用同一请求） */
+let inflightRequest: InflightRequest | null = null
+
+/** 构建缓存 / 去重的 key */
+const buildCacheKey = (url: string, mode: string, token?: string): string =>
+  `${mode}:${url}:${token || ""}`
 
 /**
  * 获取缓存的 Swagger 数据（内存缓存）
@@ -323,7 +331,7 @@ export const getCachedSwaggerData = (
   mode: string,
   token?: string
 ): SwaggerData | null => {
-  const key = `${mode}:${url}:${token || ""}`
+  const key = buildCacheKey(url, mode, token)
   if (
     swaggerDataMemoryCache &&
     swaggerDataMemoryCache.key === key &&
@@ -343,9 +351,8 @@ export const setCachedSwaggerData = (
   token: string | undefined,
   data: SwaggerData | null
 ): void => {
-  const key = `${mode}:${url}:${token || ""}`
   swaggerDataMemoryCache = {
-    key,
+    key: buildCacheKey(url, mode, token),
     data,
     timestamp: Date.now(),
   }
@@ -373,11 +380,11 @@ export const fetchOrGetCachedSwaggerData = async (
   const cached = getCachedSwaggerData(url, mode, token)
   if (cached) return cached
 
-  const key = `${mode}:${url}:${token || ""}`
+  const key = buildCacheKey(url, mode, token)
 
-  // 2. 有相同参数的 in-flight 请求，复用
-  if (inflightSwaggerPromise && inflightSwaggerKey === key) {
-    return inflightSwaggerPromise
+  // 2. 有相同参数的 in-flight 请求，复用（带 identity 校验）
+  if (inflightRequest && inflightRequest.key === key) {
+    return inflightRequest.promise
   }
 
   // 3. 发起新请求，同时存储 Promise 以便后续复用
@@ -391,11 +398,13 @@ export const fetchOrGetCachedSwaggerData = async (
       return data
     })
     .finally(() => {
-      inflightSwaggerPromise = null
-      inflightSwaggerKey = ""
+      // identity 校验：只有当前 Promise 仍是 inflightRequest 时才清空
+      // 避免在多个请求交替时误清掉后续请求的注册
+      if (inflightRequest?.promise === promise) {
+        inflightRequest = null
+      }
     })
 
-  inflightSwaggerPromise = promise
-  inflightSwaggerKey = key
+  inflightRequest = { promise, key }
   return promise
 }

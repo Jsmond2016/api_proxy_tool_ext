@@ -21,15 +21,17 @@ const AddFormButton = () => {
 
   // 预加载 Apifox Swagger 数据到内存缓存（请求去重，弹窗打开时复用同一请求）
   useEffect(() => {
-    const apifoxConfig = config.apifoxConfig
-    if (!apifoxConfig?.apifoxUrl) return
+    const { apifoxUrl, mode, apifoxToken } = config.apifoxConfig ?? {}
+    if (!apifoxUrl) return
 
     fetchOrGetCachedSwaggerData(
-      apifoxConfig.apifoxUrl,
-      apifoxConfig.mode || "local",
-      apifoxConfig.apifoxToken
-    )
-  }, [config.apifoxConfig])
+      apifoxUrl,
+      mode || "local",
+      apifoxToken
+    ).catch(() => {
+      // 预加载失败静默处理，弹窗会自行处理错误
+    })
+  }, [config.apifoxConfig?.apifoxUrl, config.apifoxConfig?.mode, config.apifoxConfig?.apifoxToken])
 
   const isAllApisTab = activeModuleId === ALL_APIS_TAB_ID
 

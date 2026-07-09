@@ -167,11 +167,13 @@ export default function ApiFormDrawer({
         return
       }
 
-      // 先检查内存缓存（同步），有则直接返回
+      const { apifoxUrl, mode, apifoxToken } = apifoxConfig
+
+      // 先检查内存缓存（同步），有则直接返回，避免 loading 闪烁
       const cached = getCachedSwaggerData(
-        apifoxConfig.apifoxUrl,
-        apifoxConfig.mode || "local",
-        apifoxConfig.apifoxToken
+        apifoxUrl,
+        mode || "local",
+        apifoxToken
       )
       if (cached) {
         setSwaggerCache(cached)
@@ -182,11 +184,13 @@ export default function ApiFormDrawer({
       setIsLoadingSwagger(true)
       try {
         const swaggerData = await fetchOrGetCachedSwaggerData(
-          apifoxConfig.apifoxUrl,
-          apifoxConfig.mode || "local",
-          apifoxConfig.apifoxToken
+          apifoxUrl,
+          mode || "local",
+          apifoxToken
         )
-        setSwaggerCache(swaggerData)
+        if (swaggerData) {
+          setSwaggerCache(swaggerData)
+        }
       } catch (error) {
         console.warn("Failed to load Apifox swagger data:", error)
         setSwaggerCache(null)
@@ -195,7 +199,7 @@ export default function ApiFormDrawer({
       }
     }
     loadSwaggerCache()
-  }, [config.apifoxConfig, visible, data])
+  }, [config.apifoxConfig?.apifoxUrl, config.apifoxConfig?.mode, config.apifoxConfig?.apifoxToken, visible, data])
 
   // 当编辑时，设置表单初始值
   useEffect(() => {
