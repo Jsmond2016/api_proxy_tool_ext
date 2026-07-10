@@ -277,6 +277,13 @@ async function handleExternalBatchQuickMock(
   request: ExternalBatchQuickMockRequest,
   sender: chrome.runtime.MessageSender
 ): Promise<ExternalBatchQuickMockResponse> {
+  const _perfTag = `[batch:${request.requestId.slice(0, 8)}]`
+  const _t0 = performance.now()
+  const _mark = (step: string) =>
+    console.log(
+      `${_perfTag} [${Math.round(performance.now() - _t0)}ms] ${step}`
+    )
+
   const sourceExtensionId = sender.id || ""
   if (!sourceExtensionId) {
     return {
@@ -311,12 +318,24 @@ async function handleExternalBatchQuickMock(
       message: "操作失败",
     }
   }
+  _mark(`URL dedup done: ${normalizedUrls.length} urls`)
+
+  // 检查是否有 URL 在本地不存在，仅当需要 Apifox 数据做补充时才拉取
+  const urlsMissingLocally = normalizedUrls.filter(
+    (url) => !findApiByNormalizedUrl(globalConfig, url)
+  )
+  _mark(`local config check: ${urlsMissingLocally.length} missing`)
 
   let apifoxApiMap = new Map()
-  try {
-    apifoxApiMap = await fetchApifoxApiMap(globalConfig)
-  } catch (error) {
-    Logger.error("Load Apifox data for batch quick mock failed", error)
+  if (urlsMissingLocally.length > 0) {
+    try {
+      apifoxApiMap = await fetchApifoxApiMap(globalConfig)
+      _mark("Apifox fetch done")
+    } catch (error) {
+      Logger.error("Load Apifox data for batch quick mock failed", error)
+    }
+  } else {
+    _mark("Apifox fetch SKIPPED (all URLs in local config)")
   }
 
   const batchModuleId = generateId()
@@ -367,39 +386,24 @@ async function handleExternalBatchQuickMock(
       })
     }
   }
+  _mark("API configs built")
 
-  const nextModules = [
-    {
-      id: batchModuleId,
-      apiDocKey: batchModuleKey,
-      label: batchModuleLabel,
-      apiDocUrl: globalConfig.apifoxConfig?.apifoxUrl || "",
-      dataWrapper: "",
-      pageDomain: "",
-      requestHeaders: "",
-      apiArr: batchApis,
-    },
-    ...globalConfig.modules,
-  ]
-
+  // 先更新内存配置（确保后续操作读到最新配置）
   globalConfig = {
     ...globalConfig,
-    modules: nextModules,
-  }
-
-  try {
-    await saveConfig()
-    await updateDeclarativeRules()
-  } catch (error) {
-    Logger.error("Persist batch quick mock config failed", error)
-    return {
-      success: false,
-      status: "failed",
-      total: normalizedUrls.length,
-      successCount: 0,
-      failCount: normalizedUrls.length,
-      message: "操作失败",
-    }
+    modules: [
+      {
+        id: batchModuleId,
+        apiDocKey: batchModuleKey,
+        label: batchModuleLabel,
+        apiDocUrl: globalConfig.apifoxConfig?.apifoxUrl || "",
+        dataWrapper: "",
+        pageDomain: "",
+        requestHeaders: "",
+        apiArr: batchApis,
+      },
+      ...globalConfig.modules,
+    ],
   }
 
   const jobId = generateId()
@@ -415,16 +419,10 @@ async function handleExternalBatchQuickMock(
   await chrome.storage.session.set({
     [`${BATCH_QUICK_MOCK_JOB_STORAGE_PREFIX}${jobId}`]: job,
   })
+  _mark("session.set done")
 
-  await chrome.tabs.create({
-    url: `${chrome.runtime.getURL(
-      "src/pages/options/index.html"
-    )}?batchQuickMock=1&jobId=${encodeURIComponent(
-      jobId
-    )}&moduleId=${encodeURIComponent(batchModuleId)}`,
-  })
-
-  return {
+  // 立即返回响应给外部插件（不阻塞持久化、规则更新、打开 tab）
+  const response: ExternalBatchQuickMockResponse = {
     success: job.status !== "failed",
     jobId,
     status: job.status,
@@ -433,6 +431,37 @@ async function handleExternalBatchQuickMock(
     failCount: job.failCount,
     message: job.message,
   }
+  _mark("response ready → returning")
+
+  // 以下操作全部异步执行，不阻塞跨插件响应
+  saveConfig().then(() => {
+    console.log(`${_perfTag} [${Math.round(performance.now() - _t0)}ms] saveConfig done`)
+  }).catch((error) => {
+    Logger.error("Persist batch quick mock config failed", error)
+  })
+
+  updateDeclarativeRules().then(() => {
+    console.log(`${_perfTag} [${Math.round(performance.now() - _t0)}ms] updateDeclarativeRules done`)
+  }).catch((error) => {
+    Logger.error("Update rules after batch quick mock failed", error)
+  })
+
+  chrome.tabs
+    .create({
+      url: `${chrome.runtime.getURL(
+        "src/pages/options/index.html"
+      )}?batchQuickMock=1&jobId=${encodeURIComponent(
+        jobId
+      )}&moduleId=${encodeURIComponent(batchModuleId)}`,
+    })
+    .then(() => {
+      console.log(`${_perfTag} [${Math.round(performance.now() - _t0)}ms] tabs.create done`)
+    })
+    .catch((error) => {
+      Logger.error("Failed to open options tab after batch quick mock", error)
+    })
+
+  return response
 }
 
 // ==================== 消息处理 ====================
@@ -673,10 +702,27 @@ chrome.runtime.onMessage.addListener(handleMessage)
 
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
   ;(async () => {
+    const _tStart = performance.now()
+    const _log = (msg: string) => {
+      const requestId =
+        request &&
+        typeof request === "object" &&
+        "requestId" in request &&
+        typeof (request as Record<string, unknown>).requestId === "string"
+          ? (request as Record<string, string>).requestId.slice(0, 8)
+          : "???"
+      console.log(
+        `[batch:${requestId}] [${Math.round(performance.now() - _tStart)}ms] ${msg}`
+      )
+    }
+
     try {
-      await ensureInitialized()
+      _log("ensureConfigLoaded start")
+      await ensureConfigLoaded()
+      _log("ensureConfigLoaded done")
 
       if (!isExternalBatchQuickMockRequest(request)) {
+        _log("invalid request type")
         sendResponse({
           success: false,
           status: "failed",
@@ -689,6 +735,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
       }
 
       const response = await handleExternalBatchQuickMock(request, sender)
+      _log("sendResponse")
       sendResponse(response)
     } catch (error) {
       Logger.error("Handle external batch quick mock failed", error)
@@ -749,6 +796,26 @@ function ensureInitialized(): Promise<void> {
   }
 
   return initializationPromise
+}
+
+/** 仅加载配置的轻量初始化（不重建规则），用于外部消息处理 */
+let configLoadedPromise: Promise<void> | null = null
+
+function ensureConfigLoaded(): Promise<void> {
+  if (!configLoadedPromise) {
+    configLoadedPromise = loadConfig().then(() => {
+      const moduleCount = globalConfig.modules.length
+      const apiCount = globalConfig.modules.reduce(
+        (sum, m) => sum + m.apiArr.length,
+        0
+      )
+      Logger.info(
+        `Config loaded: ${moduleCount} modules, ${apiCount} APIs`
+      )
+    })
+  }
+
+  return configLoadedPromise
 }
 
 ensureInitialized()

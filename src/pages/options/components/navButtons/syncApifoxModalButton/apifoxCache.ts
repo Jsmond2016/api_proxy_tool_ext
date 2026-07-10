@@ -370,24 +370,28 @@ export const clearCachedSwaggerData = (): void => {
  *
  * 无论从何调用（预加载 / 弹窗），相同参数的请求共享同一个 Promise，
  * 避免重复请求浪费，也避免弹窗打开后「预加载还没完成」又发起一个新请求。
+ *
+ * 原始 Swagger JSON 仅保留在内存缓存中（SW 存活期内有效），
+ * 不写入 chrome.storage.session（数据量过大）。解析后的 API Map
+ * 缓存见 batchQuickMock.ts 中的 parsed-api-map 缓存。
  */
 export const fetchOrGetCachedSwaggerData = async (
   url: string,
   mode: "local" | "online",
   token?: string
 ): Promise<SwaggerData | null> => {
-  // 1. 有缓存直接返回
-  const cached = getCachedSwaggerData(url, mode, token)
-  if (cached) return cached
-
   const key = buildCacheKey(url, mode, token)
 
-  // 2. 有相同参数的 in-flight 请求，复用（带 identity 校验）
+  // 1. 内存缓存（最快，SW 存活期间有效）
+  const memCached = getCachedSwaggerData(url, mode, token)
+  if (memCached) return memCached
+
+  // 2. 有相同参数的 in-flight 请求，复用
   if (inflightRequest && inflightRequest.key === key) {
     return inflightRequest.promise
   }
 
-  // 3. 发起新请求，同时存储 Promise 以便后续复用
+  // 3. 发起新请求（结果仅缓存到内存）
   const promise = fetchApifoxSwaggerData({
     mode,
     urlOrProjectId: url,
@@ -398,8 +402,6 @@ export const fetchOrGetCachedSwaggerData = async (
       return data
     })
     .finally(() => {
-      // identity 校验：只有当前 Promise 仍是 inflightRequest 时才清空
-      // 避免在多个请求交替时误清掉后续请求的注册
       if (inflightRequest?.promise === promise) {
         inflightRequest = null
       }
