@@ -1,3 +1,17 @@
+## [1.5.41](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.40...v1.5.41) (2026-07-10)
+
+
+### Bug Fixes
+
+* **scripts:** 同步发版脚本 changelog 修复（空版本保护、-u 模式、自动创建 tag） ([e8ad924](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e8ad9244c6ff5c2b55e1f68da7965286e11135ff))
+
+
+### Performance Improvements
+
+* 添加弹窗接口地址输入框复用 Apifox Swagger 请求，避免重复网络请求 ([d5a71f5](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/d5a71f5deff8efc3654a0d885abe8e91b76ff6f1))
+
+
+
 ## [1.5.40](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.39...v1.5.40) (2026-07-05)
 
 ### Bug Fixes
