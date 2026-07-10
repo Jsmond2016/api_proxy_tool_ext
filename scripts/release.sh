@@ -67,6 +67,16 @@ if git rev-parse "$VERSION" >/dev/null 2>&1; then
     exit 1
 fi
 
+# Check if there are new commits since the latest tag（空版本保护）
+LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || true)
+if [ -n "$LATEST_TAG" ]; then
+    COMMITS_SINCE_TAG=$(git log "$LATEST_TAG"..HEAD --oneline --no-merges 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$COMMITS_SINCE_TAG" -eq 0 ]; then
+        print_warning "自 $LATEST_TAG 以来没有新提交，无需发版。"
+        exit 1
+    fi
+fi
+
 # Update package.json version
 print_status "Updating package.json version..."
 npm version $VERSION --no-git-tag-version
@@ -79,6 +89,25 @@ node -e "
   require('fs').writeFileSync('./package.json', JSON.stringify(pkg, null, 2) + '\n');
 "
 
+# Generate changelog entry（同步引入 -u 模式）
+VERSION_NUMBER=${VERSION#v}
+if [ -f CHANGELOG.md ]; then
+    print_status "Generating changelog entry..."
+    BODY_FILE=$(mktemp)
+    NEW_ENTRY_FILE=$(mktemp)
+
+    cat CHANGELOG.md > "$BODY_FILE"
+    conventional-changelog -p angular -u > "$NEW_ENTRY_FILE"
+
+    {
+        cat "$NEW_ENTRY_FILE"
+        cat "$BODY_FILE"
+    } > CHANGELOG.md
+
+    rm -f "$BODY_FILE" "$NEW_ENTRY_FILE"
+    print_success "CHANGELOG.md updated"
+fi
+
 # Build the project
 print_status "Building project..."
 pnpm run build:chrome
@@ -86,8 +115,8 @@ pnpm run build:firefox
 
 # Create git tag
 print_status "Creating git tag $VERSION..."
-git add package.json
-git commit -m "chore: bump version to $VERSION"
+git add package.json CHANGELOG.md
+git commit -m "chore(release): $VERSION_NUMBER"
 git tag -a "$VERSION" -m "$MESSAGE"
 
 # Push changes and tags
