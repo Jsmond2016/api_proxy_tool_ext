@@ -5,6 +5,10 @@ description: 项目历史需求记录（供参考）
 
 # 需求文档
 
+> **更新时间**：2026-07-13；**使用模型**：Codex GPT-5；**用户**：Jsmond2016
+
+---
+
 > 本文档为历史需求记录，仅供参考。
 
 - **[产品需求文档](/requirements/product-requirements)** — 完整 PRD v2.0
@@ -13,3 +17,4 @@ description: 项目历史需求记录（供参考）
 - **[基于 tag 自动同步 Apifox 接口](/requirements/tag-sync-apifox)** — 标签同步 Apifox Mock 接口需求
 - **[增加生成权限点功能](/requirements/permission-generation)** — 权限点生成功能需求
 - **[Apifox 自定义字段名配置](/requirements/apifox-custom-fields)** — Apifox 扩展字段参考文档
+- **[模块重置后重新添加接口问题复盘](/requirements/reset-module-readd-api)** — 模块重置与接口重新添加问题的排查和修复复盘

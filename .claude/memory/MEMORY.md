@@ -5,6 +5,9 @@
 
 ## 2026-07-13
 
+- 修复模块重置后无法重新添加原接口的问题：重置读取最新 Store、等待持久化并清理残留勾选状态。
+- 添加表单的 Swagger 匹配改为精确路径与当前请求方法优先，并忽略 `parameters` 等非 HTTP 方法字段。
+- 新增 8 条模块重置及 Swagger 匹配回归测试；定向测试与 ESLint 通过，Chrome 生产构建通过。
 - 修复跨插件批量 Quick Mock 首次缓存未命中时接口名称回退为 URL 的问题。
 - 新增 IndexedDB `api-proxy-cache-db / parsed-api-maps`，持久保存解析后的 Apifox API Map，有效期 24 小时。
 - Apifox 验证和刷新成功后预热持久缓存；冷缓存等待拉取完成后再生成批量模块。

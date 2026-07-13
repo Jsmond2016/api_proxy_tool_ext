@@ -1,12 +1,19 @@
 import { ReloadOutlined } from "@ant-design/icons"
 import { Button, Modal, message } from "antd"
 import React from "react"
-import { useActiveModuleIdStore, useConfigStore } from "@src/store"
+import {
+  useActiveModuleIdStore,
+  useConfigStore,
+  useSelectedApiStore,
+} from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
+import { resetModuleApis } from "./resetModuleUtils"
 
 const ResetModuleButton = () => {
-  const { config, setConfig } = useConfigStore()
-  const { activeModuleId } = useActiveModuleIdStore()
+  const setConfig = useConfigStore((state) => state.setConfig)
+  const setSelectedApiIds = useSelectedApiStore(
+    (state) => state.setSelectedApiIds
+  )
 
   // 重置当前模块 - 清空所有 mock api
   const handleResetModule = () => {
@@ -16,17 +23,22 @@ const ResetModuleButton = () => {
       okText: "确认",
       cancelText: "取消",
       okType: "danger",
-      onOk: () => {
-        const newConfig = {
-          ...config,
-          modules: config.modules.map((module) =>
-            module.id === activeModuleId
-              ? { ...module, apiArr: [] }
-              : module
-          ),
-        }
+      onOk: async () => {
+        const config = useConfigStore.getState().config
+        const activeModuleId = useActiveModuleIdStore.getState().activeModuleId
+        const removedApiIds = new Set(
+          config.modules
+            .find((module) => module.id === activeModuleId)
+            ?.apiArr.map((api) => api.id) || []
+        )
+        const newConfig = resetModuleApis(config, activeModuleId)
         setConfig(newConfig)
-        saveConfig(newConfig)
+        setSelectedApiIds(
+          useSelectedApiStore
+            .getState()
+            .selectedApiIds.filter((id) => !removedApiIds.has(id))
+        )
+        await saveConfig(newConfig)
         message.success("模块重置成功")
       },
     })

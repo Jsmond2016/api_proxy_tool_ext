@@ -11,22 +11,12 @@ import {
   isApiKeyDuplicate,
 } from "../../../../../utils/chromeApi"
 import { appendApifoxMockToken } from "../../../../../utils/mockUtils"
-import {
-  SwaggerData,
-  ParsedApi,
-  normalizeApifoxLink,
-} from "../../navButtons/syncApifoxModalButton/apifoxUtils"
+import { SwaggerData } from "../../navButtons/syncApifoxModalButton/apifoxUtils"
 import {
   getCachedSwaggerData,
   fetchOrGetCachedSwaggerData,
 } from "../../navButtons/syncApifoxModalButton/apifoxCache"
-import {
-  APIFOX_FIELD_RUN_IN_APIFOX,
-  APIFOX_FIELD_GROUP_NAME,
-  APIFOX_FIELD_API_TYPE,
-} from "../../../../../constant/apifoxFields"
-import { ModelAction, ModelNamesMap } from "../../../../../constant/model"
-import { camelCase } from "change-case"
+import { findApiInfoFromSwagger } from "./apiFormUtils"
 // import QuickMockSection from "./QuickMockSection"
 // import CustomMockFormModal from "./CustomMockFormModal"
 
@@ -37,102 +27,6 @@ interface ApiFormDrawerProps {
   config: GlobalConfig
   data?: ApiConfig | null
   title?: string
-}
-
-// 匹配结果类型
-interface MatchResult {
-  apiInfo: ParsedApi | null
-  matchCount: number // 匹配到的接口数量
-}
-
-// 解析 Swagger 数据获取接口信息（支持模糊匹配）
-const parseApiInfoFromSwagger = (
-  swaggerData: SwaggerData,
-  apiUrl: string
-): MatchResult => {
-  if (!swaggerData.paths) {
-    return { apiInfo: null, matchCount: 0 }
-  }
-
-  // 规范化用户输入的 URL（去除前导斜杠，统一比较）
-  const normalizedApiUrl = apiUrl.replace(/^\/+/, "").toLowerCase()
-  const matchedApis: Array<{ path: string; method: string; info: ParsedApi }> =
-    []
-
-  for (const [path, methods] of Object.entries(swaggerData.paths)) {
-    // 规范化 path（去除前导斜杠，统一比较）
-    const normalizedPath = path.replace(/^\/+/, "").toLowerCase()
-
-    // 模糊匹配：检查是否互相包含
-    // 例如：用户输入 "/users" 可以匹配 "/api/saas/v1/users"
-    const isMatch =
-      normalizedPath.includes(normalizedApiUrl) ||
-      normalizedApiUrl.includes(normalizedPath)
-
-    if (isMatch) {
-      for (const [method, apiInfo] of Object.entries(methods)) {
-        if (typeof apiInfo === "object" && apiInfo !== null) {
-          const swaggerInfo = apiInfo as {
-            tags?: string[]
-            summary?: string
-            [key: string]: unknown
-          }
-          const tags = swaggerInfo.tags || []
-          const summary =
-            swaggerInfo.summary || `${method.toUpperCase()} ${path}`
-          const xApifoxRunUrl = swaggerInfo[APIFOX_FIELD_RUN_IN_APIFOX] as
-            | string
-            | undefined
-          const normalizedApifoxLink = normalizeApifoxLink(xApifoxRunUrl)
-          const apiId =
-            xApifoxRunUrl?.split("/").pop()?.split("-")?.[1] || ""
-          const groupName =
-            (swaggerInfo[APIFOX_FIELD_GROUP_NAME] as string) ||
-            (tags.length > 0 ? tags[0] : "demo.default")
-          const modelApiType =
-            (swaggerInfo[APIFOX_FIELD_API_TYPE] as string) ||
-            ModelAction.CUSTOM
-
-          // 生成权限点
-          let authPointKey = ""
-          if (/^[a-zA-Z.]+$/.test(groupName)) {
-            const authPrefix = groupName.split(".").join("-")
-            let apiName = ModelNamesMap[modelApiType] as string
-            if (apiName === "custom") {
-              apiName = camelCase(path.split("/").pop() ?? "")
-            }
-            authPointKey = `${authPrefix}-${apiName}`
-          }
-
-          matchedApis.push({
-            path,
-            method,
-            info: {
-              apiId,
-              path,
-              method: method.toUpperCase(),
-              summary,
-              link: normalizedApifoxLink,
-              tags,
-              groupName,
-              authPointKey,
-              modelApiType,
-            },
-          })
-        }
-      }
-    }
-  }
-
-  // 根据匹配数量返回结果
-  if (matchedApis.length === 1) {
-    return { apiInfo: matchedApis[0].info, matchCount: 1 }
-  } else if (matchedApis.length > 1) {
-    // 多个匹配，返回 null，让调用方处理
-    return { apiInfo: null, matchCount: matchedApis.length }
-  }
-
-  return { apiInfo: null, matchCount: 0 }
 }
 
 export default function ApiFormDrawer({
@@ -199,7 +93,7 @@ export default function ApiFormDrawer({
       }
     }
     loadSwaggerCache()
-  }, [config.apifoxConfig?.apifoxUrl, config.apifoxConfig?.mode, config.apifoxConfig?.apifoxToken, visible, data])
+  }, [config.apifoxConfig, visible, data])
 
   // 当编辑时，设置表单初始值
   useEffect(() => {
@@ -333,9 +227,10 @@ export default function ApiFormDrawer({
 
     // 如果有 Swagger 缓存，尝试从缓存中获取更多信息
     if (swaggerCache) {
-      const { apiInfo, matchCount } = parseApiInfoFromSwagger(
+      const { apiInfo, matchCount } = findApiInfoFromSwagger(
         swaggerCache,
-        apiUrl
+        apiUrl,
+        form.getFieldValue("method") || "GET"
       )
 
       if (matchCount === 1 && apiInfo) {
