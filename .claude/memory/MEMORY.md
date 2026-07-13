@@ -3,6 +3,15 @@
 > 跨会话持久记忆索引。每次会话结束时记录关键变更和待办事项。
 > 按日期倒序排列，最新的条目在顶部。
 
+## 2026-07-13
+
+- 修复跨插件批量 Quick Mock 首次缓存未命中时接口名称回退为 URL 的问题。
+- 新增 IndexedDB `api-proxy-cache-db / parsed-api-maps`，持久保存解析后的 Apifox API Map，有效期 24 小时。
+- Apifox 验证和刷新成功后预热持久缓存；冷缓存等待拉取完成后再生成批量模块。
+- 新增 Vitest 与 fake-indexeddb，缓存及富化逻辑 6 个测试通过；Chrome 生产构建通过。
+- 待办：发布前使用真实 quick-copy-ext 完成冷缓存、热缓存和浏览器重启联调。
+- 既有问题：全量 TypeScript 仍有 4 个错误，全量 ESLint 有 24 个错误和 2 个警告，均不属于本次变更。
+
 ## 2026-05-25
 
 - 初始化 AI 工程化配置（CLAUDE.md, AGENTS.md, STACK_ARCHITECTURE.md, DESIGN.md）

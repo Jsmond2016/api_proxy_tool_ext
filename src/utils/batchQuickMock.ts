@@ -13,6 +13,12 @@ import {
 } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxUtils"
 import { fetchOrGetCachedSwaggerData } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxCache"
 import { appendApifoxMockToken } from "@src/utils/mockUtils"
+import {
+  createParsedApiMap,
+  getCachedParsedApiMap,
+  normalizeApiLookupPath,
+  setCachedParsedApis,
+} from "@src/utils/parsedApiCache"
 
 export const BATCH_QUICK_MOCK_MODULE_KEY = "quick.mock.external"
 export const BATCH_QUICK_MOCK_MODULE_LABEL = "quick.mock.external"
@@ -22,32 +28,7 @@ const VALID_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"] as const
 
 const DEFAULT_METHOD: ApiConfig["method"] = "GET"
 
-export const normalizeBatchQuickMockUrl = (url: string) => {
-  const trimmed = url.trim()
-  if (!trimmed) return ""
-
-  try {
-    const parsedUrl = new URL(trimmed)
-    return normalizePath(parsedUrl.pathname)
-  } catch {
-    const [pathOnly] = trimmed.split(/[?#]/)
-    return normalizePath(pathOnly)
-  }
-}
-
-const normalizePath = (path: string) => {
-  const normalized = path.trim().replace(/\/{2,}/g, "/")
-  if (!normalized) return ""
-  if (normalized === "/") return normalized
-
-  const withLeadingSlash = normalized.startsWith("/")
-    ? normalized
-    : `/${normalized}`
-
-  return withLeadingSlash.endsWith("/")
-    ? withLeadingSlash.slice(0, -1)
-    : withLeadingSlash
-}
+export const normalizeBatchQuickMockUrl = normalizeApiLookupPath
 
 export const dedupeBatchQuickMockUrls = (urls: string[]) => {
   const seen = new Set<string>()
@@ -65,7 +46,7 @@ export const dedupeBatchQuickMockUrls = (urls: string[]) => {
 }
 
 export const buildUniqueBatchQuickMockModuleMeta = (
-  modules: ModuleConfig[]
+  modules: ModuleConfig[],
 ) => {
   const existingLabels = new Set(modules.map((module) => module.label))
   const existingKeys = new Set(modules.map((module) => module.apiDocKey))
@@ -85,7 +66,7 @@ export const buildUniqueBatchQuickMockModuleMeta = (
 
 export const findApiByNormalizedUrl = (
   config: GlobalConfig,
-  normalizedUrl: string
+  normalizedUrl: string,
 ) => {
   for (const module of config.modules) {
     for (const api of module.apiArr) {
@@ -101,101 +82,15 @@ export const findApiByNormalizedUrl = (
   return null
 }
 
-/** session 缓存 key 前缀（存放解析后的 API Map，而非原始 Swagger JSON） */
-const PARSED_API_MAP_CACHE_PREFIX = "parsed-api-map:"
-
-/** 构建 session 缓存 key */
-const buildParsedCacheKey = (url: string, mode: string, token?: string) =>
-  `${PARSED_API_MAP_CACHE_PREFIX}${mode}:${url}:${token || ""}`
-
-/** 缓存有效期 10 分钟 */
-const PARSED_CACHE_TTL = 10 * 60 * 1000
-
-/**
- * 从 chrome.storage.session 读取解析后的 API Map 缓存
- */
-const getParsedApiMapFromCache = async (
-  url: string,
-  mode: string,
-  token?: string
-): Promise<Map<string, ParsedApi> | null> => {
-  try {
-    const key = buildParsedCacheKey(url, mode, token)
-    const result = await chrome.storage.session.get(key)
-    const entry = result[key]
-    if (
-      entry &&
-      typeof entry.timestamp === "number" &&
-      Array.isArray(entry.entries) &&
-      Date.now() - entry.timestamp < PARSED_CACHE_TTL
-    ) {
-      const map = new Map<string, ParsedApi>(entry.entries)
-      console.log(`[api-map-cache] HIT size=${map.size}`, key.slice(0, 60))
-      return map
-    }
-    return null
-  } catch {
-    return null
-  }
-}
-
-/**
- * 将解析后的 API Map 写入 chrome.storage.session 缓存
- */
-const setParsedApiMapToCache = async (
-  url: string,
-  mode: string,
-  token: string | undefined,
-  map: Map<string, ParsedApi>
-): Promise<void> => {
-  try {
-    const key = buildParsedCacheKey(url, mode, token)
-    const entries = Array.from(map.entries())
-    await chrome.storage.session.set({
-      [key]: { entries, timestamp: Date.now() },
-    })
-  } catch (error) {
-    console.error(`[api-map-cache] WRITE FAILED:`, error)
-  }
-}
-
-/** 后台预拉取 Apifox 数据并缓存（不阻塞调用方） */
-const inflightPrefetches = new Map<string, Promise<void>>()
-
-const fireAsyncPrefetch = (url: string, mode: string, token?: string) => {
-  const key = buildParsedCacheKey(url, mode, token)
-  if (inflightPrefetches.has(key)) return inflightPrefetches.get(key)
-
-  const promise = (async () => {
-    try {
-      const data = await fetchOrGetCachedSwaggerData(url, mode, token)
-      if (!data) return
-
-      const parsedApis = parseSwaggerData(data, [])
-      const map = parsedApis.reduce((acc, api) => {
-        acc.set(normalizeBatchQuickMockUrl(api.path), api)
-        return acc
-      }, new Map<string, ParsedApi>())
-
-      await setParsedApiMapToCache(url, mode, token, map)
-    } catch (error) {
-      console.error("[apifox-prefetch] FAILED:", error)
-    } finally {
-      inflightPrefetches.delete(key)
-    }
-  })()
-
-  inflightPrefetches.set(key, promise)
-  return promise
-}
+const inflightApiMapRequests = new Map<
+  string,
+  Promise<Map<string, ParsedApi>>
+>()
 
 /**
  * 获取解析后的 Apifox API Map：
- * - 有缓存 → 直接返回（不触发网络请求）
- * - 无缓存 → 返回空 Map，同时在后台预拉取为下次准备
- *
- * 缓存由 options 页面的「手动同步 Apifox」或后台预拉取填充。
- * 批量 Quick Mock 流程始终不阻塞等待 Apifox。
+ * - 有持久缓存 → 直接返回（不触发网络请求）
+ * - 无持久缓存 → 等待 Apifox 拉取并写入 IndexedDB 后返回
  */
 export const fetchApifoxApiMap = async (config: GlobalConfig) => {
   const apifoxUrl = config.apifoxConfig?.apifoxUrl
@@ -205,19 +100,40 @@ export const fetchApifoxApiMap = async (config: GlobalConfig) => {
 
   const mode = config.apifoxConfig?.mode || "local"
   const token = config.apifoxConfig?.apifoxToken
+  const identity = { url: apifoxUrl, mode }
 
-  // 仅从缓存读取，不阻塞等待网络请求
-  const cached = await getParsedApiMapFromCache(apifoxUrl, mode, token)
-  if (cached) {
-    console.log(`[apifox-cache] HIT: ${cached.size} APIs`)
-    return cached
+  try {
+    const cached = await getCachedParsedApiMap(identity)
+    if (cached) {
+      console.log(`[apifox-cache] HIT: ${cached.size} APIs`)
+      return cached
+    }
+  } catch (error) {
+    console.error("[apifox-cache] READ FAILED:", error)
   }
 
-  // 缓存未命中：后台预拉取（不影响当前请求），下次即可命中
-  console.log(`[apifox-cache] MISS → fire background prefetch`)
-  fireAsyncPrefetch(apifoxUrl, mode, token)
+  const requestKey = `${mode}:${apifoxUrl}`
+  const inflightRequest = inflightApiMapRequests.get(requestKey)
+  if (inflightRequest) return inflightRequest
 
-  return new Map<string, ParsedApi>()
+  console.log("[apifox-cache] MISS: fetching Apifox data")
+  const request = (async () => {
+    const data = await fetchOrGetCachedSwaggerData(apifoxUrl, mode, token)
+    if (!data) return new Map<string, ParsedApi>()
+
+    const parsedApis = parseSwaggerData(data, [])
+    try {
+      return await setCachedParsedApis(identity, parsedApis)
+    } catch (error) {
+      console.error("[apifox-cache] WRITE FAILED:", error)
+      return createParsedApiMap(parsedApis)
+    }
+  })().finally(() => {
+    inflightApiMapRequests.delete(requestKey)
+  })
+
+  inflightApiMapRequests.set(requestKey, request)
+  return request
 }
 
 export const buildBatchQuickMockApi = ({

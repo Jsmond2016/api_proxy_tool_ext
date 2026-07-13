@@ -371,9 +371,8 @@ export const clearCachedSwaggerData = (): void => {
  * 无论从何调用（预加载 / 弹窗），相同参数的请求共享同一个 Promise，
  * 避免重复请求浪费，也避免弹窗打开后「预加载还没完成」又发起一个新请求。
  *
- * 原始 Swagger JSON 仅保留在内存缓存中（SW 存活期内有效），
- * 不写入 chrome.storage.session（数据量过大）。解析后的 API Map
- * 缓存见 batchQuickMock.ts 中的 parsed-api-map 缓存。
+ * 原始 Swagger JSON 仅保留在内存缓存中（SW 存活期内有效）。
+ * 解析后的 API Map 由 parsedApiCache.ts 持久化到 IndexedDB。
  */
 export const fetchOrGetCachedSwaggerData = async (
   url: string,

@@ -15,6 +15,7 @@ import {
 } from "./apifoxUtils"
 import { compareApifoxModules, hasChanges } from "./compareUtils"
 import { ChangeSummaryTable } from "./ChangeSummaryTable"
+import { setCachedParsedApis } from "@src/utils/parsedApiCache"
 
 type SyncApifoxModalComProps = Record<string, never>
 
@@ -194,6 +195,22 @@ const SyncApifoxModalCom: React.FC<SyncApifoxModalComProps> = () => {
       // 解析数据
       const selectedTags = apifoxConfig.selectedTags || []
       const parsedApis = parseSwaggerData(swaggerData, selectedTags)
+
+      try {
+        const allParsedApis =
+          selectedTags.length === 0
+            ? parsedApis
+            : parseSwaggerData(swaggerData, [])
+        await setCachedParsedApis(
+          {
+            url: apifoxUrl,
+            mode: apifoxConfig.mode || "local",
+          },
+          allParsedApis,
+        )
+      } catch (error) {
+        console.error("Failed to persist parsed Apifox cache:", error)
+      }
 
       if (parsedApis.length === 0) {
         message.warning("没有找到符合条件的接口")

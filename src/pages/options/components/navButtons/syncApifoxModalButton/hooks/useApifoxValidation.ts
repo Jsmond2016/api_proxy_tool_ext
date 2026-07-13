@@ -12,6 +12,7 @@ import {
   saveCachedApifoxToken,
   fetchOrGetCachedSwaggerData,
 } from "../apifoxCache"
+import { setCachedParsedApis } from "@src/utils/parsedApiCache"
 
 export const useApifoxValidation = () => {
   const [validating, setValidating] = useState(false)
@@ -43,6 +44,9 @@ export const useApifoxValidation = () => {
           mode,
           apifoxToken
         )
+        if (!data) {
+          return { success: false }
+        }
 
         const swaggerDataResult = data as SwaggerData
         setSwaggerData(swaggerDataResult)
@@ -60,6 +64,16 @@ export const useApifoxValidation = () => {
           swaggerDataResult,
           currentSelectedTags
         )
+
+        try {
+          const allParsedApis =
+            currentSelectedTags.length === 0
+              ? apis
+              : parseSwaggerDataUtil(swaggerDataResult, [])
+          await setCachedParsedApis({ url, mode }, allParsedApis)
+        } catch (error) {
+          console.error("Failed to persist parsed Apifox cache:", error)
+        }
 
         // 验证成功后，保存地址到缓存（按模式分开存储）
         if (mode === "online") {
