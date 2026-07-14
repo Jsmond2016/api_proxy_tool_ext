@@ -8,3 +8,36 @@
   --vp-button-brand-hover-bg: #4096ff;
   --vp-button-brand-active-bg: #0958d9;
 }
+
+.VPHome .vp-doc {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.VPHome .vp-doc h2 {
+  margin-top: 56px;
+  padding-top: 0;
+  border-top: 0;
+  letter-spacing: 0;
+}
+
+.VPHome .vp-doc table {
+  display: table;
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .VPHome .vp-doc {
+    padding: 0 24px 48px;
+  }
+
+  .VPHome .vp-doc h2 {
+    margin-top: 40px;
+  }
+
+  .VPHome .vp-doc table {
+    display: block;
+    overflow-x: auto;
+  }
+}
