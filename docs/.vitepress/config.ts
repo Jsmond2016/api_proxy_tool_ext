@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  base: '/api_proxy_tool_ext/',
   lang: 'zh-CN',
   title: 'API Proxy Tool',
   description: 'Chrome & Firefox 扩展 — 拦截并重定向 API 请求到 Mock 服务器',
@@ -13,7 +14,7 @@ export default defineConfig({
   ],
 
   head: [
-    ['link', { rel: 'icon', href: '/logo.png' }],
+    ['link', { rel: 'icon', href: '/api_proxy_tool_ext/logo.png' }],
     ['meta', { name: 'theme-color', content: '#1677FF' }],
   ],
 
@@ -36,7 +37,7 @@ export default defineConfig({
           text: '用户指南',
           items: [
             { text: '快速开始', link: '/guide/getting-started' },
-            { text: '扩展使用说明', link: '/guide/extension-usage' },
+            { text: '功能使用指南', link: '/guide/extension-usage' },
           ],
         },
       ],
@@ -45,6 +46,7 @@ export default defineConfig({
         {
           text: '开发指南',
           items: [
+            { text: '近期改动说明', link: '/developer-guide/recent-changes' },
             { text: 'AI 开发环境', link: '/developer-guide/ai-environment' },
             { text: '提交规范', link: '/developer-guide/commit-convention' },
             { text: 'AI 协作规范', link: '/developer-guide/agents' },
@@ -59,6 +61,14 @@ export default defineConfig({
             { text: '技术架构', link: '/architecture/stack-architecture' },
             { text: 'UI 设计规范', link: '/architecture/design' },
             { text: '跨插件 QuickMock 方案', link: '/architecture/quick-mock-plan' },
+            {
+              text: 'Quick Mock 持久缓存',
+              link: '/architecture/quick-mock-persistent-cache-fix-plan',
+            },
+            {
+              text: '批量 Quick Mock 性能优化',
+              link: '/cross-extension-batch-mock-performance-optimization',
+            },
           ],
         },
       ],

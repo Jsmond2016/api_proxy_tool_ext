@@ -6,7 +6,20 @@ outline: deep
 
 # 联调说明-跨插件批量QuickMock
 
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
 ---
+
+## 当前实现说明
+
+- 本地已存在的接口优先复用，不读取缓存或请求 Apifox。
+- 缺失接口优先读取 IndexedDB 中有效期为 24 小时的 Parsed API 缓存。
+- 首次冷缓存会等待 Apifox 拉取与解析完成，再创建模块，保证接口名称、方法、链接、权限点和标签完整。
+- 相同 Apifox 配置的并发请求会复用同一个进行中的请求，避免重复拉取。
+- IndexedDB 失败时使用本次解析结果继续处理，不中断 Quick Mock。
+- 新建的外部模块标记为 `external`，Apifox tag 刷新不会覆盖该模块。
+
+详细缓存设计见[Quick Mock 持久缓存](/architecture/quick-mock-persistent-cache-fix-plan)。
 
 ## 背景
 

@@ -1,364 +1,144 @@
+# API Proxy Tool
+
+> **更新时间**：2026-07-14；**使用模型**：Codex（GPT-5）；**用户**：Jsmond2016
+
+---
+
 <div align="center">
-<img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128"/>
-<h1>API Proxy Tool</h1>
+  <img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128" />
+  <p><strong>Chrome、Edge 与 Firefox API Mock 请求代理扩展</strong></p>
+  <p>管理接口代理规则，同步 Apifox 接口，并为联调、归档和权限点整理提供一套集中工作台。</p>
 
-<h3>Chrome & Firefox Extension — Intercept & Redirect API Requests to Mock Servers</h3>
-
-<p>A powerful browser extension for frontend development, supporting API proxy, Mock management, Apifox integration, cross-extension batch quick mock, archive, and permission point management.</p>
-
-[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF.svg)](https://vitejs.dev/)
-[![Ant Design](https://img.shields.io/badge/Ant%20Design-6.0.0-0170FE.svg)](https://ant.design/)
-[![TailwindCSS](https://img.shields.io/badge/TailwindCSS-4.1.8-38B2AC.svg)](https://tailwindcss.com/)
+[![Vite](https://img.shields.io/badge/Vite-6.3.5-646CFF.svg)](https://vite.dev/)
+[![Ant Design](https://img.shields.io/badge/Ant%20Design-6.0.0-1677FF.svg)](https://ant.design/)
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-4285F4.svg)](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)
-[![Edge Add-ons](https://img.shields.io/badge/Edge-Addons-0078D7.svg)](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
+[![Edge Add-ons](https://img.shields.io/badge/Edge%20Add--ons-0078D7.svg)](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
 
-<p><strong>📖 中文文档: <a href="README_CN.md">README_CN.md</a></strong></p>
-<p><strong>📚 完整文档站: <code>pnpm docs:dev</code> 本地启动，或访问 <a href="https://github.com/Jsmond2016/api_proxy_tool_ext/tree/main/docs">docs/</a></strong></p>
+**中文（默认）** · [English](./README_EN.md) · [在线文档](https://jsmond2016.github.io/api_proxy_tool_ext/)
 
 </div>
 
----
+## 功能概览
 
-## 📋 Table of Contents
+- **请求代理**：使用 Manifest V3 `declarativeNetRequest` 将匹配的 API 请求重定向到 Mock 地址。
+- **模块化管理**：按业务模块管理接口，提供“全部接口”聚合视图、搜索和状态排序。
+- **接口操作**：支持添加、编辑、复制、迁移、删除、批量删除、单接口测试和单接口调试。
+- **Apifox 同步**：通过项目 ID 和访问令牌在线导出 OpenAPI 数据，按 tag 同步并处理合并冲突。
+- **迭代信息**：为 tag 维护需求、技术、原型、测试用例和排期文档，并复制迭代或 CR 信息。
+- **存档恢复**：将当前面板的完整配置保存到 IndexedDB，支持查看、恢复和删除历史快照。
+- **权限点复制**：按当前模块、勾选接口或全部模块生成 CMS 权限点数据。
+- **跨扩展 Quick Mock**：接收其他扩展发送的 URL 列表，批量补全并创建外部 Mock 模块。
+- **Chrome 与 Firefox**：同一代码库提供 Chrome/Edge 和 Firefox 构建。
 
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Screenshots](#-screenshots)
-- [Quick Start](#-quick-start)
-- [Install Extension](#-install-extension)
-- [User Guide](#-user-guide)
-- [Project Structure](#-project-structure)
-- [Configuration Format](#-configuration-format)
-- [Browser Stores](#-browser-stores)
-- [License](#-license)
+完整操作流程见[功能使用指南](./docs/guide/extension-usage.md)。
 
----
+## 安装
 
-## ✨ Features
+### 应用商店
 
-### 🎯 Core Proxy Features
+- [Chrome Web Store](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)
+- [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)
 
-- **API Request Interception** — Intercept page API requests via `declarativeNetRequest` and redirect to Mock URLs
-- **Multiple Match Modes** — Supports `contains`, `exact`, and `regex` URL matching
-- **Multi-Level Toggle** — Global on/off, module-level batch toggle, individual API on/off with visual feedback
-- **Global Mock** — One-click enable/disable all proxy rules, with icon switch indicator
+### 从源码构建
 
-### 📦 Module Management
-
-- **Multi-Module Tabs** — Create, rename, reorder modules via tab interface
-- **Module-Specific Configuration** — Each module supports `apiDocUrl`, `dataWrapper`, `pageDomain`, `requestHeaders`
-- **Default Module** — Auto-creates a default module with example API on first run
-
-### 🔍 Search & Navigation
-
-- **Real-Time Search** — Filter APIs by name, URL, redirect URL, and page route with persistent keyword
-- **API Highlighting** — Auto-scroll and highlight matched APIs when navigating from batch operations or external links
-
-### 🔄 Apifox Integration
-
-- **Sync OpenAPI Data** — Parse Apifox export URLs (OpenAPI/Swagger format) to auto-import API definitions
-- **Tag-Based Filtering** — Select specific tags from Apifox to import only relevant APIs
-- **Tag History** — Remembers the last 10 tag selections
-- **Apifox URL Cache** — Persists Apifox URL across sessions
-- **Smart Auto-Fill** — Automatically fills Apifox fields (group name, API type, run-in-Apifox link) when adding/editing APIs
-- **Swagger Data Caching** — Caches parsed Swagger data for offline access
-
-### ⚡ Cross-Extension Batch Quick Mock
-
-- **External Extension Integration** — Other extensions can send API URL lists via `chrome.runtime.sendMessage` to batch-create mock configurations
-- **Automatic Module Creation** — Creates a dedicated module with all APIs auto-configured with mock URLs
-- **Apifox Data Enhancement** — Enriches imported APIs with Apifox metadata (tags, links) when Apifox is configured
-- **Result Banner** — Displays batch import results with success/failure counts and API highlights
-
-### 📋 Iteration & Document Management
-
-- **Tag-Based Iteration Info** — Attach requirement docs, technical docs, prototype links, test cases, and schedule docs to Apifox tags
-- **Visual Info Bar** — Displays iteration docs and API tags in a collapsible alert bar
-- **Copy Iteration Info** — One-click copy iteration info with CR release date selector
-
-### 🗃️ Archive & Snapshot
-
-- **Archive by Tag** — Save module snapshots by Apifox tag into IndexedDB
-- **Archive List** — Browse, view, and restore previous archive records
-- **Iteration Snapshot** — Includes Quick Mock configs and Apifox config snapshots
-
-### 🔐 Permission Point Management
-
-- **Copy Permission Points** — Extract permission points from API routes with CMS menu path format
-- **Batch Permission Copy** — Generate permission data for all APIs across all modules
-- **Group Name Validation** — Validates module label format (e.g., `a.b.c`) before permission copy
-
-### 🛠️ API Operations
-
-- **Add / Edit / Clone / Delete** — Full CRUD with form validation
-- **Batch Delete** — Select multiple APIs and delete in bulk
-- **Migrate Between Modules** — Move APIs from one module to another
-- **Test Mock** — Test redirect URL with mock toggle status check
-- **Clone with Options** — Clone within same module or across modules
-- **Copy URL & Mock URL** — One-click copy API URL or Mock redirect URL
-- **Pagination** — Configurable page size with persistent selection state
-
-### 🔧 Configuration Management
-
-- **Conflict Detection** — When syncing from Apifox, detects tag label conflicts and offers merge strategies (overwrite / merge)
-- **Module Reset** — Reset individual module or all modules
-- **Popup Back Navigation** — When opened from popup, shows a back button to return to source tab
-
----
-
-## 🛠 Tech Stack
-
-### Frontend
-
-- **React 18.3.1** — UI library
-- **TypeScript 5.8.3** — Type-safe JavaScript
-- **Ant Design 6.0.0** — Component library
-- **TailwindCSS 4.1.8** — Utility-first CSS
-
-### State & Data
-
-- **Zustand** — Lightweight state management with Chrome Storage persistence
-- **IndexedDB** — Archive record storage
-- **Chrome Storage API** — Config persistence
-
-### Build & Development
-
-- **Vite 6.3.5** — Build tool
-- **@crxjs/vite-plugin** — Chrome extension Vite plugin
-- **pnpm 10.5.2** — Package manager
-- **ESLint + Prettier** — Code quality
-
-### Extension APIs
-
-- **Manifest V3** — Latest extension spec
-- **declarativeNetRequest** — Declarative network request interception
-- **Chrome Storage API** — Data persistence
-- **externally_connectable** — Cross-extension messaging
-
----
-
-## 🚀 Quick Start
-
-### Requirements
-
-- **Node.js** >= 16.0.0
-- **pnpm** >= 8.0.0
-- **Chrome** >= 88 / **Firefox** >= 109
-
-### Install & Run
+环境版本以 [`package.json`](./package.json) 中的 Volta 配置为准：Node.js `22.17.0`、pnpm `10.5.2`。
 
 ```bash
-# Install dependencies
+git clone https://github.com/Jsmond2016/api_proxy_tool_ext.git
+cd api_proxy_tool_ext
 pnpm install
-
-# Start Chrome dev mode with hot reload
-pnpm dev
-
-# Build for production
-pnpm build        # Chrome
-pnpm build:chrome # Chrome (explicit)
-pnpm build:firefox # Firefox
+pnpm build:chrome
 ```
 
-### Load Extension
+Chrome/Edge 加载方式：
 
-**Chrome:**
+1. 打开 `chrome://extensions/` 或 `edge://extensions/`。
+2. 开启“开发者模式”。
+3. 点击“加载已解压的扩展程序”。
+4. 选择项目中的 `dist_chrome/` 目录。
 
-1. Go to `chrome://extensions/`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `dist_chrome/` directory
+Firefox 构建与加载：
 
-**Firefox:**
-
-1. Go to `about:debugging#/runtime/this-firefox`
-2. Click "Load temporary Add-on"
-3. Select `manifest.json` from `dist_firefox/`
-
----
-
-## 📖 User Guide
-
-### 1. Open Configuration Page
-
-- Click the extension icon in the browser toolbar
-- The options page opens in a new tab
-
-### 2. Module Management
-
-- **Add Module**: Click "+" in the tab bar, enter a name (e.g., `order.api`)
-- **Switch Module**: Click any tab to view its APIs
-- **Edit Module**: Right-click or use module edit to set `apiDocUrl`, `dataWrapper`, `pageDomain`
-- **Import APIs**: Use "Sync from Apifox" to auto-import API definitions by tag
-
-### 3. Add & Configure an API
-
-Click "Add" and fill in:
-
-- **API URL** — Original request URL (supports relative paths or full URLs)
-- **Redirect URL** — Mock server URL
-- **Name** — Display name
-- **Method** — GET, POST, PUT, DELETE, PATCH
-- **Match Mode** — `contains`, `exact`, or `regex`
-- **Mock Way** — `redirect` or `mock`
-
-### 4. Batch Quick Mock (Cross-Extension)
-
-- External extensions send API URL lists via `chrome.runtime.sendMessage` (`type: "BATCH_QUICK_MOCK"`)
-- The extension auto-creates a dedicated module with all APIs configured
-- A result banner shows import status with API highlights for quick navigation
-- Supports deduplication and Apifox data enrichment when configured
-
-### 5. Sync from Apifox
-
-1. Click "Sync from Apifox" button in the top bar
-2. Enter your Apifox OpenAPI export URL
-3. Select the tags you want to import
-4. Choose merge strategy (overwrite / merge) when conflicts exist
-5. APIs are auto-created with redirect URLs based on your Mock prefix
-
-### 6. Archive Snapshots
-
-1. Configure Apifox and select iteration tags
-2. Click "Archive" → "Archive" to save current module state
-3. Browse archives via "View Archives"
-4. Restore a previous archive when needed
-
-### 7. Permission Management
-
-- Click "Copy Permission Points" to extract CMS permission data from your APIs
-- Module labels must follow `a.b.c` format for valid permission group names
-
-### 8. Test Mock
-
-- Click the lightning icon on any API row
-- The test calls the Mock URL and displays the response (status, headers, body)
-
----
-
-## 📁 Project Structure
-
+```bash
+pnpm build:firefox
 ```
+
+打开 `about:debugging#/runtime/this-firefox`，选择“临时载入附加组件”，再选择 `dist_firefox/manifest.json`。
+
+## 快速使用
+
+1. 点击扩展图标，在 Popup 中开启全局 Mock，并进入配置页。
+2. 选择默认模块或点击模块栏 `+` 新建模块。
+3. 点击“添加”，填写接口地址、名称、Mock URL、请求方式和匹配方式。
+4. 开启接口行的 Mock 开关。
+5. 使用“测试”验证 Mock 地址，再从业务页面发起真实请求。
+
+需要批量导入接口时，可在顶部使用“设置 Apifox 配置”；需要保留迭代状态时，可设置迭代信息后创建存档。
+
+## Apifox 同步
+
+当前同步界面使用 Apifox 在线导出能力，需要：
+
+- Apifox 项目数字 ID
+- 个人访问令牌 Access Token
+- 云端 Mock 令牌
+- 一个或多个接口 tag
+
+同步后，添加接口表单可根据路径自动补充名称、方法、Mock 地址、权限点和 Apifox 链接。刷新操作只替换 Apifox 同步维护的接口，不覆盖手工接口或外部 Quick Mock 模块。
+
+> 不要把 Access Token、Mock 令牌或其他凭据写入仓库、Issue、截图或共享文档。
+
+## 开发命令
+
+| 命令                 | 说明                                   |
+| :------------------- | :------------------------------------- |
+| `pnpm dev`           | 启动 Chrome 开发模式                   |
+| `pnpm dev:firefox`   | 启动 Firefox 开发模式                  |
+| `pnpm build:chrome`  | 构建到 `dist_chrome/`                  |
+| `pnpm build:firefox` | 构建到 `dist_firefox/`                 |
+| `pnpm test`          | 运行 Vitest 测试                       |
+| `pnpm lint`          | 检查 `src/` 下的 TypeScript/React 代码 |
+| `pnpm docs:dev`      | 启动 VitePress 文档站                  |
+| `pnpm docs:build`    | 构建 VitePress 文档站                  |
+
+## 项目结构
+
+```text
 api_proxy_tool_ext/
-├── public/                         # Static assets (icons)
-├── scripts/
-│   └── generate-changelog.mjs     # Changelog generator
 ├── src/
-│   ├── assets/
-│   │   ├── img/
-│   │   └── styles/                # Global CSS
-│   ├── constant/
-│   │   ├── apifoxFields.ts        # Apifox custom field names
-│   │   ├── constant.ts            # Default config, log/error messages
-│   │   └── model.ts               # Model action constants (CRUD)
-│   ├── locales/en/                # i18n messages
 │   ├── pages/
-│   │   ├── background/            # Service Worker
-│   │   │   └── index.ts           # Rule management, messaging, icon control
-│   │   ├── options/               # Main options page
-│   │   │   ├── components/
-│   │   │   │   ├── listTable/     # API table with actions (clone, migrate, test, delete)
-│   │   │   │   ├── navButtons/    # Top bar buttons (sync, archive, permissions, reset)
-│   │   │   │   ├── operateButtons/# Per-module buttons (add, batch delete, permissions, reset)
-│   │   │   │   ├── ModuleInfoBar.tsx    # Tag & iteration info bar
-│   │   │   │   ├── ModuleTabs.tsx       # Module tab interface
-│   │   │   │   ├── SearchSelect.tsx     # Real-time search
-│   │   │   │   └── BatchQuickMockBanner.tsx # Batch import result banner
-│   │   │   └── Options.tsx        # Main layout
-│   │   └── popup/                 # Popup page (opens options in new tab)
-│   ├── store/                     # Zustand stores
-│   ├── types/                     # TypeScript definitions
-│   └── utils/
-│       ├── archiveUtil.ts         # IndexedDB archive operations
-│       ├── batchQuickMock.ts      # Cross-extension batch Quick Mock
-│       ├── chromeApi.ts           # Chrome API wrapper
-│       ├── configUtil.tsx         # Config save/load helpers
-│       ├── dataProcessor.ts       # Data processing utilities
-│       ├── docUtils.ts            # Document link parsing
-│       ├── logger.ts              # Console logger
-│       └── permissionUtils.ts     # Permission point extraction
-├── manifest.json                  # Extension manifest
-├── package.json
+│   │   ├── background/       # Service Worker 与代理规则
+│   │   ├── options/          # 完整配置页面
+│   │   └── popup/            # 快速全局开关与配置页入口
+│   ├── store/                # Zustand 状态
+│   ├── types/                # 配置与消息类型
+│   └── utils/                # 缓存、归档、权限点和数据处理
+├── docs/                     # VitePress 文档
+├── scripts/                  # 版本与 changelog 脚本
+├── manifest.json             # Chrome Manifest V3 清单
 ├── vite.config.chrome.ts
-├── vite.config.firefox.ts
-└── README.md
+└── vite.config.firefox.ts
 ```
 
----
+## 文档
 
-## 📄 Configuration Format
+- [快速开始](./docs/guide/getting-started.md)
+- [功能使用指南](./docs/guide/extension-usage.md)
+- [跨插件批量 Quick Mock 联调](./docs/api-reference/quick-mock-debug.md)
+- [架构设计](./docs/architecture/index.md)
+- [发布流程](./docs/publishing/release-guide.md)
+- [更新日志](./CHANGELOG.md)
 
-### Configuration JSON Example
+在线文档由 GitHub Pages 自动部署：<https://jsmond2016.github.io/api_proxy_tool_ext/>
 
-```json
-[
-  {
-    "apiDocKey": "order.management",
-    "label": "Order Management",
-    "apiDocUrl": "https://docs.example.com/order",
-    "dataWrapper": "data",
-    "pageDomain": "https://admin.example.com",
-    "requestHeaders": "X-Custom-Header: value",
-    "apiArr": [
-      {
-        "apiKey": "/api/orders",
-        "apiName": "Get Order List",
-        "apiUrl": "https://api.example.com/orders",
-        "redirectURL": "http://127.0.0.1:4523/mock/orders",
-        "method": "get",
-        "filterType": "contains",
-        "delay": 0,
-        "isOpen": true,
-        "mockWay": "redirect",
-        "statusCode": 200,
-        "authPointKey": "order.queryList",
-        "pageRoute": "/order/list"
-      }
-    ]
-  }
-]
-```
+## 数据与权限
 
-### Field Descriptions
+扩展需要 `storage`、`declarativeNetRequest`、`declarativeNetRequestFeedback` 以及 HTTP/HTTPS 页面访问权限，用于保存配置、生成代理规则和匹配页面请求。
 
-| Field            | Description                                |
-| ---------------- | ------------------------------------------ |
-| `apiDocKey`      | Module unique identifier                   |
-| `label`          | Module display name                        |
-| `apiDocUrl`      | Module documentation URL                   |
-| `dataWrapper`    | Response data wrapper path                 |
-| `pageDomain`     | Page domain for route matching             |
-| `requestHeaders` | Custom request headers                     |
-| `apiKey`         | API unique identifier                      |
-| `apiName`        | API display name                           |
-| `apiUrl`         | Original API URL                           |
-| `redirectURL`    | Mock redirect target                       |
-| `method`         | HTTP method (get/post/put/delete/patch)    |
-| `filterType`     | URL matching method (contains/exact/regex) |
-| `delay`          | Response delay in ms                       |
-| `isOpen`         | Whether enabled                            |
-| `mockWay`        | Mock mode (redirect/mockResponse)          |
-| `authPointKey`   | Permission point key                       |
-| `pageRoute`      | Page route identifier                      |
+用户配置保存在浏览器本地存储；存档和 Parsed API 缓存保存在 IndexedDB。隐私说明见[隐私声明](./docs/publishing/privacy.md)。
 
----
+## 许可证
 
-## 🏪 Browser Stores
-
-- **[Chrome Web Store](https://chromewebstore.google.com/detail/api-proxy-tool/dnjnkgbfdbciepmfcfpoelocadfdppak)** — Install from Chrome Web Store
-- **[Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/api-proxy-tool/fcnakllkigbofpkphmpfhblhdnfomahj?hl=zh-CN)** — Install from Edge Add-ons
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-<div align="center">
-<p>If this project helps you, please give it a ⭐️ Star!</p>
-<p>Made with ❤️ by Jsmond2016</p>
-</div>
+[MIT](./LICENSE)
