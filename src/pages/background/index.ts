@@ -400,6 +400,7 @@ async function handleExternalBatchQuickMock(
         dataWrapper: "",
         pageDomain: "",
         requestHeaders: "",
+        source: "external",
         apiArr: batchApis,
       },
       ...globalConfig.modules,

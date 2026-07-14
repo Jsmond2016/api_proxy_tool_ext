@@ -6,8 +6,6 @@ import {
   GlobalConfig,
   ArchiveData,
   ArchiveRecord,
-  ModuleConfig,
-  QuickMockConfig,
 } from "@src/types"
 import { getIterationInfo } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxCache"
 
@@ -61,58 +59,30 @@ export const initArchiveDB = (): Promise<IDBDatabase> => {
 }
 
 /**
- * 收集指定 tag 的所有相关数据
+ * 收集当前面板的完整快照，并使用 tag 关联迭代信息
  */
 export const archiveTagData = async (
   tag: string,
   config: GlobalConfig
 ): Promise<ArchiveData> => {
-  // 1. 收集指定 tag 的接口
-  const archivedModules: ModuleConfig[] = []
-  const usedQuickMockKeys = new Set<string>()
-
-  config.modules.forEach((module) => {
-    const relatedApis = module.apiArr.filter(
-      (api) => api.tags && api.tags.includes(tag)
-    )
-
-    if (relatedApis.length > 0) {
-      // 收集使用的快速联调配置 key
-      relatedApis.forEach((api) => {
-        if (api.quickMockKey) {
-          usedQuickMockKeys.add(api.quickMockKey)
-        }
-        if (api.customMockResponses) {
-          // 自定义响应已经包含在 api 中，不需要额外收集
-        }
-      })
-
-      // 如果模块下所有接口都属于该 tag，保留完整模块
-      if (relatedApis.length === module.apiArr.length) {
-        archivedModules.push({ ...module })
-      } else {
-        // 否则创建新模块只包含相关接口
-        archivedModules.push({
-          ...module,
-          apiArr: relatedApis.map((api) => ({ ...api })),
-        })
-      }
-    }
-  })
+  const archivedModules = config.modules.map((module) => ({
+    ...module,
+    apifoxApiIds: module.apifoxApiIds ? [...module.apifoxApiIds] : undefined,
+    apiArr: module.apiArr.map((api) => ({
+      ...api,
+      tags: api.tags ? [...api.tags] : undefined,
+      customMockResponses: api.customMockResponses?.map((response) => ({
+        ...response,
+      })),
+    })),
+  }))
 
   // 2. 收集迭代信息
   const iterationInfoMap = await getIterationInfo()
   const iterationInfo = iterationInfoMap[tag]
 
-  // 3. 收集快速联调配置
-  const quickMockConfigs: QuickMockConfig[] = []
-  if (config.quickMockConfigs && usedQuickMockKeys.size > 0) {
-    config.quickMockConfigs.forEach((config) => {
-      if (usedQuickMockKeys.has(config.key)) {
-        quickMockConfigs.push({ ...config })
-      }
-    })
-  }
+  // 3. 收集完整快速联调配置，确保恢复后面板状态不丢失
+  const quickMockConfigs = config.quickMockConfigs?.map((item) => ({ ...item }))
 
   // 4. 收集 Apifox 配置快照
   const apifoxConfig = config.apifoxConfig
@@ -136,7 +106,9 @@ export const archiveTagData = async (
       : undefined,
     modules: archivedModules,
     quickMockConfigs:
-      quickMockConfigs.length > 0 ? quickMockConfigs : undefined,
+      quickMockConfigs && quickMockConfigs.length > 0
+        ? quickMockConfigs
+        : undefined,
     apifoxConfig,
   }
 

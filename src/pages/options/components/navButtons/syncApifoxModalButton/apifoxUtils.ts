@@ -248,15 +248,8 @@ export const convertParsedApisToModules = (
   )
 
   // 转换为 ModuleConfig 格式
-  return Object.entries(groupedApis).map(([groupName, apis]) => ({
-    id: generateId(),
-    apiDocKey: groupName.toLowerCase().replace(/\s+/g, "."),
-    label: groupName,
-    apiDocUrl: apifoxConfig.apifoxUrl,
-    dataWrapper: "",
-    pageDomain: "",
-    requestHeaders: "",
-    apiArr: apis.map((api) => {
+  return Object.entries(groupedApis).map(([groupName, apis]) => {
+    const apiArr = apis.map((api) => {
       // 使用 Apifox 的 apiId 作为唯一标识，如果不存在则生成新ID
       const finalId = api.apiId || generateId()
 
@@ -292,8 +285,21 @@ export const convertParsedApisToModules = (
         authPointKey: api.authPointKey,
         tags: api.tags, // 保存接口的 tags
       }
-    }),
-  }))
+    })
+
+    return {
+      id: generateId(),
+      apiDocKey: groupName.toLowerCase().replace(/\s+/g, "."),
+      label: groupName,
+      apiDocUrl: apifoxConfig.apifoxUrl,
+      dataWrapper: "",
+      pageDomain: "",
+      requestHeaders: "",
+      source: "apifox" as const,
+      apifoxApiIds: apiArr.map((api) => api.id),
+      apiArr,
+    }
+  })
 }
 
 /** 未配置或无效 groupName 的接口统一归入的分组 */

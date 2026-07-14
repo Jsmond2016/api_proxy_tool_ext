@@ -129,7 +129,7 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
       <div className="space-y-4">
         <Alert
           title="归档说明"
-          description="选择要归档的迭代 tag，系统将保存该 tag 相关的所有接口、文档、自定义配置等信息。归档后可以随时恢复。"
+          description="选择迭代 tag 后，系统将保存当前面板的全部接口、模块、文档和自定义配置。归档后可以随时完整恢复。"
           type="info"
           showIcon
         />

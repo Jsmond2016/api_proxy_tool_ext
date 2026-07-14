@@ -45,6 +45,8 @@ export interface ModuleConfig {
   pageDomain?: string
   requestHeaders?: string
   apiArr: ApiConfig[]
+  source?: "apifox" | "external" // 模块来源，用于区分同步模块和外部插入模块
+  apifoxApiIds?: string[] // 由 Apifox 同步维护的接口 ID，自定义接口不在此列表
 }
 
 // Apifox 配置类型
@@ -200,8 +202,8 @@ export interface ArchiveData {
     testCaseDocs: string
     scheduleDocs: string
   } // 迭代信息
-  modules: ModuleConfig[] // 相关模块配置（只包含该 tag 的接口）
-  quickMockConfigs?: QuickMockConfig[] // 相关的快速联调配置
+  modules: ModuleConfig[] // 归档时的完整面板模块配置
+  quickMockConfigs?: QuickMockConfig[] // 归档时的完整快速联调配置
   apifoxConfig?: ApifoxConfig // Apifox 配置快照
 }
 
