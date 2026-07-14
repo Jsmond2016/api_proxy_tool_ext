@@ -1,7 +1,7 @@
 {
   "name": "api_proxy_tool_ext",
-  "version": "1.5.42",
-  "releaseDate": "2026.07.10",
+  "version": "1.5.43",
+  "releaseDate": "2026.07.14",
   "description": "A simple chrome & firefox extension template with Vite, React, TypeScript and Tailwind CSS.",
   "license": "MIT",
   "repository": {

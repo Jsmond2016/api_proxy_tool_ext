@@ -1,3 +1,19 @@
+## [1.5.43](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.42...v1.5.43) (2026-07-14)
+
+
+### Bug Fixes
+
+* **components:** 修复 Apifox 刷新覆盖和存档缺失 ([3f7fcb7](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/3f7fcb7628322125ac5bc2bf8219139a06cefbac))
+* **components:** 修复模块重置后接口无法重新添加 ([2fdbdb6](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/2fdbdb684dbc098362190e4ee7af01c8257d3505))
+* **db:** 修复批量 Quick Mock 持久缓存失效 ([e3406cc](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e3406ccca2125f4b67b0c87ef7730a6aeee834c6))
+
+
+### Performance Improvements
+
+* 优化跨插件批量 Quick Mock 响应速度 ([6a7c231](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/6a7c2310f9379b5197965a4bc1468f62ba3e2e54))
+
+
+
 ## [1.5.42](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.41...v1.5.42) (2026-07-10)
 
 
