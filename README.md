@@ -98,6 +98,7 @@ pnpm build:firefox
 | `pnpm dev:firefox`   | 启动 Firefox 开发模式                  |
 | `pnpm build:chrome`  | 构建到 `dist_chrome/`                  |
 | `pnpm build:firefox` | 构建到 `dist_firefox/`                 |
+| `pnpm package`       | 构建并生成 Chrome/Firefox 本地安装包   |
 | `pnpm test`          | 运行 Vitest 测试                       |
 | `pnpm lint`          | 检查 `src/` 下的 TypeScript/React 代码 |
 | `pnpm docs:dev`      | 启动 VitePress 文档站                  |

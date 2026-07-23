@@ -242,11 +242,19 @@ export default function Options() {
               >
                 Api Proxy Tool
               </a>{" "}
-              | current version:{" "}
+              |{" "}
               <a href="https://github.com/Jsmond2016/api_proxy_tool_ext/releases">
-                v{packageJson.version}{packageJson.releaseDate ? `_${packageJson.releaseDate}` : ""}
+                v{packageJson.version}
+                {packageJson.releaseDate ? `_${packageJson.releaseDate}` : ""}
               </a>{" "}
-              | Author: Jsmond2016
+              |{" "}
+              <a
+                href="https://github.com/Jsmond2016"
+                target="_blank"
+                rel="noreferrer"
+              >
+                Jsmond2016
+              </a>
             </Text>
           </Footer>
         </Layout>

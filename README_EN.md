@@ -70,16 +70,17 @@ The current Apifox synchronization UI requires a numeric project ID, a personal 
 
 ## Development
 
-| Command              | Purpose                                |
-| :------------------- | :------------------------------------- |
-| `pnpm dev`           | Start Chrome development mode          |
-| `pnpm dev:firefox`   | Start Firefox development mode         |
-| `pnpm build:chrome`  | Build into `dist_chrome/`              |
-| `pnpm build:firefox` | Build into `dist_firefox/`             |
-| `pnpm test`          | Run Vitest tests                       |
-| `pnpm lint`          | Lint TypeScript and React source files |
-| `pnpm docs:dev`      | Start the VitePress documentation site |
-| `pnpm docs:build`    | Build the documentation site           |
+| Command              | Purpose                                        |
+| :------------------- | :--------------------------------------------- |
+| `pnpm dev`           | Start Chrome development mode                  |
+| `pnpm dev:firefox`   | Start Firefox development mode                 |
+| `pnpm build:chrome`  | Build into `dist_chrome/`                      |
+| `pnpm build:firefox` | Build into `dist_firefox/`                     |
+| `pnpm package`       | Build and create local Chrome/Firefox packages |
+| `pnpm test`          | Run Vitest tests                               |
+| `pnpm lint`          | Lint TypeScript and React source files         |
+| `pnpm docs:dev`      | Start the VitePress documentation site         |
+| `pnpm docs:build`    | Build the documentation site                   |
 
 ## Documentation
 
