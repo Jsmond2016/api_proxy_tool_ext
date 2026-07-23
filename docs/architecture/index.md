@@ -16,5 +16,6 @@ description: API Proxy Tool 的技术架构和设计决策
 - **[技术架构](/architecture/stack-architecture)** — 项目架构模式、数据流和架构决策记录
 - **[UI 设计规范](/architecture/design)** — 设计系统、组件规范和交互模式
 - **[跨插件 QuickMock 方案](/architecture/quick-mock-plan)** — 跨插件批量 QuickMock 技术方案
+- **[全局响应模板方案](/architecture/global-response-template-plan)** — 指定接口返回本地 JSON 响应的技术方案
 - **[Quick Mock 持久缓存](/architecture/quick-mock-persistent-cache-fix-plan)** — IndexedDB 缓存、冷启动补全与降级策略
 - **[批量 Quick Mock 性能优化](/cross-extension-batch-mock-performance-optimization)** — 外部消息处理、缓存和响应链路优化记录
