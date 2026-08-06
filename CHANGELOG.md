@@ -1,3 +1,14 @@
+## [1.5.44](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.43...v1.5.44) (2026-08-06)
+
+
+### Features
+
+* **options:** 添加测试弹框去改 mock 入口 ([092dd7d](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/092dd7debc9a0b800e69cb80cab759022d2b8d26))
+* 尝试全局响应模板方案，尝试失败 ([444f981](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/444f981b1c60ccd5380843301362723d7d61b0a3))
+* 添加本地扩展打包命令并优化页脚信息 ([99215c4](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/99215c41beada9041556ce469d03e05d44b942c6))
+
+
+
 ## [1.5.43](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.42...v1.5.43) (2026-07-14)
 
 
