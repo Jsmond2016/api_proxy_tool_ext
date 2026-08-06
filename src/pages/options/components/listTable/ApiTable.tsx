@@ -23,6 +23,7 @@ import CloneButton from "./cloneButon/CloneButton"
 import MigrateButton from "./migrateButton/MigrateButton"
 import DeleteButton from "./deleteButton/DeleteButton"
 import TestButton from "./testButton/TestButton"
+import { getApifoxApiLink } from "./apifoxLink"
 import {
   useActiveModuleIdStore,
   useConfigStore,
@@ -333,33 +334,35 @@ export default function ApiTable() {
       title: "请求方式",
       dataIndex: "method",
       width: 120,
-      render: (_, record: ApiConfig) => (
-        <Space>
-          <Tooltip title="连击 3 次开启仅单个调试">
-            <Tag
-              color={getMethodColor(record.method)}
-              className="cursor-pointer !px-3 !py-1 !min-w-[56px] !text-center !leading-none"
-              onClick={() => handleMethodTripleClick(record.id)}
-            >
-              {record.method.toUpperCase()}
-            </Tag>
-          </Tooltip>
-          <TestButton apiConfig={record} getMethodColor={getMethodColor} />
-        </Space>
-      ),
+      render: (_, record: ApiConfig) => {
+        const apifoxLink = getApifoxApiLink(record, projectId)
+
+        return (
+          <Space>
+            <Tooltip title="连击 3 次开启仅单个调试">
+              <Tag
+                color={getMethodColor(record.method)}
+                className="cursor-pointer !px-3 !py-1 !min-w-[56px] !text-center !leading-none"
+                onClick={() => handleMethodTripleClick(record.id)}
+              >
+                {record.method.toUpperCase()}
+              </Tag>
+            </Tooltip>
+            <TestButton
+              apiConfig={record}
+              apifoxLink={apifoxLink}
+              getMethodColor={getMethodColor}
+            />
+          </Space>
+        )
+      },
     },
     {
       title: "接口信息",
       dataIndex: "apiName",
       width: 280,
       render: (_, record: ApiConfig) => {
-        const directLink = record.link?.trim()
-        const isApifoxId = /^\d+$/.test(record.id)
-        const fallbackLink =
-          projectId && isApifoxId
-            ? `https://app.apifox.com/project/${projectId}/apis/api-${record.id}`
-            : ""
-        const apiLink = directLink || fallbackLink
+        const apiLink = getApifoxApiLink(record, projectId)
 
         return (
           <Space orientation="vertical" size="small" className="w-full">

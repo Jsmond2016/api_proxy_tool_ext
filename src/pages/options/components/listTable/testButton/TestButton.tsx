@@ -1,6 +1,11 @@
 import React, { useState } from "react"
 import { Button, Modal, Spin, Tag, message } from "antd"
-import { ThunderboltOutlined, CloseCircleOutlined, CheckCircleOutlined } from "@ant-design/icons"
+import {
+  ThunderboltOutlined,
+  CloseCircleOutlined,
+  CheckCircleOutlined,
+  ExportOutlined,
+} from "@ant-design/icons"
 import { ApiConfig } from "@src/types"
 import { useConfigStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
@@ -8,11 +13,13 @@ import { appendApifoxMockToken } from "@src/utils/mockUtils"
 
 interface TestButtonProps {
   apiConfig: ApiConfig
+  apifoxLink?: string
   getMethodColor: (method: string) => string
 }
 
 const TestButton: React.FC<TestButtonProps> = ({
   apiConfig,
+  apifoxLink,
   getMethodColor,
 }) => {
   const { config, setConfig } = useConfigStore()
@@ -164,6 +171,18 @@ const TestButton: React.FC<TestButtonProps> = ({
           }
         }}
         footer={[
+          apifoxLink ? (
+            <Button
+              key="edit-mock"
+              type="primary"
+              icon={<ExportOutlined />}
+              href={apifoxLink}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              去改 mock
+            </Button>
+          ) : null,
           <Button
             key="close"
             onClick={() => {
