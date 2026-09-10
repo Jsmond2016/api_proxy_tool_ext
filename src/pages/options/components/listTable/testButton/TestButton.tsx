@@ -466,19 +466,19 @@ const TestButton: React.FC<TestButtonProps> = ({
                         }
                         aria-label="搜索响应数据"
                       />
-                      <Tooltip title="上一个匹配项 (Shift + Enter)">
-                        <Button
-                          aria-label="上一个匹配项"
-                          icon={<UpOutlined />}
-                          onClick={() => handleSearchNavigation(-1)}
-                          disabled={!searchMatches.length}
-                        />
-                      </Tooltip>
                       <Tooltip title="下一个匹配项 (Enter)">
                         <Button
                           aria-label="下一个匹配项"
                           icon={<DownOutlined />}
                           onClick={() => handleSearchNavigation(1)}
+                          disabled={!searchMatches.length}
+                        />
+                      </Tooltip>
+                      <Tooltip title="上一个匹配项 (Shift + Enter)">
+                        <Button
+                          aria-label="上一个匹配项"
+                          icon={<UpOutlined />}
+                          onClick={() => handleSearchNavigation(-1)}
                           disabled={!searchMatches.length}
                         />
                       </Tooltip>
