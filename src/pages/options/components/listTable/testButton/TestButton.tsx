@@ -6,6 +6,8 @@ import {
   ThunderboltOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
+  CaretDownOutlined,
+  CaretRightOutlined,
   ExportOutlined,
   UpOutlined,
 } from "@ant-design/icons";
@@ -40,6 +42,7 @@ const TestButton: React.FC<TestButtonProps> = ({
   const [showGlobalOffWarning, setShowGlobalOffWarning] = useState(false);
   const [searchKeyword, setSearchKeyword] = useState("");
   const [activeSearchIndex, setActiveSearchIndex] = useState(0);
+  const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
   const searchResultRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const searchMatches = useMemo(
@@ -54,9 +57,23 @@ const TestButton: React.FC<TestButtonProps> = ({
 
   useEffect(() => {
     if (activeSearchMatch) {
-      searchResultRefs.current[activeSearchMatch.path]?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
+      setCollapsedPaths((currentPaths) => {
+        const expandedPaths = new Set(currentPaths);
+        let currentPath = activeSearchMatch.path;
+        while (currentPath !== "$") {
+          expandedPaths.delete(currentPath);
+          currentPath = currentPath.endsWith("]")
+            ? currentPath.replace(/\[(?:\d+|"(?:\\.|[^"])*")\]$/, "")
+            : currentPath.slice(0, currentPath.lastIndexOf("."));
+        }
+        expandedPaths.delete("$");
+        return expandedPaths;
+      });
+      window.requestAnimationFrame(() => {
+        searchResultRefs.current[activeSearchMatch.path]?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
       });
     }
   }, [activeSearchIndex, activeSearchMatch]);
@@ -65,6 +82,7 @@ const TestButton: React.FC<TestButtonProps> = ({
     setTestResult(null);
     setSearchKeyword("");
     setActiveSearchIndex(0);
+    setCollapsedPaths(new Set());
   };
 
   const handleSearchNavigation = (direction: 1 | -1) => {
@@ -123,6 +141,18 @@ const TestButton: React.FC<TestButtonProps> = ({
         ? `${path}.${key}`
         : `${path}[${JSON.stringify(key)}]`;
 
+  const toggleCollapsedPath = (path: string) => {
+    setCollapsedPaths((currentPaths) => {
+      const nextPaths = new Set(currentPaths);
+      if (nextPaths.has(path)) {
+        nextPaths.delete(path);
+      } else {
+        nextPaths.add(path);
+      }
+      return nextPaths;
+    });
+  };
+
   const renderPrimitive = (value: unknown) => {
     const text = String(value);
     return typeof value === "string" ? (
@@ -141,80 +171,158 @@ const TestButton: React.FC<TestButtonProps> = ({
     path: string,
     depth = 0,
     isLast = true,
+    lineNumberRef = { current: 1 },
   ): React.ReactNode => {
     const suffix = isLast ? "" : ",";
-    const getRowProps = (rowPath: string) => ({
-      ref: (element: HTMLDivElement | null) => {
-        searchResultRefs.current[rowPath] = element;
-      },
-      className:
-        activeSearchMatch?.path === rowPath ? "bg-blue-100 rounded" : undefined,
-      style: { paddingLeft: `${depth * 20}px` },
-    });
+    const renderLine = (
+      content: React.ReactNode,
+      rowPath?: string,
+      indent = depth,
+    ) => {
+      const lineNumber = lineNumberRef.current++;
+      return (
+        <div className="grid grid-cols-[3rem_minmax(0,1fr)] min-h-6">
+          <span className="select-none border-r border-gray-200 pr-2 text-right text-gray-400">
+            {lineNumber}
+          </span>
+          <div
+            ref={(element) => {
+              if (rowPath) {
+                searchResultRefs.current[rowPath] = element;
+              }
+            }}
+            className={
+              activeSearchMatch?.path === rowPath
+                ? "bg-blue-100 rounded"
+                : undefined
+            }
+            style={{ paddingLeft: `${indent * 20}px` }}
+          >
+            {content}
+          </div>
+        </div>
+      );
+    };
+
+    const renderCollapseButton = (blockPath: string, label: string) => {
+      const isCollapsed = collapsedPaths.has(blockPath);
+      return (
+        <Tooltip title={`${isCollapsed ? "展开" : "折叠"}${label}`}>
+          <Button
+            type="text"
+            size="small"
+            icon={isCollapsed ? <CaretRightOutlined /> : <CaretDownOutlined />}
+            onClick={() => toggleCollapsedPath(blockPath)}
+            aria-label={`${isCollapsed ? "展开" : "折叠"}${label}`}
+            style={{ width: 20, height: 20, padding: 0, marginRight: 4 }}
+          />
+        </Tooltip>
+      );
+    };
 
     if (Array.isArray(value)) {
+      const isCollapsed = collapsedPaths.has(path);
       return (
         <>
-          <div style={{ paddingLeft: `${depth * 20}px` }}>[</div>
-          {value.map((item, index) => {
-            const childPath = getChildPath(path, index);
-            return (
-              <React.Fragment key={childPath}>
-                {renderResponseValue(
-                  item,
-                  childPath,
-                  depth + 1,
-                  index === value.length - 1,
-                )}
-              </React.Fragment>
-            );
-          })}
-          <div style={{ paddingLeft: `${depth * 20}px` }}>{`]${suffix}`}</div>
+          {renderLine(
+            <>
+              {renderCollapseButton(path, "数组")}
+              {isCollapsed ? `[ ... ${value.length} 项 ]${suffix}` : "["}
+            </>,
+            path,
+          )}
+          {!isCollapsed && (
+            <>
+              {value.map((item, index) => {
+                const childPath = getChildPath(path, index);
+                return (
+                  <React.Fragment key={childPath}>
+                    {renderResponseValue(
+                      item,
+                      childPath,
+                      depth + 1,
+                      index === value.length - 1,
+                      lineNumberRef,
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {renderLine(`]${suffix}`)}
+            </>
+          )}
         </>
       );
     }
 
     if (value !== null && typeof value === "object") {
       const entries = Object.entries(value);
+      const isCollapsed = collapsedPaths.has(path);
       return (
         <>
-          <div style={{ paddingLeft: `${depth * 20}px` }}>{"{"}</div>
-          {entries.map(([key, item], index) => {
-            const childPath = getChildPath(path, key);
-            const childIsLast = index === entries.length - 1;
-            if (item !== null && typeof item === "object") {
-              return (
-                <React.Fragment key={childPath}>
-                  <div {...getRowProps(childPath)}>
-                    {`"`}
-                    {highlightSearchKeyword(key)}
-                    {`":`}
-                  </div>
-                  {renderResponseValue(item, childPath, depth + 2, childIsLast)}
-                </React.Fragment>
-              );
-            }
+          {renderLine(
+            <>
+              {renderCollapseButton(path, "对象")}
+              {isCollapsed ? `{ ... ${entries.length} 个字段 }${suffix}` : "{"}
+            </>,
+            path,
+          )}
+          {!isCollapsed && (
+            <>
+              {entries.map(([key, item], index) => {
+                const childPath = getChildPath(path, key);
+                const childIsLast = index === entries.length - 1;
+                if (item !== null && typeof item === "object") {
+                  return (
+                    <React.Fragment key={childPath}>
+                      {renderLine(
+                        <>
+                          {`"`}
+                          {highlightSearchKeyword(key)}
+                          {`":`}
+                        </>,
+                        childPath,
+                        depth + 1,
+                      )}
+                      {renderResponseValue(
+                        item,
+                        childPath,
+                        depth + 2,
+                        childIsLast,
+                        lineNumberRef,
+                      )}
+                    </React.Fragment>
+                  );
+                }
 
-            return (
-              <div key={childPath} {...getRowProps(childPath)}>
-                {`"`}
-                {highlightSearchKeyword(key)}
-                {`": `}
-                {renderPrimitive(item)}
-                {childIsLast ? "" : ","}
-              </div>
-            );
-          })}
-          <div style={{ paddingLeft: `${depth * 20}px` }}>{`}${suffix}`}</div>
+                return (
+                  <React.Fragment key={childPath}>
+                    {renderLine(
+                      <>
+                        {`"`}
+                        {highlightSearchKeyword(key)}
+                        {`": `}
+                        {renderPrimitive(item)}
+                        {childIsLast ? "" : ","}
+                      </>,
+                      childPath,
+                      depth + 1,
+                    )}
+                  </React.Fragment>
+                );
+              })}
+              {renderLine(`}${suffix}`)}
+            </>
+          )}
         </>
       );
     }
 
-    return (
-      <div {...getRowProps(path)}>
+    return renderLine(
+      <>
         {renderPrimitive(value)}
         {suffix}
-      </div>
+      </>,
+      path,
     );
   };
 
