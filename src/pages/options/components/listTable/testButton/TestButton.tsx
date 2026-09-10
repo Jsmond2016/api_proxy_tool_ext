@@ -1,20 +1,24 @@
-import React, { useState } from "react"
-import { Button, Modal, Spin, Tag, message } from "antd"
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Button, Input, Modal, Spin, Tag, Tooltip, message } from "antd";
 import {
+  CopyOutlined,
+  DownOutlined,
   ThunderboltOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
   ExportOutlined,
-} from "@ant-design/icons"
-import { ApiConfig } from "@src/types"
-import { useConfigStore } from "@src/store"
-import { saveConfig } from "@src/utils/configUtil"
-import { appendApifoxMockToken } from "@src/utils/mockUtils"
+  UpOutlined,
+} from "@ant-design/icons";
+import { ApiConfig } from "@src/types";
+import { useConfigStore } from "@src/store";
+import { saveConfig } from "@src/utils/configUtil";
+import { appendApifoxMockToken } from "@src/utils/mockUtils";
+import { findResponseSearchMatches } from "./responseSearch";
 
 interface TestButtonProps {
-  apiConfig: ApiConfig
-  apifoxLink?: string
-  getMethodColor: (method: string) => string
+  apiConfig: ApiConfig;
+  apifoxLink?: string;
+  getMethodColor: (method: string) => string;
 }
 
 const TestButton: React.FC<TestButtonProps> = ({
@@ -22,34 +26,216 @@ const TestButton: React.FC<TestButtonProps> = ({
   apifoxLink,
   getMethodColor,
 }) => {
-  const { config, setConfig } = useConfigStore()
-  const [testModalVisible, setTestModalVisible] = useState(false)
-  const [testLoading, setTestLoading] = useState(false)
+  const { config, setConfig } = useConfigStore();
+  const [testModalVisible, setTestModalVisible] = useState(false);
+  const [testLoading, setTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<{
-    status: number
-    statusText?: string
-    headers: Record<string, string>
-    data: unknown
-    error?: string
-  } | null>(null)
+    status: number;
+    statusText?: string;
+    headers: Record<string, string>;
+    data: unknown;
+    error?: string;
+  } | null>(null);
 
-  const [showGlobalOffWarning, setShowGlobalOffWarning] = useState(false)
+  const [showGlobalOffWarning, setShowGlobalOffWarning] = useState(false);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [activeSearchIndex, setActiveSearchIndex] = useState(0);
+  const searchResultRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const searchMatches = useMemo(
+    () => findResponseSearchMatches(testResult?.data, searchKeyword),
+    [searchKeyword, testResult?.data],
+  );
+  const activeSearchMatch = searchMatches[activeSearchIndex];
+
+  useEffect(() => {
+    setActiveSearchIndex(0);
+  }, [searchKeyword, testResult?.data]);
+
+  useEffect(() => {
+    if (activeSearchMatch) {
+      searchResultRefs.current[activeSearchMatch.path]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [activeSearchIndex, activeSearchMatch]);
+
+  const resetTestResult = () => {
+    setTestResult(null);
+    setSearchKeyword("");
+    setActiveSearchIndex(0);
+  };
+
+  const handleSearchNavigation = (direction: 1 | -1) => {
+    if (!searchMatches.length) {
+      return;
+    }
+
+    setActiveSearchIndex(
+      (currentIndex) =>
+        (currentIndex + direction + searchMatches.length) %
+        searchMatches.length,
+    );
+  };
+
+  const handleCopySearchPath = async () => {
+    if (!activeSearchMatch) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(activeSearchMatch.path);
+      message.success("字段路径已复制");
+    } catch (error) {
+      console.error("复制字段路径失败:", error);
+      message.error("复制失败，请重试");
+    }
+  };
+
+  const highlightSearchKeyword = (value: string) => {
+    const trimmedKeyword = searchKeyword.trim();
+    if (!trimmedKeyword) {
+      return value;
+    }
+
+    const segments = value.split(
+      new RegExp(
+        `(${trimmedKeyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`,
+        "gi",
+      ),
+    );
+    return segments.map((segment, index) =>
+      segment.toLocaleLowerCase() === trimmedKeyword.toLocaleLowerCase() ? (
+        <mark key={`${segment}-${index}`} className="bg-amber-200 px-0.5">
+          {segment}
+        </mark>
+      ) : (
+        segment
+      ),
+    );
+  };
+
+  const getChildPath = (path: string, key: string | number) =>
+    typeof key === "number"
+      ? `${path}[${key}]`
+      : /^[A-Za-z_$][\w$]*$/.test(key)
+        ? `${path}.${key}`
+        : `${path}[${JSON.stringify(key)}]`;
+
+  const renderPrimitive = (value: unknown) => {
+    const text = String(value);
+    return typeof value === "string" ? (
+      <>
+        {`"`}
+        {highlightSearchKeyword(text)}
+        {`"`}
+      </>
+    ) : (
+      highlightSearchKeyword(text)
+    );
+  };
+
+  const renderResponseValue = (
+    value: unknown,
+    path: string,
+    depth = 0,
+    isLast = true,
+  ): React.ReactNode => {
+    const suffix = isLast ? "" : ",";
+    const getRowProps = (rowPath: string) => ({
+      ref: (element: HTMLDivElement | null) => {
+        searchResultRefs.current[rowPath] = element;
+      },
+      className:
+        activeSearchMatch?.path === rowPath ? "bg-blue-100 rounded" : undefined,
+      style: { paddingLeft: `${depth * 20}px` },
+    });
+
+    if (Array.isArray(value)) {
+      return (
+        <>
+          <div style={{ paddingLeft: `${depth * 20}px` }}>[</div>
+          {value.map((item, index) => {
+            const childPath = getChildPath(path, index);
+            return (
+              <React.Fragment key={childPath}>
+                {renderResponseValue(
+                  item,
+                  childPath,
+                  depth + 1,
+                  index === value.length - 1,
+                )}
+              </React.Fragment>
+            );
+          })}
+          <div style={{ paddingLeft: `${depth * 20}px` }}>{`]${suffix}`}</div>
+        </>
+      );
+    }
+
+    if (value !== null && typeof value === "object") {
+      const entries = Object.entries(value);
+      return (
+        <>
+          <div style={{ paddingLeft: `${depth * 20}px` }}>{"{"}</div>
+          {entries.map(([key, item], index) => {
+            const childPath = getChildPath(path, key);
+            const childIsLast = index === entries.length - 1;
+            if (item !== null && typeof item === "object") {
+              return (
+                <React.Fragment key={childPath}>
+                  <div {...getRowProps(childPath)}>
+                    {`"`}
+                    {highlightSearchKeyword(key)}
+                    {`":`}
+                  </div>
+                  {renderResponseValue(item, childPath, depth + 2, childIsLast)}
+                </React.Fragment>
+              );
+            }
+
+            return (
+              <div key={childPath} {...getRowProps(childPath)}>
+                {`"`}
+                {highlightSearchKeyword(key)}
+                {`": `}
+                {renderPrimitive(item)}
+                {childIsLast ? "" : ","}
+              </div>
+            );
+          })}
+          <div style={{ paddingLeft: `${depth * 20}px` }}>{`}${suffix}`}</div>
+        </>
+      );
+    }
+
+    return (
+      <div {...getRowProps(path)}>
+        {renderPrimitive(value)}
+        {suffix}
+      </div>
+    );
+  };
 
   // 执行测试请求
   const runTestRequest = async () => {
-    setTestModalVisible(true)
-    setTestLoading(true)
-    setTestResult(null)
+    setTestModalVisible(true);
+    setTestLoading(true);
+    resetTestResult();
 
     try {
       // 模拟请求延迟 1 秒
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       // 使用 redirectURL 进行测试（会被代理拦截的 URL）
-      let testUrl = apiConfig.redirectURL
+      let testUrl = apiConfig.redirectURL;
 
       // 如果配置了 Apifox Mock Token 但 URL 中未携带，自动补充
-      testUrl = appendApifoxMockToken(testUrl, config.apifoxConfig?.apifoxMockToken)
+      testUrl = appendApifoxMockToken(
+        testUrl,
+        config.apifoxConfig?.apifoxMockToken,
+      );
 
       const response = await fetch(testUrl, {
         method: apiConfig.method,
@@ -63,19 +249,19 @@ const TestButton: React.FC<TestButtonProps> = ({
           apiConfig.method !== "GET" && apiConfig.requestBody
             ? apiConfig.requestBody
             : undefined,
-      })
+      });
 
-      const headers: Record<string, string> = {}
+      const headers: Record<string, string> = {};
       response.headers.forEach((value, key) => {
-        headers[key] = value
-      })
+        headers[key] = value;
+      });
 
-      let responseData: unknown
-      const contentType = response.headers.get("content-type")
+      let responseData: unknown;
+      const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
-        responseData = await response.json()
+        responseData = await response.json();
       } else {
-        responseData = await response.text()
+        responseData = await response.text();
       }
 
       setTestResult({
@@ -83,18 +269,18 @@ const TestButton: React.FC<TestButtonProps> = ({
         statusText: response.statusText,
         headers,
         data: responseData,
-      })
+      });
     } catch (error) {
       setTestResult({
         status: 0,
         headers: {},
         data: null,
         error: error instanceof Error ? error.message : "请求失败，未知错误",
-      })
+      });
     } finally {
-      setTestLoading(false)
+      setTestLoading(false);
     }
-  }
+  };
 
   // 仅调试单个接口：关闭其他所有接口，只保留当前接口
   const handleDebugSingle = () => {
@@ -108,46 +294,48 @@ const TestButton: React.FC<TestButtonProps> = ({
           isOpen: api.id === apiConfig.id,
         })),
       })),
-    }
-    setConfig(newConfig)
-    saveConfig(newConfig)
-    message.success("已关闭其他接口，仅保留当前接口的 Mock 开关")
-    setShowGlobalOffWarning(false)
-    runTestRequest()
-  }
+    };
+    setConfig(newConfig);
+    saveConfig(newConfig);
+    message.success("已关闭其他接口，仅保留当前接口的 Mock 开关");
+    setShowGlobalOffWarning(false);
+    runTestRequest();
+  };
 
   // 开启全局开关
   const handleEnableGlobal = () => {
     const newConfig = {
       ...config,
       isGlobalEnabled: true,
-    }
-    setConfig(newConfig)
-    saveConfig(newConfig)
-    message.success("已开启全局 Mock 开关")
-    setShowGlobalOffWarning(false)
-    runTestRequest()
-  }
+    };
+    setConfig(newConfig);
+    saveConfig(newConfig);
+    message.success("已开启全局 Mock 开关");
+    setShowGlobalOffWarning(false);
+    runTestRequest();
+  };
 
   // 测试按钮点击入口
   const handleTest = () => {
     if (!config.isGlobalEnabled) {
-      setShowGlobalOffWarning(true)
-      return
+      setShowGlobalOffWarning(true);
+      return;
     }
 
     if (!apiConfig.isOpen) {
-      message.warning("单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试")
-      return
+      message.warning(
+        "单个 Mock 开关未打开，请先打开该接口的 Mock 开关后再测试",
+      );
+      return;
     }
 
     if (!apiConfig.redirectURL) {
-      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试")
-      return
+      message.warning("该接口未配置 Mock 地址，请先配置 Mock 地址后再测试");
+      return;
     }
 
-    runTestRequest()
-  }
+    runTestRequest();
+  };
 
   return (
     <>
@@ -166,8 +354,8 @@ const TestButton: React.FC<TestButtonProps> = ({
         open={testModalVisible}
         onCancel={() => {
           if (!testLoading) {
-            setTestModalVisible(false)
-            setTestResult(null)
+            setTestModalVisible(false);
+            resetTestResult();
           }
         }}
         footer={[
@@ -186,8 +374,8 @@ const TestButton: React.FC<TestButtonProps> = ({
           <Button
             key="close"
             onClick={() => {
-              setTestModalVisible(false)
-              setTestResult(null)
+              setTestModalVisible(false);
+              resetTestResult();
             }}
             disabled={testLoading}
           >
@@ -253,8 +441,8 @@ const TestButton: React.FC<TestButtonProps> = ({
                         testResult.status >= 200 && testResult.status < 300
                           ? "green"
                           : testResult.status >= 300 && testResult.status < 400
-                          ? "orange"
-                          : "red"
+                            ? "orange"
+                            : "red"
                       }
                     >
                       {testResult.status} {testResult.statusText || ""}
@@ -264,12 +452,70 @@ const TestButton: React.FC<TestButtonProps> = ({
 
                 <div>
                   <div className="font-semibold mb-2">响应数据：</div>
-                  <div className="bg-gray-50 p-3 rounded text-sm max-h-96 overflow-y-auto">
-                    <pre className="whitespace-pre-wrap">
-                      {typeof testResult.data === "string"
-                        ? testResult.data
-                        : JSON.stringify(testResult.data, null, 2)}
-                    </pre>
+                  <div className="border border-gray-200 rounded overflow-hidden">
+                    <div className="flex items-center gap-2 bg-white p-2 border-b border-gray-200">
+                      <Input
+                        allowClear
+                        placeholder="搜索响应数据"
+                        value={searchKeyword}
+                        onChange={(event) =>
+                          setSearchKeyword(event.target.value)
+                        }
+                        onPressEnter={(event) =>
+                          handleSearchNavigation(event.shiftKey ? -1 : 1)
+                        }
+                        aria-label="搜索响应数据"
+                      />
+                      <Tooltip title="上一个匹配项 (Shift + Enter)">
+                        <Button
+                          aria-label="上一个匹配项"
+                          icon={<UpOutlined />}
+                          onClick={() => handleSearchNavigation(-1)}
+                          disabled={!searchMatches.length}
+                        />
+                      </Tooltip>
+                      <Tooltip title="下一个匹配项 (Enter)">
+                        <Button
+                          aria-label="下一个匹配项"
+                          icon={<DownOutlined />}
+                          onClick={() => handleSearchNavigation(1)}
+                          disabled={!searchMatches.length}
+                        />
+                      </Tooltip>
+                    </div>
+                    <div className="bg-gray-50 p-3 text-sm font-mono max-h-80 overflow-y-auto leading-6">
+                      {renderResponseValue(testResult.data, "$")}
+                    </div>
+                    <div className="flex items-center justify-between gap-3 bg-white px-3 py-2 border-t border-gray-200 text-xs">
+                      <div className="min-w-0 text-gray-500">
+                        {searchKeyword.trim() ? (
+                          activeSearchMatch ? (
+                            <>
+                              <span className="mr-2 text-gray-400">
+                                {activeSearchIndex + 1}/{searchMatches.length}
+                              </span>
+                              <span className="font-mono text-gray-700 break-all">
+                                {activeSearchMatch.path}
+                              </span>
+                            </>
+                          ) : (
+                            "未找到匹配的字段"
+                          )
+                        ) : (
+                          "输入关键词以查找字段路径"
+                        )}
+                      </div>
+                      <Tooltip title="复制字段路径">
+                        <Button
+                          type="text"
+                          size="small"
+                          icon={<CopyOutlined />}
+                          onClick={handleCopySearchPath}
+                          disabled={!activeSearchMatch}
+                          aria-label="复制字段路径"
+                        />
+                      </Tooltip>
+                    </div>
                   </div>
                 </div>
               </>
@@ -290,7 +536,9 @@ const TestButton: React.FC<TestButtonProps> = ({
       >
         <div className="py-3 space-y-2 text-xs text-gray-500">
           <div>
-            <span className="text-orange-600 font-medium">仅调试单个接口：</span>
+            <span className="text-orange-600 font-medium">
+              仅调试单个接口：
+            </span>
             关闭其他接口 Mock，打开全局开关，仅单个测试
           </div>
           <div>
@@ -318,7 +566,7 @@ const TestButton: React.FC<TestButtonProps> = ({
         </div>
       </Modal>
     </>
-  )
-}
+  );
+};
 
-export default TestButton
+export default TestButton;
