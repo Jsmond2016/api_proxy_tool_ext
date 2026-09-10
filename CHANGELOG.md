@@ -1,3 +1,14 @@
+## [1.5.45](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.44...v1.5.45) (2026-09-10)
+
+
+### Features
+
+* **components:** 添加响应数据搜索定位 ([1a80e10](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/1a80e1091b596666ea576bc1088283a68d922873))
+* **components:** 添加响应数据行号折叠 ([37cd51a](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/37cd51a85d75edd9b4de1009bdd7740c1aff16be))
+* 优化搜索定位顺序 icon ([4279c04](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/4279c042921f7aa3e521b6931dc388d6e3d4cd54))
+
+
+
 ## [1.5.44](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.43...v1.5.44) (2026-08-06)
 
 
