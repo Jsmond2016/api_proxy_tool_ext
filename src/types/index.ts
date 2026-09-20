@@ -194,14 +194,6 @@ export interface ArchiveData {
   version: string // 归档格式版本
   tag: string // 归档的 tag
   archivedAt: number // 归档时间戳
-  iterationInfo?: {
-    tag: string
-    requirementDocs: string
-    technicalDocs: string
-    prototypeDocs: string
-    testCaseDocs: string
-    scheduleDocs: string
-  } // 迭代信息
   modules: ModuleConfig[] // 归档时的完整面板模块配置
   quickMockConfigs?: QuickMockConfig[] // 归档时的完整快速联调配置
   apifoxConfig?: ApifoxConfig // Apifox 配置快照

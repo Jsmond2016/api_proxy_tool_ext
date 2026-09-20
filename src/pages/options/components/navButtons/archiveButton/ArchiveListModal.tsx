@@ -14,7 +14,6 @@ import {
   ReloadOutlined,
   DeleteOutlined,
   RollbackOutlined,
-  CopyOutlined,
 } from "@ant-design/icons"
 import { ArchiveRecord } from "@src/types"
 import {
@@ -25,17 +24,6 @@ import {
 } from "@src/utils/archiveUtil"
 import { useConfigStore, useActiveModuleIdStore } from "@src/store"
 import { saveConfig } from "@src/utils/configUtil"
-import {
-  getIterationInfo,
-  saveIterationInfo,
-} from "../syncApifoxModalButton/apifoxCache"
-import { copyToClipboard } from "@src/utils/permissionUtils"
-import {
-  buildIterationCopyText,
-  getIterationFieldLinks,
-  hasIterationFieldValue,
-  iterationInfoFieldConfigs,
-} from "../syncApifoxModalButton/iterationInfoConfig"
 
 const { Text } = Typography
 
@@ -104,20 +92,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
       setConfig(restoredConfig)
       await saveConfig(restoredConfig)
 
-      // 恢复迭代信息
-      if (archiveData.iterationInfo) {
-        const iterationInfoMap = await getIterationInfo()
-        iterationInfoMap[archiveData.tag] = {
-          tag: archiveData.iterationInfo.tag,
-          requirementDocs: archiveData.iterationInfo.requirementDocs,
-          technicalDocs: archiveData.iterationInfo.technicalDocs,
-          prototypeDocs: archiveData.iterationInfo.prototypeDocs,
-          testCaseDocs: archiveData.iterationInfo.testCaseDocs,
-          scheduleDocs: archiveData.iterationInfo.scheduleDocs,
-        }
-        await saveIterationInfo(iterationInfoMap)
-      }
-
       // 激活第一个模块（如果存在）
       if (restoredConfig.modules.length > 0) {
         setActiveModuleId(restoredConfig.modules[0].id)
@@ -160,20 +134,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
     }
   }
 
-  const handleCopyDocs = async (record: ArchiveRecord) => {
-    const copyText = buildIterationCopyText(
-      record.tag,
-      record.archiveData.iterationInfo
-    )
-    const success = await copyToClipboard(copyText)
-
-    if (success) {
-      message.success("归档文档信息已复制")
-    } else {
-      message.error("复制失败，请重试")
-    }
-  }
-
   const columns = [
     {
       title: "迭代 Tag",
@@ -194,63 +154,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
       width: 180,
     },
     {
-      title: "文档",
-      key: "docs",
-      width: 300,
-      render: (_: unknown, record: ArchiveRecord) => {
-        const iterationInfo = record.archiveData.iterationInfo
-        if (!hasIterationFieldValue(iterationInfo)) {
-          return <Text type="secondary">-</Text>
-        }
-
-        return (
-          <Space
-            orientation="vertical"
-            size="small"
-            style={{ fontSize: "12px" }}
-          >
-            {iterationInfoFieldConfigs.map(
-              ({ key, shortLabel, linkColorClassName }) => {
-                const links = getIterationFieldLinks(iterationInfo, key)
-                if (links.length === 0) {
-                  return null
-                }
-
-                return (
-                  <div key={key}>
-                    <Text type="secondary" style={{ fontSize: "12px" }}>
-                      {shortLabel}：
-                    </Text>
-                    <Space wrap size="small">
-                      {links.map((doc, index) => (
-                        <a
-                          key={index}
-                          href={doc}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={linkColorClassName.replace(
-                            " hover:text-blue-800",
-                            ""
-                          ).replace(" hover:text-green-800", "").replace(
-                            " hover:text-purple-800",
-                            ""
-                          ).replace(" hover:text-amber-800", "")}
-                          style={{ fontSize: "12px" }}
-                          title={doc}
-                        >
-                          {shortLabel}-{index + 1}
-                        </a>
-                      ))}
-                    </Space>
-                  </div>
-                )
-              }
-            )}
-          </Space>
-        )
-      },
-    },
-    {
       title: "模块数",
       dataIndex: "moduleCount",
       key: "moduleCount",
@@ -267,17 +170,9 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
     {
       title: "操作",
       key: "action",
-      width: 200,
+      width: 160,
       render: (_: unknown, record: ArchiveRecord) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<CopyOutlined />}
-            onClick={() => handleCopyDocs(record)}
-          >
-            复制文档
-          </Button>
           <Button
             type="link"
             size="small"
@@ -425,47 +320,6 @@ const ArchiveListModal: React.FC<ArchiveListModalProps> = ({
                 {selectedArchive.apiCount} 个接口
               </Descriptions.Item>
             </Descriptions>
-
-            {/* 迭代信息 */}
-            {selectedArchive.archiveData.iterationInfo && (
-              <div className="mt-4">
-                <Text strong className="block mb-2">
-                  迭代文档：
-                </Text>
-                <div className="pl-4 space-y-2">
-                  {iterationInfoFieldConfigs.map(
-                    ({ key, label, shortLabel, linkColorClassName }) => {
-                      const links = getIterationFieldLinks(
-                        selectedArchive.archiveData.iterationInfo!,
-                        key
-                      )
-                      if (links.length === 0) {
-                        return null
-                      }
-
-                      return (
-                        <div key={key}>
-                          <Text type="secondary">{label}：</Text>
-                          <Space wrap className="ml-2">
-                            {links.map((doc, index) => (
-                              <a
-                                key={index}
-                                href={doc}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={linkColorClassName}
-                              >
-                                {shortLabel}-{index + 1}
-                              </a>
-                            ))}
-                          </Space>
-                        </div>
-                      )
-                    }
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* 模块列表 */}
             {selectedArchive.archiveData.modules.length > 0 && (

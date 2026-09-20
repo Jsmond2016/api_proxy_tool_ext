@@ -5,7 +5,6 @@ import {
   message,
   Descriptions,
   Tag,
-  Space,
   Alert,
   Typography,
 } from "antd"
@@ -15,7 +14,6 @@ import {
   saveArchive,
   initArchiveDB,
 } from "@src/utils/archiveUtil"
-import { parseDocLinks } from "@src/utils/docUtils"
 
 const { Text } = Typography
 
@@ -129,7 +127,7 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
       <div className="space-y-4">
         <Alert
           title="归档说明"
-          description="选择迭代 tag 后，系统将保存当前面板的全部接口、模块、文档和自定义配置。归档后可以随时完整恢复。"
+          description="选择迭代 tag 后，系统将保存当前面板的全部接口、模块和自定义配置。归档后可以随时完整恢复。"
           type="info"
           showIcon
         />
@@ -182,122 +180,6 @@ const ArchiveModal: React.FC<ArchiveModalProps> = ({
                 个接口
               </Descriptions.Item>
             </Descriptions>
-
-            {/* 迭代信息 */}
-            {archivePreview.iterationInfo && (
-              <div className="mb-4 mt-4">
-                <Text strong className="block mb-2">
-                  迭代文档：
-                </Text>
-                <div className="pl-4 space-y-2">
-                  {parseDocLinks(archivePreview.iterationInfo.requirementDocs)
-                    .length > 0 && (
-                    <div>
-                      <Text type="secondary">需求文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          archivePreview.iterationInfo!.requirementDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline"
-                          >
-                            需求-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(archivePreview.iterationInfo!.technicalDocs)
-                    .length > 0 && (
-                    <div>
-                      <Text type="secondary">技术文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          archivePreview.iterationInfo!.technicalDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-600 hover:underline"
-                          >
-                            技术-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(archivePreview.iterationInfo!.prototypeDocs)
-                    .length > 0 && (
-                    <div>
-                      <Text type="secondary">原型文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          archivePreview.iterationInfo!.prototypeDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-purple-600 hover:underline"
-                          >
-                            原型-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(archivePreview.iterationInfo!.testCaseDocs)
-                    .length > 0 && (
-                    <div>
-                      <Text type="secondary">测试用例：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          archivePreview.iterationInfo!.testCaseDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-amber-600 hover:underline"
-                          >
-                            用例-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                  {parseDocLinks(archivePreview.iterationInfo!.scheduleDocs)
-                    .length > 0 && (
-                    <div>
-                      <Text type="secondary">排期文档：</Text>
-                      <Space wrap className="ml-2">
-                        {parseDocLinks(
-                          archivePreview.iterationInfo!.scheduleDocs
-                        ).map((doc, index) => (
-                          <a
-                            key={index}
-                            href={doc}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-cyan-600 hover:underline"
-                          >
-                            排期-{index + 1}
-                          </a>
-                        ))}
-                      </Space>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* 模块列表 */}
             {archivePreview.modules.length > 0 && (

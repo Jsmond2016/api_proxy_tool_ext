@@ -7,7 +7,6 @@ import {
   ArchiveData,
   ArchiveRecord,
 } from "@src/types"
-import { getIterationInfo } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxCache"
 
 const DB_NAME = "api-proxy-archive-db"
 const DB_VERSION = 1
@@ -59,7 +58,7 @@ export const initArchiveDB = (): Promise<IDBDatabase> => {
 }
 
 /**
- * 收集当前面板的完整快照，并使用 tag 关联迭代信息
+ * 收集当前面板的完整快照，并使用 tag 标识存档
  */
 export const archiveTagData = async (
   tag: string,
@@ -77,14 +76,10 @@ export const archiveTagData = async (
     })),
   }))
 
-  // 2. 收集迭代信息
-  const iterationInfoMap = await getIterationInfo()
-  const iterationInfo = iterationInfoMap[tag]
-
-  // 3. 收集完整快速联调配置，确保恢复后面板状态不丢失
+  // 2. 收集完整快速联调配置，确保恢复后面板状态不丢失
   const quickMockConfigs = config.quickMockConfigs?.map((item) => ({ ...item }))
 
-  // 4. 收集 Apifox 配置快照
+  // 3. 收集 Apifox 配置快照
   const apifoxConfig = config.apifoxConfig
     ? { ...config.apifoxConfig }
     : undefined
@@ -94,16 +89,6 @@ export const archiveTagData = async (
     version: "1.0.0",
     tag,
     archivedAt: Date.now(),
-    iterationInfo: iterationInfo
-        ? {
-          tag: iterationInfo.tag,
-          requirementDocs: iterationInfo.requirementDocs,
-          technicalDocs: iterationInfo.technicalDocs,
-          prototypeDocs: iterationInfo.prototypeDocs,
-          testCaseDocs: iterationInfo.testCaseDocs,
-          scheduleDocs: iterationInfo.scheduleDocs,
-        }
-      : undefined,
     modules: archivedModules,
     quickMockConfigs:
       quickMockConfigs && quickMockConfigs.length > 0

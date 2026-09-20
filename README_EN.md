@@ -7,7 +7,7 @@
 <div align="center">
   <img src="public/icon-128.png" alt="API Proxy Tool Logo" width="128" height="128" />
   <p><strong>API Mock proxy extension for Chrome, Edge, and Firefox</strong></p>
-  <p>Manage request redirection rules, synchronize Apifox APIs, archive iteration snapshots, and generate permission data.</p>
+  <p>Manage request redirection rules, synchronize Apifox APIs, archive workspace snapshots, and generate permission data.</p>
 
 [![React](https://img.shields.io/badge/React-18.3.1-blue.svg)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-blue.svg)](https://www.typescriptlang.org/)
@@ -24,7 +24,6 @@
 - Organize APIs in modules with an aggregated All APIs view, search, and status sorting.
 - Add, edit, clone, migrate, delete, batch-delete, test, and isolate individual APIs for debugging.
 - Synchronize OpenAPI data from Apifox by project ID and tags, with conflict handling and refresh previews.
-- Attach requirement, technical, prototype, test case, and schedule documents to iteration tags.
 - Archive and restore complete workspace snapshots in IndexedDB.
 - Generate CMS permission data for selected APIs, a module, or the complete workspace.
 - Receive cross-extension `BATCH_QUICK_MOCK` requests and create enriched external Mock modules.

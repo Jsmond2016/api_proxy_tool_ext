@@ -1,11 +1,6 @@
 import type { ApiConfig, GlobalConfig } from "@src/types"
-import { beforeEach, describe, expect, it, vi } from "vitest"
-import { getIterationInfo } from "@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxCache"
+import { describe, expect, it } from "vitest"
 import { archiveTagData } from "./archiveUtil"
-
-vi.mock("@src/pages/options/components/navButtons/syncApifoxModalButton/apifoxCache", () => ({
-  getIterationInfo: vi.fn()
-}))
 
 const createApi = (id: string, tags?: string[]): ApiConfig => ({
   id,
@@ -19,14 +14,10 @@ const createApi = (id: string, tags?: string[]): ApiConfig => ({
   isOpen: true,
   mockWay: "redirect",
   statusCode: 200,
-  tags
+  tags,
 })
 
 describe("archiveTagData", () => {
-  beforeEach(() => {
-    vi.mocked(getIterationInfo).mockResolvedValue({})
-  })
-
   it("archives every API and quick mock config in the current panel", async () => {
     const config: GlobalConfig = {
       isGlobalEnabled: true,
@@ -35,16 +26,18 @@ describe("archiveTagData", () => {
           id: "tag-module",
           apiDocKey: "tag.module",
           label: "Tag module",
-          apiArr: [createApi("tag-api", ["sprint"])]
+          apiArr: [createApi("tag-api", ["sprint"])],
         },
         {
           id: "custom-module",
           apiDocKey: "custom.module",
           label: "Custom module",
-          apiArr: [createApi("custom-api")]
-        }
+          apiArr: [createApi("custom-api")],
+        },
       ],
-      quickMockConfigs: [{ id: "quick-1", key: "success", name: "Success", responseJson: "{}" }]
+      quickMockConfigs: [
+        { id: "quick-1", key: "success", name: "Success", responseJson: "{}" },
+      ],
     }
 
     const archive = await archiveTagData("sprint", config)
@@ -53,5 +46,6 @@ describe("archiveTagData", () => {
     expect(archive.modules).not.toBe(config.modules)
     expect(archive.modules[0].apiArr).not.toBe(config.modules[0].apiArr)
     expect(archive.quickMockConfigs).toEqual(config.quickMockConfigs)
+    expect(archive).not.toHaveProperty("iterationInfo")
   })
 })

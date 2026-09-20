@@ -32,11 +32,11 @@ features:
     link: /guide/extension-usage#模块与接口管理
     linkText: 了解接口管理
   - title: 同步 Apifox
-    details: 按 tag 拉取 OpenAPI 接口，自动补全 Mock 地址、请求方式、权限点及关联文档，并保留手工配置。
+    details: 按 tag 拉取 OpenAPI 接口，自动补全 Mock 地址、请求方式和权限点，并保留手工配置。
     link: /guide/extension-usage#apifox-同步
     linkText: 查看同步流程
-  - title: 保存迭代现场
-    details: 维护迭代资料，将当前规则和配套配置保存为本地存档，需要时一键恢复。
+  - title: 保存配置现场
+    details: 将当前规则和配套配置保存为本地存档，需要时一键恢复。
     link: /guide/extension-usage#存档与恢复
     linkText: 查看存档功能
   - title: 整理权限点
