@@ -1,58 +1,48 @@
-## [1.5.45](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.44...v1.5.45) (2026-09-10)
-
+## [1.5.46](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.45...v1.5.46) (2026-09-20)
 
 ### Features
 
-* **components:** 添加响应数据搜索定位 ([1a80e10](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/1a80e1091b596666ea576bc1088283a68d922873))
-* **components:** 添加响应数据行号折叠 ([37cd51a](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/37cd51a85d75edd9b4de1009bdd7740c1aff16be))
-* 优化搜索定位顺序 icon ([4279c04](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/4279c042921f7aa3e521b6931dc388d6e3d4cd54))
+- **options:** 删除迭代信息功能 ([374bb95](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/374bb95b06ab8dc6bca0a273245ded214ed5e232))
 
+## [1.5.45](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.44...v1.5.45) (2026-09-10)
 
+### Features
+
+- **components:** 添加响应数据搜索定位 ([1a80e10](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/1a80e1091b596666ea576bc1088283a68d922873))
+- **components:** 添加响应数据行号折叠 ([37cd51a](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/37cd51a85d75edd9b4de1009bdd7740c1aff16be))
+- 优化搜索定位顺序 icon ([4279c04](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/4279c042921f7aa3e521b6931dc388d6e3d4cd54))
 
 ## [1.5.44](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.43...v1.5.44) (2026-08-06)
 
-
 ### Features
 
-* **options:** 添加测试弹框去改 mock 入口 ([092dd7d](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/092dd7debc9a0b800e69cb80cab759022d2b8d26))
-* 尝试全局响应模板方案，尝试失败 ([444f981](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/444f981b1c60ccd5380843301362723d7d61b0a3))
-* 添加本地扩展打包命令并优化页脚信息 ([99215c4](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/99215c41beada9041556ce469d03e05d44b942c6))
-
-
+- **options:** 添加测试弹框去改 mock 入口 ([092dd7d](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/092dd7debc9a0b800e69cb80cab759022d2b8d26))
+- 尝试全局响应模板方案，尝试失败 ([444f981](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/444f981b1c60ccd5380843301362723d7d61b0a3))
+- 添加本地扩展打包命令并优化页脚信息 ([99215c4](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/99215c41beada9041556ce469d03e05d44b942c6))
 
 ## [1.5.43](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.42...v1.5.43) (2026-07-14)
 
-
 ### Bug Fixes
 
-* **components:** 修复 Apifox 刷新覆盖和存档缺失 ([3f7fcb7](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/3f7fcb7628322125ac5bc2bf8219139a06cefbac))
-* **components:** 修复模块重置后接口无法重新添加 ([2fdbdb6](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/2fdbdb684dbc098362190e4ee7af01c8257d3505))
-* **db:** 修复批量 Quick Mock 持久缓存失效 ([e3406cc](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e3406ccca2125f4b67b0c87ef7730a6aeee834c6))
-
+- **components:** 修复 Apifox 刷新覆盖和存档缺失 ([3f7fcb7](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/3f7fcb7628322125ac5bc2bf8219139a06cefbac))
+- **components:** 修复模块重置后接口无法重新添加 ([2fdbdb6](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/2fdbdb684dbc098362190e4ee7af01c8257d3505))
+- **db:** 修复批量 Quick Mock 持久缓存失效 ([e3406cc](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e3406ccca2125f4b67b0c87ef7730a6aeee834c6))
 
 ### Performance Improvements
 
-* 优化跨插件批量 Quick Mock 响应速度 ([6a7c231](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/6a7c2310f9379b5197965a4bc1468f62ba3e2e54))
-
-
+- 优化跨插件批量 Quick Mock 响应速度 ([6a7c231](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/6a7c2310f9379b5197965a4bc1468f62ba3e2e54))
 
 ## [1.5.42](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.41...v1.5.42) (2026-07-10)
 
-
-
 ## [1.5.41](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.40...v1.5.41) (2026-07-10)
-
 
 ### Bug Fixes
 
-* **scripts:** 同步发版脚本 changelog 修复（空版本保护、-u 模式、自动创建 tag） ([e8ad924](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e8ad9244c6ff5c2b55e1f68da7965286e11135ff))
-
+- **scripts:** 同步发版脚本 changelog 修复（空版本保护、-u 模式、自动创建 tag） ([e8ad924](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/e8ad9244c6ff5c2b55e1f68da7965286e11135ff))
 
 ### Performance Improvements
 
-* 添加弹窗接口地址输入框复用 Apifox Swagger 请求，避免重复网络请求 ([d5a71f5](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/d5a71f5deff8efc3654a0d885abe8e91b76ff6f1))
-
-
+- 添加弹窗接口地址输入框复用 Apifox Swagger 请求，避免重复网络请求 ([d5a71f5](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/d5a71f5deff8efc3654a0d885abe8e91b76ff6f1))
 
 ## [1.5.40](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.39...v1.5.40) (2026-07-05)
 
