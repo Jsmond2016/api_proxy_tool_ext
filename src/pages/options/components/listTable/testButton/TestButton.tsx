@@ -10,6 +10,7 @@ import {
   CaretRightOutlined,
   ExportOutlined,
   UpOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { ApiConfig } from "@src/types";
 import { useConfigStore } from "@src/store";
@@ -467,6 +468,16 @@ const TestButton: React.FC<TestButtonProps> = ({
           }
         }}
         footer={[
+          <Button
+            key="retry"
+            type="primary"
+            icon={<ReloadOutlined />}
+            onClick={runTestRequest}
+            disabled={testLoading}
+            style={{ backgroundColor: "#52c41a", borderColor: "#52c41a" }}
+          >
+            重试
+          </Button>,
           apifoxLink ? (
             <Button
               key="edit-mock"

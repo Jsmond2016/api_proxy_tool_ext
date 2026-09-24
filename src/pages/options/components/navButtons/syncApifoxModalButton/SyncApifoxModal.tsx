@@ -3,7 +3,6 @@ import { Modal, Form, Input, Select, message } from "antd"
 import { GlobalConfig, ModuleConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
-  getOnlineMockPrefix,
   type ParsedApi,
 } from "./apifoxUtils"
 import {
@@ -39,7 +38,7 @@ interface SyncApifoxModalProps {
 }
 
 const MOCK_PREFIX_ONLINE =
-  "https://m1.apifoxmock.com/m1/项目编号-0-default"
+  "https://m1.apifoxmock.com/m1/{随机编号}-default"
 
 export default function SyncApifoxModal({
   visible,
@@ -49,6 +48,7 @@ export default function SyncApifoxModal({
   config,
 }: SyncApifoxModalProps) {
   const [form] = Form.useForm()
+  const projectId = Form.useWatch<string>("projectId", form) || ""
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
@@ -95,8 +95,6 @@ export default function SyncApifoxModal({
   const handleProjectIdChange = () => {
     const projectId = form.getFieldValue("projectId")
     if (projectId) {
-      // 自动填充 mockPrefix
-      form.setFieldValue("mockPrefix", getOnlineMockPrefix(projectId))
       // 触发验证
       const token = form.getFieldValue("apifoxToken")
       validateApifoxUrl(projectId, selectedTags, "online", token).then(
@@ -127,6 +125,12 @@ export default function SyncApifoxModal({
       return
     }
 
+    const mockPrefix = form.getFieldValue("mockPrefix")?.trim()
+    if (!mockPrefix) {
+      message.warning("请输入Mock地址前缀")
+      return
+    }
+
     // 如果有冲突的 tags，必须选择合并策略
     if (duplicateTags.length > 0 && !mergeStrategy) {
       message.warning("请选择合并策略")
@@ -134,7 +138,6 @@ export default function SyncApifoxModal({
     }
 
     const projectId = form.getFieldValue("projectId")
-    const mockPrefix = form.getFieldValue("mockPrefix") || getOnlineMockPrefix(projectId)
     const apifoxToken = form.getFieldValue("apifoxToken")
     const apifoxMockToken = form.getFieldValue("apifoxMockToken")
 
@@ -231,7 +234,7 @@ export default function SyncApifoxModal({
             projectId: finalProjectId,
             apifoxToken: finalToken,
             apifoxMockToken: finalMockToken,
-            mockPrefix: getOnlineMockPrefix(finalProjectId),
+            mockPrefix: "",
           })
           setSelectedTags(savedTags)
 
@@ -250,7 +253,7 @@ export default function SyncApifoxModal({
             projectId: "",
             apifoxToken: "",
             apifoxMockToken: "",
-            mockPrefix: MOCK_PREFIX_ONLINE,
+            mockPrefix: "",
           })
         }
       })
@@ -347,7 +350,22 @@ export default function SyncApifoxModal({
               label="Mock地址前缀"
               name="mockPrefix"
               rules={[{ required: true, message: "请输入Mock地址前缀" }]}
-              extra={MOCK_PREFIX_ONLINE}
+              extra={
+                <span>
+                  示例 {MOCK_PREFIX_ONLINE}{" "}
+                  <a
+                    href={
+                      projectId.trim()
+                        ? `https://app.apifox.com/project/${encodeURIComponent(projectId.trim())}`
+                        : undefined
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    去查看
+                  </a>
+                </span>
+              }
             >
               <Input />
             </Form.Item>
