@@ -1,3 +1,10 @@
+## [1.5.47](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.46...v1.5.47) (2026-09-24)
+
+### Features
+
+- **pages:** 优化 Apifox 同步与接口测试 ([73ae785](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/73ae78597da8b451cf4f26e7c60f72db4cce2c08))
+- **pages:** 增加 Apifox 配置导入导出与前缀缓存 ([b86fa50](https://github.com/Jsmond2016/api_proxy_tool_ext/commit/b86fa507e306e29f01c4813993f64fdcbe58d3b4))
+
 ## [1.5.46](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.45...v1.5.46) (2026-09-20)
 
 ### Features
