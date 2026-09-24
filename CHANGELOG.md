@@ -1,3 +1,7 @@
+## [1.5.48](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.47...v1.5.48) (2026-09-24)
+
+
+
 ## [1.5.47](https://github.com/Jsmond2016/api_proxy_tool_ext/compare/v1.5.46...v1.5.47) (2026-09-24)
 
 ### Features
