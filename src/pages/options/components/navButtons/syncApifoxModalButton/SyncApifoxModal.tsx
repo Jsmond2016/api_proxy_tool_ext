@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from "react"
-import { Modal, Form, Input, Select, message } from "antd"
-import { GlobalConfig, ModuleConfig } from "../../../../../types"
+import { Modal, Form, Input, Select, Button, message } from "antd"
+import { ApifoxConfig, GlobalConfig, ModuleConfig } from "../../../../../types"
 import {
   convertParsedApisToModules,
   type ParsedApi,
 } from "./apifoxUtils"
 import {
   getCachedApifoxMockToken,
+  getCachedApifoxMockPrefix,
   getCachedApifoxProjectId,
   getCachedApifoxToken,
   saveCachedApifoxMockToken,
+  saveCachedApifoxMockPrefix,
   saveCachedApifoxProjectId,
   saveCachedApifoxToken,
 } from "./apifoxCache"
@@ -20,6 +22,9 @@ import TagHistorySelector from "./components/TagHistorySelector"
 import ConflictAlerts, { type MergeStrategy } from "./components/ConflictAlerts"
 import ApiSummaryAlert from "./components/ApiSummaryAlert"
 import UrlValidationStatus from "./components/UrlValidationStatus"
+import ImportConfigModal from "./components/ImportConfigModal"
+import ExportConfigModal from "./components/ExportConfigModal"
+import type { ApifoxImportConfig } from "./components/configTransfer"
 
 interface SyncApifoxModalProps {
   visible: boolean
@@ -29,11 +34,7 @@ interface SyncApifoxModalProps {
     mergeStrategy?: MergeStrategy,
     duplicateTags?: string[]
   ) => void
-  onSaveConfig?: (apifoxConfig: {
-    apifoxUrl: string
-    mockPrefix: string
-    selectedTags?: string[]
-  }) => void
+  onSaveConfig?: (apifoxConfig: ApifoxConfig) => void
   config: GlobalConfig
 }
 
@@ -52,6 +53,10 @@ export default function SyncApifoxModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [parsedApis, setParsedApis] = useState<ParsedApi[]>([])
   const [mergeStrategy, setMergeStrategy] = useState<MergeStrategy>("merge")
+  const [importVisible, setImportVisible] = useState(false)
+  const [exportVisible, setExportVisible] = useState(false)
+  const [exportText, setExportText] = useState("")
+  const [importing, setImporting] = useState(false)
 
   // 使用自定义 hooks
   const {
@@ -130,6 +135,9 @@ export default function SyncApifoxModal({
       message.warning("请输入Mock地址前缀")
       return
     }
+    saveCachedApifoxMockPrefix(mockPrefix).catch((error) => {
+      console.error("Failed to save cached mock prefix:", error)
+    })
 
     // 如果有冲突的 tags，必须选择合并策略
     if (duplicateTags.length > 0 && !mergeStrategy) {
@@ -206,6 +214,66 @@ export default function SyncApifoxModal({
     updateParsedApis(tags)
   }
 
+  const handleOpenImport = () => {
+    setImportVisible(true)
+  }
+
+  const handleImport = async (configToImport: ApifoxImportConfig) => {
+    setImporting(true)
+    try {
+      form.setFieldsValue({
+        projectId: configToImport.projectId,
+        apifoxToken: configToImport.apifoxToken,
+        apifoxMockToken: configToImport.apifoxMockToken,
+        mockPrefix: configToImport.mockPrefix,
+        tags: configToImport.selectedTags,
+      })
+      setSelectedTags(configToImport.selectedTags)
+
+      const result = await validateApifoxUrl(
+        configToImport.projectId,
+        configToImport.selectedTags,
+        "online",
+        configToImport.apifoxToken
+      )
+      if (!result.success || !result.parsedApis) {
+        return false
+      }
+
+      setParsedApis(result.parsedApis)
+      saveCachedApifoxMockPrefix(configToImport.mockPrefix).catch((error) => {
+        console.error("Failed to save cached mock prefix:", error)
+      })
+      message.success("配置导入成功，接口和分组已更新")
+      return true
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const handleOpenExport = () => {
+    const values = form.getFieldsValue([
+      "projectId",
+      "apifoxToken",
+      "apifoxMockToken",
+      "mockPrefix",
+    ])
+    setExportText(
+      JSON.stringify(
+        {
+          projectId: values.projectId || "",
+          apifoxToken: values.apifoxToken || "",
+          apifoxMockToken: values.apifoxMockToken || "",
+          mockPrefix: values.mockPrefix || "",
+          selectedTags,
+        },
+        null,
+        2
+      )
+    )
+    setExportVisible(true)
+  }
+
   // 监听弹框显示状态，加载已保存的配置
   useEffect(() => {
     if (visible) {
@@ -218,12 +286,15 @@ export default function SyncApifoxModal({
         ? config.apifoxConfig.apifoxToken || "" : ""
       const savedMockToken = config.apifoxConfig?.mode === "online"
         ? config.apifoxConfig.apifoxMockToken || "" : ""
+      const savedMockPrefix = config.apifoxConfig?.mode === "online"
+        ? config.apifoxConfig.mockPrefix || "" : ""
 
       Promise.all([
         projectId ? Promise.resolve(projectId) : getCachedApifoxProjectId(),
         savedApifoxToken ? Promise.resolve(savedApifoxToken) : getCachedApifoxToken(),
         savedMockToken ? Promise.resolve(savedMockToken) : getCachedApifoxMockToken(),
-      ]).then(([cachedProjectId, cachedToken, cachedMockToken]) => {
+        savedMockPrefix ? Promise.resolve(savedMockPrefix) : getCachedApifoxMockPrefix(),
+      ]).then(([cachedProjectId, cachedToken, cachedMockToken, cachedMockPrefix]) => {
         // 只读取当前为 online 模式时的 config 值，避免本地模式的 URL 被当作项目编号填入
         const finalProjectId = projectId || cachedProjectId || ""
         const finalToken = savedApifoxToken || cachedToken || ""
@@ -234,7 +305,7 @@ export default function SyncApifoxModal({
             projectId: finalProjectId,
             apifoxToken: finalToken,
             apifoxMockToken: finalMockToken,
-            mockPrefix: "",
+            mockPrefix: cachedMockPrefix || "",
           })
           setSelectedTags(savedTags)
 
@@ -253,7 +324,7 @@ export default function SyncApifoxModal({
             projectId: "",
             apifoxToken: "",
             apifoxMockToken: "",
-            mockPrefix: "",
+            mockPrefix: cachedMockPrefix || "",
           })
         }
       })
@@ -270,14 +341,29 @@ export default function SyncApifoxModal({
       onCancel={handleCancel}
       onOk={handleOk}
       width={800}
-      okText="确定同步"
-      cancelText="取消"
-      okButtonProps={{
-        disabled:
-          parsedApis.length === 0 ||
-          selectedTags.length === 0 ||
-          (duplicateTags.length > 0 && !mergeStrategy),
-      }}
+      footer={[
+        <Button key="import" onClick={handleOpenImport}>
+          导入配置
+        </Button>,
+        <Button key="export" onClick={handleOpenExport}>
+          导出配置
+        </Button>,
+        <Button key="cancel" onClick={handleCancel}>
+          取消
+        </Button>,
+        <Button
+          key="submit"
+          type="primary"
+          onClick={handleOk}
+          disabled={
+            parsedApis.length === 0 ||
+            selectedTags.length === 0 ||
+            (duplicateTags.length > 0 && !mergeStrategy)
+          }
+        >
+          确定同步
+        </Button>,
+      ]}
     >
       <Form
         form={form}
@@ -367,7 +453,16 @@ export default function SyncApifoxModal({
                 </span>
               }
             >
-              <Input />
+              <Input
+                onBlur={(event) => {
+                  const prefix = event.target.value.trim()
+                  if (prefix) {
+                    saveCachedApifoxMockPrefix(prefix).catch((error) => {
+                      console.error("Failed to save cached mock prefix:", error)
+                    })
+                  }
+                }}
+              />
             </Form.Item>
 
             <ApiSummaryAlert parsedApis={parsedApis} />
@@ -380,6 +475,18 @@ export default function SyncApifoxModal({
           </>
         )}
       </Form>
+
+      <ImportConfigModal
+        open={importVisible}
+        loading={importing}
+        onCancel={() => setImportVisible(false)}
+        onConfirm={handleImport}
+      />
+      <ExportConfigModal
+        open={exportVisible}
+        text={exportText}
+        onCancel={() => setExportVisible(false)}
+      />
     </Modal>
   )
 }

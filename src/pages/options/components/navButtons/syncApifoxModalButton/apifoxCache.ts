@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   APIFOX_ONLINE_PROJECT_ID: "apifox-cached-online-project-id",
   APIFOX_ONLINE_TOKEN: "apifox-cached-online-token",
   APIFOX_MOCK_TOKEN: "apifox-cached-mock-token",
+  APIFOX_MOCK_PREFIX: "apifox-cached-mock-prefix",
   TAG_HISTORY: "apifox-tag-history",
 } as const
 
@@ -140,6 +141,26 @@ export const saveCachedApifoxMockToken = async (token: string): Promise<void> =>
     await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_MOCK_TOKEN]: token })
   } catch (error) {
     console.error("Failed to save cached Apifox mock token:", error)
+  }
+}
+
+/** 获取缓存的在线模式 Mock 地址前缀 */
+export const getCachedApifoxMockPrefix = async (): Promise<string | null> => {
+  try {
+    const result = await chrome.storage.local.get([STORAGE_KEYS.APIFOX_MOCK_PREFIX])
+    return result[STORAGE_KEYS.APIFOX_MOCK_PREFIX] || null
+  } catch (error) {
+    console.error("Failed to get cached Apifox mock prefix:", error)
+    return null
+  }
+}
+
+/** 保存在线模式 Mock 地址前缀到缓存 */
+export const saveCachedApifoxMockPrefix = async (prefix: string): Promise<void> => {
+  try {
+    await chrome.storage.local.set({ [STORAGE_KEYS.APIFOX_MOCK_PREFIX]: prefix })
+  } catch (error) {
+    console.error("Failed to save cached Apifox mock prefix:", error)
   }
 }
 
